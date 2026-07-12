@@ -6,6 +6,8 @@ export interface UserNode {
   isPrivate: boolean;
   isVerified: boolean;
   followsViewer: boolean;
+  detectedAt?: number;
+  isNew?: boolean;
 }
 
 export interface CacheData {
@@ -13,3 +15,7 @@ export interface CacheData {
   users: UserNode[];
 }
 
+export interface UnfollowResult {
+  ok: boolean;
+  status: number;
+}

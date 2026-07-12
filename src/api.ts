@@ -1,4 +1,4 @@
-import { UserNode, CacheData } from './types';
+import { UserNode, CacheData, UnfollowResult } from './types';
 
 // Helper function to read cookies
 export const getCookie = (name: string): string | null => {
@@ -85,11 +85,6 @@ export const fetchFollowings = async (
   return followedUsers;
 };
 
-export interface UnfollowResult {
-  ok: boolean;
-  status: number;
-}
-
 // Unfollow a specific user by ID
 export const unfollowUser = async (userId: string, csrfToken: string): Promise<UnfollowResult> => {
   const response = await fetch(`https://www.instagram.com/web/friendships/${userId}/unfollow/`, {
@@ -128,3 +123,60 @@ export const setCachedFollowings = (userId: string, users: UserNode[]): void => 
   }
 };
 
+// Merge fresh scan results with previous cached entries to preserve unfollower metadata
+export const mergeCacheWithFreshScan = (
+  freshUsers: UserNode[],
+  previousCache: CacheData | null
+): UserNode[] => {
+  const previousMap = new Map<string, UserNode>();
+  if (previousCache?.users) {
+    for (const u of previousCache.users) {
+      previousMap.set(u.id, u);
+    }
+  }
+
+  const now = Date.now();
+
+  return freshUsers.map(u => {
+    // If they follow us back, they don't have unfollower metadata
+    if (u.followsViewer) {
+      return u;
+    }
+
+    const prevUser = previousMap.get(u.id);
+
+    if (previousCache) {
+      if (prevUser) {
+        if (prevUser.followsViewer) {
+          // Confirmed new unfollower: they followed us in previous scan, but not now
+          return {
+            ...u,
+            detectedAt: now,
+            isNew: true
+          };
+        } else {
+          // Already an unfollower: carry over their original detection timestamp
+          return {
+            ...u,
+            detectedAt: prevUser.detectedAt || previousCache.timestamp,
+            isNew: false
+          };
+        }
+      } else {
+        // New following: not in previous cache, and they don't follow us back
+        return {
+          ...u,
+          detectedAt: now,
+          isNew: false
+        };
+      }
+    } else {
+      // First scan: baseline detection
+      return {
+        ...u,
+        detectedAt: now,
+        isNew: false
+      };
+    }
+  });
+};

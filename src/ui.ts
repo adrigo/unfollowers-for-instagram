@@ -1,5 +1,13 @@
 import { UserNode } from './types';
 import { unfollowUser, setCachedFollowings } from './api';
+import {
+  VERIFIED_BADGE_SVG,
+  NEW_UNFOLLOWER_SVG,
+  PRIVATE_LOCK_SVG,
+  FOLLOWS_YOU_SVG,
+  NON_FOLLOWERS_SVG,
+  wrapIcon
+} from './icons';
 
 export function renderList(
   bodyEl: HTMLElement,
@@ -11,6 +19,9 @@ export function renderList(
   let showNonFollowers = true;
   let showFollowers = false;
   let showVerified = true;
+  let showPrivate = true;
+  let showNewUnfollowersOnly = false;
+  let currentSortBy = 'unfollowed-recent';
   let isGridView = false;
 
   // Bulk action states
@@ -27,7 +38,7 @@ export function renderList(
           <div style="font-weight: bold; color: #fff; font-size: 0.82rem; margin-bottom: 0.5rem; text-transform: uppercase; letter-spacing: 0.05em;">Search:</div>
           <input type="text" class="iu-search-input" id="iu-search" placeholder="Username or name..." style="width: 100%; box-sizing: border-box;" />
         </div>
-        
+
         <!-- Actions Group -->
         <div class="iu-sidebar-section iu-sidebar-actions">
           <button class="iu-btn-export" id="iu-bulk-unfollow-btn" style="width: 100%; background: #ef4444; border-color: rgba(239, 68, 68, 0.4); text-align: center;" disabled>Unfollow (0)</button>
@@ -37,32 +48,57 @@ export function renderList(
           </div>
         </div>
 
-        <!-- Sort Select -->
+        <!-- Sort Custom Dropdown -->
         <div class="iu-sidebar-section">
           <div style="font-weight: bold; color: #fff; font-size: 0.82rem; margin-bottom: 0.5rem; text-transform: uppercase; letter-spacing: 0.05em;">Sort By:</div>
-          <select id="iu-sort-select" style="width: 100%; box-sizing: border-box;">
-            <option value="name-asc">A-Z (Username)</option>
-            <option value="name-desc">Z-A (Username)</option>
-            <option value="private-first">🔒 Private First</option>
-            <option value="verified-first">✓ Verified First</option>
-          </select>
+          <div class="iu-custom-dropdown" id="iu-sort-dropdown">
+            <div class="iu-dropdown-trigger" id="iu-sort-trigger">
+              <span id="iu-sort-trigger-content" style="display: flex; align-items: center; gap: 0.4rem;"></span>
+              <span style="font-size: 0.65rem; color: #888;">▼</span>
+            </div>
+            <div class="iu-dropdown-options" id="iu-sort-options">
+              <div class="iu-dropdown-option" data-value="unfollowed-recent">
+                ${NEW_UNFOLLOWER_SVG} Recently Unfollowed
+              </div>
+              <div class="iu-dropdown-option" data-value="name-asc">
+                <span style="display: inline-block; width: 16px; text-align: center; font-size: 0.75rem; font-weight: bold; color: #aaa; vertical-align: middle;">AZ</span> A-Z (Username)
+              </div>
+              <div class="iu-dropdown-option" data-value="name-desc">
+                <span style="display: inline-block; width: 16px; text-align: center; font-size: 0.75rem; font-weight: bold; color: #aaa; vertical-align: middle;">ZA</span> Z-A (Username)
+              </div>
+              <div class="iu-dropdown-option" data-value="private-first">
+                ${PRIVATE_LOCK_SVG} Private First
+              </div>
+              <div class="iu-dropdown-option" data-value="verified-first">
+                ${VERIFIED_BADGE_SVG} Verified First
+              </div>
+            </div>
+          </div>
         </div>
 
         <!-- Filter Checkboxes -->
         <div class="iu-sidebar-section">
           <div style="font-weight: bold; color: #fff; font-size: 0.82rem; margin-bottom: 0.6rem; text-transform: uppercase; letter-spacing: 0.05em;">Filters:</div>
           <div class="iu-filter-list">
-            <label class="iu-filter-label">
+            <label class="iu-filter-label" style="display: flex; align-items: center; gap: 0.35rem;">
               <input type="checkbox" id="iu-filter-nonfollowers" ${showNonFollowers ? 'checked' : ''} />
-              Non-followers
+              ${NON_FOLLOWERS_SVG} Non-followers
             </label>
-            <label class="iu-filter-label">
+            <label class="iu-filter-label" style="display: flex; align-items: center; gap: 0.35rem;">
               <input type="checkbox" id="iu-filter-followers" ${showFollowers ? 'checked' : ''} />
-              Followers
+              ${FOLLOWS_YOU_SVG} Followers
             </label>
-            <label class="iu-filter-label">
+            <label class="iu-filter-label" style="display: flex; align-items: center; gap: 0.35rem;">
+              <input type="checkbox" id="iu-filter-new-unfollowers" ${showNewUnfollowersOnly ? 'checked' : ''} />
+              ${NEW_UNFOLLOWER_SVG} New Unfollowers Only
+            </label>
+            <label class="iu-filter-label" style="display: flex; align-items: center; gap: 0.35rem;">
               <input type="checkbox" id="iu-filter-verified" ${showVerified ? 'checked' : ''} />
-              Show Verified
+              ${VERIFIED_BADGE_SVG} Show Verified
+            </label>
+            <label class="iu-filter-label" style="display: flex; align-items: center; gap: 0.35rem;">
+              <input type="checkbox" id="iu-filter-private" ${showPrivate ? 'checked' : ''} />
+              ${PRIVATE_LOCK_SVG} Show Private
             </label>
           </div>
         </div>
@@ -72,19 +108,33 @@ export function renderList(
           <div style="font-weight: bold; color: #fff; font-size: 0.82rem; margin-bottom: 0.6rem; text-transform: uppercase; letter-spacing: 0.05em;">Statistics:</div>
           <div class="iu-stats-vertical">
             <div class="iu-stat-row">
-              <span>Non-followers</span>
+              <span style="display: flex; align-items: center; gap: 0.35rem;">
+                ${NON_FOLLOWERS_SVG} Non-followers
+              </span>
               <span id="stat-nonfollowers" class="iu-stat-val non-followers">0</span>
             </div>
             <div class="iu-stat-row">
-              <span>Followers</span>
+              <span style="display: flex; align-items: center; gap: 0.35rem;">
+                ${NEW_UNFOLLOWER_SVG} New Unfollowers
+              </span>
+              <span id="stat-new-unfollowers" class="iu-stat-val new-unfollowers">0</span>
+            </div>
+            <div class="iu-stat-row">
+              <span style="display: flex; align-items: center; gap: 0.35rem;">
+                ${FOLLOWS_YOU_SVG} Followers
+              </span>
               <span id="stat-followers" class="iu-stat-val followers">0</span>
             </div>
             <div class="iu-stat-row">
-              <span>Verified</span>
+              <span style="display: flex; align-items: center; gap: 0.35rem;">
+                ${VERIFIED_BADGE_SVG} Verified
+              </span>
               <span id="stat-verified" class="iu-stat-val verified">0</span>
             </div>
             <div class="iu-stat-row">
-              <span>Private</span>
+              <span style="display: flex; align-items: center; gap: 0.35rem;">
+                ${PRIVATE_LOCK_SVG} Private
+              </span>
               <span id="stat-private" class="iu-stat-val private">0</span>
             </div>
           </div>
@@ -127,25 +177,29 @@ export function renderList(
 
   const nonFollowersCheck = document.getElementById('iu-filter-nonfollowers') as HTMLInputElement;
   const followersCheck = document.getElementById('iu-filter-followers') as HTMLInputElement;
+  const newUnfollowersCheck = document.getElementById('iu-filter-new-unfollowers') as HTMLInputElement;
   const verifiedCheck = document.getElementById('iu-filter-verified') as HTMLInputElement;
+  const privateCheck = document.getElementById('iu-filter-private') as HTMLInputElement;
   const selectAllCheck = document.getElementById('iu-select-all') as HTMLInputElement;
-  const sortSelect = document.getElementById('iu-sort-select') as HTMLSelectElement;
 
   const progressBanner = document.getElementById('iu-bulk-progress-banner')!;
   const progressText = document.getElementById('iu-bulk-progress-text')!;
   const pauseBtn = document.getElementById('iu-bulk-pause-btn')!;
   const cancelBtn = document.getElementById('iu-bulk-cancel-btn')!;
+  const customSortDropdown = document.getElementById('iu-sort-dropdown')!;
 
   // Filtered reference for exports and bulk actions
   let currentFilteredList: UserNode[] = [];
 
   const updateStatsCounters = () => {
     const nonFollowers = activeUsers.filter(u => !u.followsViewer).length;
+    const newUnfollowers = activeUsers.filter(u => !u.followsViewer && u.isNew).length;
     const followers = activeUsers.filter(u => u.followsViewer).length;
     const verified = activeUsers.filter(u => u.isVerified).length;
     const privateCount = activeUsers.filter(u => u.isPrivate).length;
 
     document.getElementById('stat-nonfollowers')!.textContent = String(nonFollowers);
+    document.getElementById('stat-new-unfollowers')!.textContent = String(newUnfollowers);
     document.getElementById('stat-followers')!.textContent = String(followers);
     document.getElementById('stat-verified')!.textContent = String(verified);
     document.getElementById('stat-private')!.textContent = String(privateCount);
@@ -160,7 +214,6 @@ export function renderList(
     const allVisibleSelected = currentFilteredList.length > 0 && currentFilteredList.every(u => selectedUserIds.has(u.id));
     selectAllCheck.checked = allVisibleSelected;
   };
-
   const updateUIList = () => {
     const term = searchInput.value.toLowerCase().trim();
 
@@ -173,16 +226,32 @@ export function renderList(
       const matchesStatus = (showNonFollowers && !u.followsViewer) || (showFollowers && u.followsViewer);
       if (!matchesStatus) return false;
 
+      // New Unfollowers filter
+      if (showNewUnfollowersOnly && !u.isNew) return false;
+
       // Verified filter
       const matchesVerified = !u.isVerified || showVerified;
       if (!matchesVerified) return false;
+
+      // Private filter
+      const matchesPrivate = !u.isPrivate || showPrivate;
+      if (!matchesPrivate) return false;
 
       return true;
     });
 
     // Apply Sorting
-    const sortBy = sortSelect.value;
-    if (sortBy === 'name-asc') {
+    const sortBy = currentSortBy;
+    if (sortBy === 'unfollowed-recent') {
+      currentFilteredList.sort((a, b) => {
+        const isNewA = a.isNew ? 1 : 0;
+        const isNewB = b.isNew ? 1 : 0;
+        if (isNewA !== isNewB) {
+          return isNewB - isNewA;
+        }
+        return a.username.localeCompare(b.username);
+      });
+    } else if (sortBy === 'name-asc') {
       currentFilteredList.sort((a, b) => a.username.localeCompare(b.username));
     } else if (sortBy === 'name-desc') {
       currentFilteredList.sort((a, b) => b.username.localeCompare(a.username));
@@ -211,24 +280,31 @@ export function renderList(
       return;
     }
 
-    listEl.innerHTML = currentFilteredList.map(user => `
+    listEl.innerHTML = currentFilteredList.map(user => {
+      const newBadge = user.isNew ? wrapIcon(NEW_UNFOLLOWER_SVG, 'New Unfollower') : '';
+
+      return `
       <div class="iu-user-card" id="card-${user.id}">
         <div class="iu-user-info">
           <input type="checkbox" class="iu-user-checkbox" data-id="${user.id}" ${selectedUserIds.has(user.id) ? 'checked' : ''} />
           <img class="iu-avatar" src="${user.profilePicUrl}" alt="${user.username}" />
           <div class="iu-names">
-            <div>
+            <div class="iu-username-wrapper">
               <a class="iu-username" href="https://www.instagram.com/${user.username}/" target="_blank">${user.username}</a>
-              ${user.isVerified ? '<span class="iu-badge iu-badge-verified">✓ Verified</span>' : ''}
-              ${user.isPrivate ? '<span class="iu-badge iu-badge-private">🔒 Private</span>' : ''}
-              ${user.followsViewer ? '<span class="iu-badge iu-badge-follower">Follows you</span>' : ''}
+              <div class="iu-card-badges">
+                ${user.isVerified ? wrapIcon(VERIFIED_BADGE_SVG, 'Verified') : ''}
+                ${user.isPrivate ? wrapIcon(PRIVATE_LOCK_SVG, 'Private Account') : ''}
+                ${user.followsViewer ? wrapIcon(FOLLOWS_YOU_SVG, 'Follows you') : wrapIcon(NON_FOLLOWERS_SVG, 'Non-follower')}
+                ${newBadge}
+              </div>
             </div>
             <span class="iu-fullname">${user.fullName}</span>
           </div>
         </div>
         <button class="iu-unfollow-btn" data-id="${user.id}">Unfollow</button>
       </div>
-    `).join('');
+      `;
+    }).join('');
 
     syncSelectAllState();
   };
@@ -243,14 +319,14 @@ export function renderList(
         btn.textContent = 'Unfollowed';
         btn.style.background = 'rgba(255,255,255,0.05)';
         btn.style.color = '#ada79d';
-        
+
         // Remove from local lists
         activeUsers = activeUsers.filter(u => u.id !== user.id);
         selectedUserIds.delete(user.id);
-        
+
         // Save to local cache
         setCachedFollowings(dsUserId, activeUsers);
-        
+
         setTimeout(() => {
           updateUIList();
           updateStatsCounters();
@@ -277,13 +353,13 @@ export function renderList(
     if (target.classList.contains('iu-user-checkbox')) {
       const id = target.getAttribute('data-id')!;
       const isChecked = (target as HTMLInputElement).checked;
-      
+
       if (isChecked) {
         selectedUserIds.add(id);
       } else {
         selectedUserIds.delete(id);
       }
-      
+
       updateBulkButton();
       syncSelectAllState();
     }
@@ -343,8 +419,6 @@ export function renderList(
 
     const preventExit = (e: BeforeUnloadEvent) => {
       e.preventDefault();
-      e.returnValue = '';
-      return '';
     };
     window.addEventListener('beforeunload', preventExit);
 
@@ -364,10 +438,15 @@ export function renderList(
     searchInput.disabled = true;
     nonFollowersCheck.disabled = true;
     followersCheck.disabled = true;
+    newUnfollowersCheck.disabled = true;
     verifiedCheck.disabled = true;
+    privateCheck.disabled = true;
     layoutBtn.disabled = true;
     exportBtn.disabled = true;
-    sortSelect.disabled = true;
+    if (customSortDropdown) {
+      customSortDropdown.style.pointerEvents = 'none';
+      customSortDropdown.style.opacity = '0.5';
+    }
 
     // Disable all checkbox inputs in the cards
     listEl.querySelectorAll('.iu-user-checkbox').forEach(cb => {
@@ -398,7 +477,7 @@ export function renderList(
         if (!user) continue;
 
         progressText.textContent = `Unfollowing: ${i + 1} / ${idsArray.length} (@${user.username})`;
-        
+
         const cardBtn = listEl.querySelector(`.iu-unfollow-btn[data-id="${id}"]`) as HTMLButtonElement;
         if (cardBtn) {
           cardBtn.disabled = true;
@@ -407,12 +486,12 @@ export function renderList(
 
         try {
           const res = await unfollowUser(id, csrfToken);
-          
+
           if (res.ok) {
             successCount++;
             activeUsers = activeUsers.filter(u => u.id !== id);
             selectedUserIds.delete(id);
-            
+
             if (cardBtn) {
               cardBtn.textContent = 'Unfollowed';
               cardBtn.style.background = 'rgba(255,255,255,0.05)';
@@ -424,12 +503,12 @@ export function renderList(
               pauseBtn.textContent = 'Resume';
               pauseBtn.style.background = 'linear-gradient(135deg, #f97316, #ec4899, #7c3aed)';
               pauseBtn.style.color = '#fff';
-              
+
               if (cardBtn) {
                 cardBtn.disabled = false;
                 cardBtn.textContent = 'Unfollow';
               }
-              
+
               alert('Instagram rate limit detected (HTTP 429). The bulk unfollow process has been automatically paused. Please wait a few minutes before resuming to avoid account restrictions.');
               i--;
               continue;
@@ -476,14 +555,19 @@ export function renderList(
     searchInput.disabled = false;
     nonFollowersCheck.disabled = false;
     followersCheck.disabled = false;
+    newUnfollowersCheck.disabled = false;
     verifiedCheck.disabled = false;
+    privateCheck.disabled = false;
     layoutBtn.disabled = false;
     exportBtn.disabled = false;
-    sortSelect.disabled = false;
+    if (customSortDropdown) {
+      customSortDropdown.style.pointerEvents = 'auto';
+      customSortDropdown.style.opacity = '1';
+    }
 
     const actionText = isBulkCancelled ? 'Bulk unfollow cancelled.' : 'Bulk unfollow complete.';
     alert(`${actionText}\nSuccessfully unfollowed: ${successCount}\nFailed: ${failCount}`);
-    
+
     updateUIList();
     updateStatsCounters();
     updateBulkButton();
@@ -498,14 +582,53 @@ export function renderList(
     showFollowers = followersCheck.checked;
     updateUIList();
   });
+  newUnfollowersCheck.addEventListener('change', () => {
+    showNewUnfollowersOnly = newUnfollowersCheck.checked;
+    updateUIList();
+  });
   verifiedCheck.addEventListener('change', () => {
     showVerified = verifiedCheck.checked;
     updateUIList();
   });
-
-  // Change listener for sorting dropdown
-  sortSelect.addEventListener('change', () => {
+  privateCheck.addEventListener('change', () => {
+    showPrivate = privateCheck.checked;
     updateUIList();
+  });
+
+  // Toggle custom dropdown
+  const sortTrigger = document.getElementById('iu-sort-trigger')!;
+  const sortOptions = document.getElementById('iu-sort-options')!;
+  const sortTriggerContent = document.getElementById('iu-sort-trigger-content')!;
+
+  sortTrigger.addEventListener('click', (e) => {
+    e.stopPropagation();
+    sortOptions.classList.toggle('show');
+  });
+
+  document.addEventListener('click', () => {
+    sortOptions.classList.remove('show');
+  });
+
+  const optionMapping: Record<string, string> = {
+    'unfollowed-recent': `${NEW_UNFOLLOWER_SVG} Recently Unfollowed`,
+    'name-asc': `<span style="display: inline-block; width: 16px; text-align: center; font-size: 0.75rem; font-weight: bold; color: #aaa; vertical-align: middle;">AZ</span> A-Z (Username)`,
+    'name-desc': `<span style="display: inline-block; width: 16px; text-align: center; font-size: 0.75rem; font-weight: bold; color: #aaa; vertical-align: middle;">ZA</span> Z-A (Username)`,
+    'private-first': `${PRIVATE_LOCK_SVG} Private First`,
+    'verified-first': `${VERIFIED_BADGE_SVG} Verified First`
+  };
+
+  // Set initial trigger content
+  sortTriggerContent.innerHTML = optionMapping[currentSortBy];
+
+  // Option select handler
+  sortOptions.querySelectorAll('.iu-dropdown-option').forEach(opt => {
+    opt.addEventListener('click', () => {
+      const val = (opt as HTMLElement).dataset.value!;
+      currentSortBy = val;
+      sortTriggerContent.innerHTML = optionMapping[val];
+      sortOptions.classList.remove('show');
+      updateUIList();
+    });
   });
 
   // Layout Toggle Handler

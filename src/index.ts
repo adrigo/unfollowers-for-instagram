@@ -1,6 +1,7 @@
 import { CSS_STYLES } from './styles';
-import { getCookie, fetchFollowings, getCachedFollowings, setCachedFollowings } from './api';
+import { getCookie, fetchFollowings, getCachedFollowings, setCachedFollowings, mergeCacheWithFreshScan } from './api';
 import { renderList } from './ui';
+import { CACHE_SYNC_SVG } from './icons';
 
 (async () => {
   if (location.hostname !== 'www.instagram.com') {
@@ -49,18 +50,7 @@ import { renderList } from './ui';
         </div>
         <button class="iu-close-btn" id="iu-close-btn">&times;</button>
       </div>
-      <div class="iu-body" id="iu-body">
-        <div class="iu-scanner-view">
-          <div class="iu-spinner"></div>
-          <div>
-            <h3 style="margin-bottom: 0.5rem; font-weight: 600;">Analyzing your account...</h3>
-            <p style="color: #ada79d; font-size: 0.9rem;" id="iu-scan-status">Preparing scanner...</p>
-          </div>
-          <div class="iu-progress-bar-container">
-            <div class="iu-progress-bar" id="iu-progress-bar"></div>
-          </div>
-        </div>
-      </div>
+      <div class="iu-body" id="iu-body"></div>
     </div>
   `;
   document.body.appendChild(overlayEl);
@@ -149,11 +139,17 @@ import { renderList } from './ui';
         scanStatusEl.textContent = `Scanned ${scanned} of ${total} followings (${percentage}%)...`;
       }, signal);
 
+      // Get previous cache before overwriting it
+      const prevCache = getCachedFollowings(ds_user_id);
+
+      // Merge fresh scan results with previous cached entries to preserve unfollower metadata
+      const mergedUsers = mergeCacheWithFreshScan(followedUsers, prevCache);
+
       // Save to local cache
-      setCachedFollowings(ds_user_id, followedUsers);
+      setCachedFollowings(ds_user_id, mergedUsers);
 
       // Render List View
-      currentListController = renderList(bodyEl, followedUsers, csrfToken || '', ds_user_id);
+      currentListController = renderList(bodyEl, mergedUsers, csrfToken || '', ds_user_id);
     } catch (err) {
       if (err instanceof DOMException && err.name === 'AbortError') {
         console.log('Scan successfully aborted.');
@@ -184,16 +180,21 @@ import { renderList } from './ui';
 
     bodyEl.innerHTML = `
       <div style="text-align: center; margin: auto; padding: 2.5rem; display: flex; flex-direction: column; gap: 1.5rem; align-items: center; justify-content: center; height: 100%;">
-        <span style="font-size: 3rem;">💾</span>
+        ${CACHE_SYNC_SVG}
         <div>
           <h3 style="margin-bottom: 0.5rem; font-weight: 600; font-size: 1.3rem;">Found Cached Data</h3>
           <p style="color: #ada79d; font-size: 0.9rem; line-height: 1.5; max-width: 380px;">
             A cached list of <strong>${cachedData.users.length} users</strong> was found (loaded ${ageString}).
+            <br>
+            Select <strong>Scan Fresh</strong> to check for recent changes, or <strong>Use Cache</strong> to view the saved list without scanning.
           </p>
         </div>
         <div style="display: flex; gap: 1rem; width: 100%; max-width: 350px;">
           <button id="iu-use-cache-btn" class="iu-btn-export" style="flex: 1; background: linear-gradient(135deg, #f97316, #ec4899, #7c3aed); color: #fff; border: none; font-weight: 700; height: 42px; border-radius: 10px;">Use Cache</button>
           <button id="iu-scan-fresh-btn" class="iu-btn-export" style="flex: 1; height: 42px; border-radius: 10px;">Scan Fresh</button>
+        </div>
+        <div style="background: rgba(192, 132, 252, 0.1); border: 1px solid rgba(192, 132, 252, 0.2); border-radius: 8px; padding: 0.75rem 1rem; font-size: 0.82rem; color: #c084fc; max-width: 350px; text-align: left; line-height: 1.4; box-sizing: border-box;">
+          <strong>Note:</strong> To detect new unfollowers, we will use the cache but we need to do a fresh scan.
         </div>
       </div>
     `;
