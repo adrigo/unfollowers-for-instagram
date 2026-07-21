@@ -135,8 +135,6 @@ export const mergeCacheWithFreshScan = (
     }
   }
 
-  const now = Date.now();
-
   return freshUsers.map(u => {
     // If they follow us back, they don't have unfollower metadata
     if (u.followsViewer) {
@@ -151,14 +149,12 @@ export const mergeCacheWithFreshScan = (
           // Confirmed new unfollower: they followed us in previous scan, but not now
           return {
             ...u,
-            detectedAt: now,
             isNew: true
           };
         } else {
-          // Already an unfollower: carry over their original detection timestamp
+          // Already an unfollower
           return {
             ...u,
-            detectedAt: prevUser.detectedAt || previousCache.timestamp,
             isNew: false
           };
         }
@@ -166,7 +162,6 @@ export const mergeCacheWithFreshScan = (
         // New following: not in previous cache, and they don't follow us back
         return {
           ...u,
-          detectedAt: now,
           isNew: false
         };
       }
@@ -174,7 +169,6 @@ export const mergeCacheWithFreshScan = (
       // First scan: baseline detection
       return {
         ...u,
-        detectedAt: now,
         isNew: false
       };
     }

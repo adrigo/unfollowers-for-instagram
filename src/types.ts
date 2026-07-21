@@ -6,7 +6,6 @@ export interface UserNode {
   isPrivate: boolean;
   isVerified: boolean;
   followsViewer: boolean;
-  detectedAt?: number;
   isNew?: boolean;
 }
 
