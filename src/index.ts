@@ -1,5 +1,5 @@
 import { CSS_STYLES } from './styles';
-import { getCookie, fetchFollowings, getCachedFollowings, setCachedFollowings, mergeCacheWithFreshScan } from './api';
+import { getCookie, fetchFollowings, getCachedFollowings, setCachedFollowings, mergeCacheWithFreshScan, formatCacheAge } from './api';
 import { renderList } from './ui';
 import { CACHE_SYNC_SVG } from './icons';
 
@@ -175,8 +175,7 @@ import { CACHE_SYNC_SVG } from './icons';
   // Check cache data
   const cachedData = getCachedFollowings(ds_user_id);
   if (cachedData) {
-    const ageMin = Math.round((Date.now() - cachedData.timestamp) / 60000);
-    const ageString = ageMin < 1 ? 'just now' : ageMin === 1 ? '1 minute ago' : `${ageMin} minutes ago`;
+    const ageString = formatCacheAge(cachedData.timestamp);
 
     bodyEl.innerHTML = `
       <div style="text-align: center; margin: auto; padding: 2.5rem; display: flex; flex-direction: column; gap: 1.5rem; align-items: center; justify-content: center; height: 100%;">

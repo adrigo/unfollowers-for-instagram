@@ -180,3 +180,44 @@ export const mergeCacheWithFreshScan = (
     }
   });
 };
+
+export const formatCacheAge = (timestamp: number): string => {
+  const diffMs = Math.max(0, Date.now() - timestamp);
+  const totalSeconds = Math.floor(diffMs / 1000);
+
+  if (totalSeconds < 1) {
+    return 'just now';
+  }
+
+  const days = Math.floor(totalSeconds / 86400);
+  const hours = Math.floor((totalSeconds % 86400) / 3600);
+  const mins = Math.floor((totalSeconds % 3600) / 60);
+  const seconds = totalSeconds % 60;
+
+  const parts: string[] = [];
+
+  if (days > 0) {
+    parts.push(`${days} ${days === 1 ? 'day' : 'days'}`);
+  }
+  if (hours > 0) {
+    parts.push(`${hours} ${hours === 1 ? 'hour' : 'hours'}`);
+  }
+  if (mins > 0) {
+    parts.push(`${mins} ${mins === 1 ? 'min' : 'mins'}`);
+  }
+  if (seconds > 0) {
+    parts.push(`${seconds} ${seconds === 1 ? 'second' : 'seconds'}`);
+  }
+
+  if (parts.length === 0) {
+    return 'just now';
+  }
+
+  const ageText = parts.length === 1
+    ? parts[0]
+    : parts.length === 2
+    ? `${parts[0]} and ${parts[1]}`
+    : `${parts.slice(0, -1).join(', ')} and ${parts[parts.length - 1]}`;
+
+  return `${ageText} ago`;
+};
