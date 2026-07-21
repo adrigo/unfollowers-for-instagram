@@ -1,5 +1,5 @@
-import { UserNode } from './types';
-import { unfollowUser, setCachedFollowings } from './api';
+import { UserNode, CacheData } from './types';
+import { unfollowUser, setCachedFollowings, getCachedFollowings, validateAndParseCacheData, formatCacheAge } from './api';
 import {
   VERIFIED_BADGE_SVG,
   NEW_UNFOLLOWER_SVG,
@@ -9,11 +9,87 @@ import {
   wrapIcon
 } from './icons';
 
+export function loadCacheWithScanAnimation(
+  file: File,
+  bodyEl: HTMLElement,
+  csrfToken: string,
+  dsUserId: string,
+  onScanFresh?: () => void
+) {
+  bodyEl.innerHTML = `
+    <div class="iu-scanner-view">
+      <div class="iu-spinner"></div>
+      <div>
+        <h3 style="margin-bottom: 0.5rem; font-weight: 600;">Importing cached data...</h3>
+        <p style="color: #ada79d; font-size: 0.9rem;" id="iu-scan-status">Reading backup file...</p>
+      </div>
+      <div class="iu-progress-bar-container">
+        <div class="iu-progress-bar" id="iu-progress-bar" style="width: 25%; transition: width 0.3s ease;"></div>
+      </div>
+    </div>
+  `;
+
+  const scanStatusEl = document.getElementById('iu-scan-status')!;
+  const progressBarEl = document.getElementById('iu-progress-bar')!;
+
+  const reader = new FileReader();
+  reader.onload = (event) => {
+    const content = event.target?.result as string;
+    const result = validateAndParseCacheData(content);
+
+    if (result.error || !result.data) {
+      bodyEl.innerHTML = `
+        <div style="text-align: center; margin: auto; padding: 2rem;">
+          <span style="font-size: 3rem;">⚠️</span>
+          <h3 style="margin: 1rem 0; color: #f87171;">Import Failed</h3>
+          <p style="color: #ada79d; margin-bottom: 1.5rem; line-height: 1.5; max-width: 320px; margin-left: auto; margin-right: auto;">${result.error}</p>
+          <button id="iu-reload-btn" class="iu-btn-export" style="background: linear-gradient(135deg, #f97316, #ec4899, #7c3aed); color: #fff; border: none;">Reload Page</button>
+        </div>
+      `;
+      document.getElementById('iu-reload-btn')?.addEventListener('click', () => {
+        location.reload();
+      });
+      return;
+    }
+
+    progressBarEl.style.width = '70%';
+    scanStatusEl.textContent = `Loading ${result.data.users.length} users from cache...`;
+
+    setCachedFollowings(dsUserId, result.data.users, result.data.timestamp);
+
+    setTimeout(() => {
+      progressBarEl.style.width = '100%';
+      scanStatusEl.textContent = 'Finalizing list view...';
+
+      setTimeout(() => {
+        renderList(bodyEl, result.data!.users, csrfToken, dsUserId, onScanFresh);
+      }, 250);
+    }, 300);
+  };
+
+  reader.onerror = () => {
+    bodyEl.innerHTML = `
+      <div style="text-align: center; margin: auto; padding: 2rem;">
+        <span style="font-size: 3rem;">⚠️</span>
+        <h3 style="margin: 1rem 0; color: #f87171;">Import Failed</h3>
+        <p style="color: #ada79d; margin-bottom: 1.5rem; line-height: 1.5; max-width: 320px; margin-left: auto; margin-right: auto;">Unable to read the selected file.</p>
+        <button id="iu-reload-btn" class="iu-btn-export" style="background: linear-gradient(135deg, #f97316, #ec4899, #7c3aed); color: #fff; border: none;">Reload Page</button>
+      </div>
+    `;
+    document.getElementById('iu-reload-btn')?.addEventListener('click', () => {
+      location.reload();
+    });
+  };
+
+  reader.readAsText(file);
+}
+
 export function renderList(
   bodyEl: HTMLElement,
   initialUsers: UserNode[],
   csrfToken: string,
-  dsUserId: string
+  dsUserId: string,
+  onScanFresh?: () => void
 ): { cancelBulk: () => void } {
   let activeUsers = [...initialUsers];
   let showNonFollowers = true;
@@ -44,6 +120,10 @@ export function renderList(
           <button class="iu-btn-export" id="iu-bulk-unfollow-btn" style="width: 100%; background: #ef4444; border-color: rgba(239, 68, 68, 0.4); text-align: center;" disabled>Unfollow (0)</button>
           <div class="iu-btn-group">
             <button class="iu-btn-export" id="iu-layout-btn" style="flex: 1; text-align: center;">Grid View</button>
+            <button class="iu-btn-export" id="iu-sidebar-scan-btn" style="flex: 1; text-align: center;">New Scan</button>
+          </div>
+          <div class="iu-btn-group">
+            <button class="iu-btn-export" id="iu-import-btn" style="flex: 1; text-align: center;">Import</button>
             <button class="iu-btn-export" id="iu-export-btn" style="flex: 1; text-align: center;">Export</button>
           </div>
         </div>
@@ -172,6 +252,7 @@ export function renderList(
   const searchInput = document.getElementById('iu-search') as HTMLInputElement;
   const countTextEl = document.getElementById('iu-count-text')!;
   const exportBtn = document.getElementById('iu-export-btn') as HTMLButtonElement;
+  const importBtn = document.getElementById('iu-import-btn') as HTMLButtonElement;
   const layoutBtn = document.getElementById('iu-layout-btn') as HTMLButtonElement;
   const bulkUnfollowBtn = document.getElementById('iu-bulk-unfollow-btn') as HTMLButtonElement;
 
@@ -641,16 +722,55 @@ export function renderList(
   // Live search handler
   searchInput.addEventListener('input', updateUIList);
 
-  // Export handler
+  // Export handler (exports LocalStorage cache format)
   exportBtn.addEventListener('click', () => {
-    const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(currentFilteredList, null, 2));
+    const currentCache = getCachedFollowings(dsUserId);
+    const cacheToExport: CacheData = {
+      timestamp: currentCache?.timestamp || Date.now(),
+      users: activeUsers
+    };
+    const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(cacheToExport, null, 2));
     const downloadAnchor = document.createElement('a');
     downloadAnchor.setAttribute("href", dataStr);
-    downloadAnchor.setAttribute("download", "instagram_filtered_unfollowers.json");
+    downloadAnchor.setAttribute("download", `iu_cache_${dsUserId || 'export'}.json`);
     document.body.appendChild(downloadAnchor);
     downloadAnchor.click();
     downloadAnchor.remove();
   });
+
+  // Import handler (imports LocalStorage cache format with scan animation)
+  importBtn.addEventListener('click', () => {
+    let fileInput = document.getElementById('iu-import-file-input') as HTMLInputElement;
+    if (!fileInput) {
+      fileInput = document.createElement('input');
+      fileInput.type = 'file';
+      fileInput.id = 'iu-import-file-input';
+      fileInput.accept = '.json';
+      fileInput.style.display = 'none';
+      document.body.appendChild(fileInput);
+    }
+
+    fileInput.onchange = (e) => {
+      const file = (e.target as HTMLInputElement).files?.[0];
+      if (!file) return;
+
+      loadCacheWithScanAnimation(file, bodyEl, csrfToken, dsUserId, onScanFresh);
+      fileInput.value = '';
+    };
+
+    fileInput.click();
+  });
+
+  // Sidebar New Scan handler
+  const sidebarScanBtn = document.getElementById('iu-sidebar-scan-btn') as HTMLButtonElement;
+  if (sidebarScanBtn) {
+    sidebarScanBtn.addEventListener('click', () => {
+      if (onScanFresh) {
+        isBulkCancelled = true;
+        onScanFresh();
+      }
+    });
+  }
 
   updateUIList();
   updateStatsCounters();

@@ -63,7 +63,9 @@ Once you open `public/index.html` in your browser:
 
 ## 🛠️ Features
 
-* **Local Storage Caching:** Stores scanned results locally. Skip the network fetch loop when running consecutive analyses.
+* **Local Storage Caching & Humanized Age:** Stores scanned results locally in `localStorage` and formats cache age dynamically (e.g. `1 day, 2 hours and 10 mins ago`).
+* **Cache Export & Import (Cross-Device Migration):** Export your full cache state as a JSON file (`iu_cache_<user_id>.json`) and import it onto any other browser or computer to move your scan history without re-scanning. Note: Imported files must be a valid JSON file previously exported by this tool (containing `timestamp` and `users`).
+* **Sidebar Quick Controls:** Instant **New Scan**, **Grid View**, **Import**, and **Export** actions accessible right from the sidebar.
 * **Sequential Bulk Unfollow:** Select multiple users and unfollow them sequentially with a dedicated pause/cancel progress banner.
 * **Randomized Timing Delays (Anti-Spam):** Pauses requests with a random timing jitter between `2.0s` and `3.5s` to mimic human pacing and prevent automated bot detection.
 * **Auto-Pause on Rate Limits:** Intercepts HTTP 429 (Too Many Requests) errors from Instagram, automatically pausing the bulk loop and prompting the user to wait instead of letting subsequent requests fail.
@@ -72,7 +74,6 @@ Once you open `public/index.html` in your browser:
 * **Custom Layouts:** Toggle between a detailed List View or a compact Grid View.
 * **Detailed Statistics Bar:** View live counts of Non-followers, Followers, Verified profiles, and Private accounts at a glance.
 * **Sorting & Filtering:** Sort by Username (A-Z/Z-A), Private First, or Verified First. Filter list by Non-followers, Followers, and Verified tags.
-* **JSON Exports:** Export your current filtered list as a structured JSON file with one click.
 
 ---
 

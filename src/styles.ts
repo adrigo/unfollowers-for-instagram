@@ -502,6 +502,15 @@ export const CSS_STYLES = `
     width: 100%;
   }
 
+  .iu-btn-group .iu-btn-export {
+    flex: 1 1 0px;
+    min-width: 0;
+    padding: 0.65rem 0.25rem;
+    font-size: 0.78rem;
+    white-space: nowrap;
+    text-align: center;
+  }
+
   .iu-filter-list {
     display: flex;
     flex-direction: column;

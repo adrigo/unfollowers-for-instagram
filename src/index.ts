@@ -1,6 +1,6 @@
 import { CSS_STYLES } from './styles';
-import { getCookie, fetchFollowings, getCachedFollowings, setCachedFollowings, mergeCacheWithFreshScan, formatCacheAge } from './api';
-import { renderList } from './ui';
+import { getCookie, fetchFollowings, getCachedFollowings, setCachedFollowings, mergeCacheWithFreshScan, formatCacheAge, validateAndParseCacheData } from './api';
+import { renderList, loadCacheWithScanAnimation } from './ui';
 import { CACHE_SYNC_SVG } from './icons';
 
 (async () => {
@@ -149,7 +149,7 @@ import { CACHE_SYNC_SVG } from './icons';
       setCachedFollowings(ds_user_id, mergedUsers);
 
       // Render List View
-      currentListController = renderList(bodyEl, mergedUsers, csrfToken || '', ds_user_id);
+      currentListController = renderList(bodyEl, mergedUsers, csrfToken || '', ds_user_id, startScanning);
     } catch (err) {
       if (err instanceof DOMException && err.name === 'AbortError') {
         console.log('Scan successfully aborted.');
@@ -172,6 +172,29 @@ import { CACHE_SYNC_SVG } from './icons';
     }
   };
 
+  // Helper to trigger file import on initial screen
+  const handleInitialImport = () => {
+    let fileInput = document.getElementById('iu-initial-import-input') as HTMLInputElement;
+    if (!fileInput) {
+      fileInput = document.createElement('input');
+      fileInput.type = 'file';
+      fileInput.id = 'iu-initial-import-input';
+      fileInput.accept = '.json';
+      fileInput.style.display = 'none';
+      document.body.appendChild(fileInput);
+    }
+
+    fileInput.onchange = (e) => {
+      const file = (e.target as HTMLInputElement).files?.[0];
+      if (!file) return;
+
+      loadCacheWithScanAnimation(file, bodyEl, csrfToken || '', ds_user_id, startScanning);
+      fileInput.value = '';
+    };
+
+    fileInput.click();
+  };
+
   // Check cache data
   const cachedData = getCachedFollowings(ds_user_id);
   if (cachedData) {
@@ -185,21 +208,26 @@ import { CACHE_SYNC_SVG } from './icons';
           <p style="color: #ada79d; font-size: 0.9rem; line-height: 1.5; max-width: 380px;">
             A cached list of <strong>${cachedData.users.length} users</strong> was found (loaded ${ageString}).
             <br>
-            Select <strong>Scan Fresh</strong> to check for recent changes, or <strong>Use Cache</strong> to view the saved list without scanning.
+            Select <strong>New Scan</strong> to check for recent changes, <strong>Use Cache</strong> to view the saved list, or <strong>Import</strong> a JSON backup.
           </p>
         </div>
-        <div style="display: flex; gap: 1rem; width: 100%; max-width: 350px;">
+        <div style="display: flex; gap: 0.5rem; width: 100%; max-width: 380px;">
           <button id="iu-use-cache-btn" class="iu-btn-export" style="flex: 1; background: linear-gradient(135deg, #f97316, #ec4899, #7c3aed); color: #fff; border: none; font-weight: 700; height: 42px; border-radius: 10px;">Use Cache</button>
-          <button id="iu-scan-fresh-btn" class="iu-btn-export" style="flex: 1; height: 42px; border-radius: 10px;">Scan Fresh</button>
+          <button id="iu-import-cache-btn" class="iu-btn-export" style="flex: 1; height: 42px; border-radius: 10px;">Import</button>
+          <button id="iu-scan-fresh-btn" class="iu-btn-export" style="flex: 1; height: 42px; border-radius: 10px;">New Scan</button>
         </div>
-        <div style="background: rgba(192, 132, 252, 0.1); border: 1px solid rgba(192, 132, 252, 0.2); border-radius: 8px; padding: 0.75rem 1rem; font-size: 0.82rem; color: #c084fc; max-width: 350px; text-align: left; line-height: 1.4; box-sizing: border-box;">
+        <div style="background: rgba(192, 132, 252, 0.1); border: 1px solid rgba(192, 132, 252, 0.2); border-radius: 8px; padding: 0.75rem 1rem; font-size: 0.82rem; color: #c084fc; max-width: 380px; text-align: left; line-height: 1.4; box-sizing: border-box;">
           <strong>Note:</strong> To detect new unfollowers, we will use the cache but we need to do a fresh scan.
         </div>
       </div>
     `;
 
     document.getElementById('iu-use-cache-btn')!.addEventListener('click', () => {
-      currentListController = renderList(bodyEl, cachedData.users, csrfToken || '', ds_user_id);
+      currentListController = renderList(bodyEl, cachedData.users, csrfToken || '', ds_user_id, startScanning);
+    });
+
+    document.getElementById('iu-import-cache-btn')!.addEventListener('click', () => {
+      handleInitialImport();
     });
 
     document.getElementById('iu-scan-fresh-btn')!.addEventListener('click', () => {

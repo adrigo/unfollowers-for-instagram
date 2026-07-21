@@ -111,15 +111,46 @@ export const getCachedFollowings = (userId: string): CacheData | null => {
 };
 
 // Save followings list to cache
-export const setCachedFollowings = (userId: string, users: UserNode[]): void => {
+export const setCachedFollowings = (userId: string, users: UserNode[], customTimestamp?: number): void => {
   try {
     const data: CacheData = {
-      timestamp: Date.now(),
+      timestamp: customTimestamp ?? Date.now(),
       users
     };
     localStorage.setItem(`iu_cache_${userId}`, JSON.stringify(data));
   } catch (e) {
     console.error('Failed to save followings cache:', e);
+  }
+};
+
+// Validate and parse imported cache JSON file
+export const validateAndParseCacheData = (jsonString: string): { data?: CacheData; error?: string } => {
+  try {
+    const parsed = JSON.parse(jsonString);
+    if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
+      return { error: 'Invalid format. File must contain a JSON object.' };
+    }
+    if (typeof parsed.timestamp !== 'number' || isNaN(parsed.timestamp)) {
+      return { error: 'Missing or invalid "timestamp" field. It must be a valid timestamp number.' };
+    }
+    if (!Array.isArray(parsed.users)) {
+      return { error: 'Missing or invalid "users" field. It must be an array of users.' };
+    }
+    // Verify user array elements contain basic user properties
+    const isValidUsers = parsed.users.every(
+      (u: any) => u && typeof u === 'object' && typeof u.id === 'string' && typeof u.username === 'string'
+    );
+    if (!isValidUsers) {
+      return { error: 'Invalid user objects in "users" array. Each user must have an "id" and "username".' };
+    }
+    return {
+      data: {
+        timestamp: parsed.timestamp,
+        users: parsed.users
+      }
+    };
+  } catch (e) {
+    return { error: 'Failed to parse JSON file. Ensure the file contains valid JSON.' };
   }
 };
 
