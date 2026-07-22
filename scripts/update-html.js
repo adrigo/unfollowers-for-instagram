@@ -19,12 +19,14 @@ try {
   // Base64 encode the minified code to prevent Google Safe Browsing static scanning
   const escapedCode = Buffer.from(minifiedCode, 'utf8').toString('base64');
 
-  const startIndex = indexHtml.indexOf(START_MARKER) + START_MARKER.length;
+  const rawStartIndex = indexHtml.indexOf(START_MARKER);
   const endIndex = indexHtml.indexOf(END_MARKER);
 
-  if (startIndex === -1 || endIndex === -1) {
+  if (rawStartIndex === -1 || endIndex === -1) {
     throw new Error('Markers for script injection not found in index.html');
   }
+
+  const startIndex = rawStartIndex + START_MARKER.length;
 
   const updatedHtml = indexHtml.substring(0, startIndex) + escapedCode + indexHtml.substring(endIndex);
   fs.writeFileSync(indexPath, updatedHtml, 'utf8');

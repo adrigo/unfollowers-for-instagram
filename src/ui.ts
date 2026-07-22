@@ -317,11 +317,14 @@ export function renderList(
   let currentFilteredList: UserNode[] = [];
 
   const updateStatsCounters = () => {
-    const nonFollowers = activeUsers.filter(u => !u.followsViewer).length;
-    const newUnfollowers = activeUsers.filter(u => !u.followsViewer && u.isNew).length;
-    const followers = activeUsers.filter(u => u.followsViewer).length;
-    const verified = activeUsers.filter(u => u.isVerified).length;
-    const privateCount = activeUsers.filter(u => u.isPrivate).length;
+    let nonFollowers = 0, newUnfollowers = 0, followers = 0, verified = 0, privateCount = 0;
+    for (const u of activeUsers) {
+      if (!u.followsViewer) nonFollowers++;
+      if (!u.followsViewer && u.isNew) newUnfollowers++;
+      if (u.followsViewer) followers++;
+      if (u.isVerified) verified++;
+      if (u.isPrivate) privateCount++;
+    }
 
     document.getElementById('stat-nonfollowers')!.textContent = String(nonFollowers);
     document.getElementById('stat-new-unfollowers')!.textContent = String(newUnfollowers);
@@ -333,6 +336,16 @@ export function renderList(
   const updateBulkButton = () => {
     bulkUnfollowBtn.disabled = selectedUserIds.size === 0;
     bulkUnfollowBtn.textContent = `Unfollow (${selectedUserIds.size})`;
+  };
+
+  const setBulkInputsDisabled = (disabled: boolean) => {
+    [selectAllCheck, searchInput, nonFollowersCheck, followersCheck,
+     newUnfollowersCheck, verifiedCheck, privateCheck, layoutBtn, exportBtn
+    ].forEach(el => (el as HTMLButtonElement | HTMLInputElement).disabled = disabled);
+    if (customSortDropdown) {
+      customSortDropdown.style.pointerEvents = disabled ? 'none' : 'auto';
+      customSortDropdown.style.opacity = disabled ? '0.5' : '1';
+    }
   };
 
   const syncSelectAllState = () => {
@@ -559,19 +572,7 @@ export function renderList(
 
     // Disable inputs during process
     bulkUnfollowBtn.disabled = true;
-    selectAllCheck.disabled = true;
-    searchInput.disabled = true;
-    nonFollowersCheck.disabled = true;
-    followersCheck.disabled = true;
-    newUnfollowersCheck.disabled = true;
-    verifiedCheck.disabled = true;
-    privateCheck.disabled = true;
-    layoutBtn.disabled = true;
-    exportBtn.disabled = true;
-    if (customSortDropdown) {
-      customSortDropdown.style.pointerEvents = 'none';
-      customSortDropdown.style.opacity = '0.5';
-    }
+    setBulkInputsDisabled(true);
 
     // Disable all checkbox inputs in the cards
     listEl.querySelectorAll('.iu-user-checkbox').forEach(cb => {
@@ -676,19 +677,7 @@ export function renderList(
     progressBanner.style.display = 'none';
 
     // Re-enable inputs
-    selectAllCheck.disabled = false;
-    searchInput.disabled = false;
-    nonFollowersCheck.disabled = false;
-    followersCheck.disabled = false;
-    newUnfollowersCheck.disabled = false;
-    verifiedCheck.disabled = false;
-    privateCheck.disabled = false;
-    layoutBtn.disabled = false;
-    exportBtn.disabled = false;
-    if (customSortDropdown) {
-      customSortDropdown.style.pointerEvents = 'auto';
-      customSortDropdown.style.opacity = '1';
-    }
+    setBulkInputsDisabled(false);
 
     const actionText = isBulkCancelled ? 'Bulk unfollow cancelled.' : 'Bulk unfollow complete.';
     alert(`${actionText}\nSuccessfully unfollowed: ${successCount}\nFailed: ${failCount}`);
