@@ -1,15 +1,16 @@
 import { UserNode, CacheData } from './types';
 import { unfollowUser } from './api';
 import { setCachedFollowings, getCachedFollowings, validateAndParseCacheData, formatCacheAge } from './storage';
-import {
-  VERIFIED_BADGE_SVG,
-  NEW_UNFOLLOWER_SVG,
-  PRIVATE_LOCK_SVG,
-  FOLLOWS_YOU_SVG,
-  NON_FOLLOWERS_SVG,
-  CACHE_SYNC_SVG,
-  wrapIcon
-} from './icons';
+import VERIFIED_BADGE_SVG from './assets/verified.svg';
+import NEW_UNFOLLOWER_SVG from './assets/new-unfollower.svg';
+import PRIVATE_LOCK_SVG from './assets/private.svg';
+import FOLLOWS_YOU_SVG from './assets/follows-you.svg';
+import NON_FOLLOWERS_SVG from './assets/non-follower.svg';
+import CACHE_SYNC_SVG from './assets/cache-sync.svg';
+
+function wrapIcon(iconSvg: string, title: string): string {
+  return `<span title="${title}" style="display: inline-block; vertical-align: middle; margin-left: 0.25rem; line-height: 1; cursor: help; flex-shrink: 0;">${iconSvg}</span>`;
+}
 
 export function renderCachePrompt(
   bodyEl: HTMLElement,
