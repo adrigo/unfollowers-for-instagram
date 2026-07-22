@@ -21,20 +21,23 @@ Created by [adrigo](https://adrigo.dev).
 
 ## 🚀 Getting Started
 
-### 1. Build the Code
-To compile the source code and generate the final copy-pasteable script, you must have [Node.js](https://nodejs.org) installed.
+### 1. Build Environment & Requirements
+- **Supported OS:** Linux, macOS, Windows
+- **Node.js Version:** >= 18.0.0
+- **Package Manager:** npm >= 9.0.0
 
 ```bash
-# Install lightweight devDependencies
+# 1. Install lightweight devDependencies (esbuild & typescript)
 npm install
 
-# Run the production build
+# 2. Execute technical build script
 npm run build
 ```
 
-This will:
-* Bundle and minify the TypeScript files (`src/`) into `dist/index.min.js`.
-* Run [scripts/update-html.js](./scripts/update-html.js) to Base64-encode the bundle and automatically inject the resulting string into the static landing page ([public/index.html](./public/index.html)) to encapsulate the script code.
+This automated build script (`npm run build`) will:
+* Compile and minify TypeScript source files ([src/](./src/)) into [`extension/index.min.js`](./extension/index.min.js) using `esbuild`.
+* Run [scripts/create-extension-icons.js](./scripts/create-extension-icons.js) to render PNG icons from [`src/assets/icon.svg`](./src/assets/icon.svg).
+* Run [scripts/update-html.js](./scripts/update-html.js) to sync the compiled bundle with [`public/index.html`](./public/index.html).
 
 ### 2. Open the UI
 Open the generated landing page directly in your browser:
@@ -58,6 +61,25 @@ Once you open `public/index.html` in your browser:
 2. Go to [instagram.com](https://www.instagram.com) and log in.
 3. Open your browser console (press `F12` or `Ctrl+Shift+J` on Windows, `Cmd+Option+I` on Mac).
 4. Paste the copied code and press **Enter**.
+
+#### Option C: Browser Extension (Chrome, Edge, Firefox)
+* **Chrome / Edge / Brave:**
+  1. Open `chrome://extensions` and enable **Developer mode** (top-right).
+  2. Click **Load unpacked** and select the [`extension/`](./extension) folder.
+* **Firefox:**
+  1. Open `about:debugging#/runtime/this-firefox`.
+  2. Click **Load Temporary Add-on...** and select [`extension/manifest.json`](./extension/manifest.json).
+  3. Go to [instagram.com](https://www.instagram.com) and click the **IG Unfollowers** extension icon!
+
+---
+
+## 🎨 Asset Management & Master Icon
+
+All vector assets live in `src/assets/`. **`src/assets/icon.svg`** serves as the single source of truth for the project's logo and favicon.
+
+When you run `npm run build`, the build script automatically:
+* Syncs `src/assets/icon.svg` to [`public/favicon.svg`](./public/favicon.svg).
+* Renders crisp active (`icon*.png`) and dark (`icon*-dark.png`) PNG icon variants in [`extension/`](./extension) for browser tab state detection.
 
 ---
 
@@ -93,18 +115,27 @@ Once you open `public/index.html` in your browser:
 ## 📁 Code Structure
 
 ```
+├── extension/             # Unpacked Chrome/Firefox browser extension files
+│   ├── background.js      # Background service worker for dynamic toolbar icon state
+│   ├── manifest.json      # Cross-browser Manifest V3 configuration
+│   ├── popup.html         # Extension popup interface
+│   └── popup.js           # Extension controller & live tab navigation listener
 ├── public/
-│   └── index.html          # Redesigned glassmorphic landing page template
+│   ├── favicon.svg        # Synced automatically from src/assets/icon.svg
+│   └── index.html         # Redesigned glassmorphic landing page template
 ├── scripts/
-│   └── update-html.js      # Post-build script to inject code into index.html
+│   ├── create-extension-icons.js # Syncs master SVG and generates active/dark PNGs
+│   └── update-html.js     # Post-build script to inject code into index.html
 ├── src/
-│   ├── api.ts              # GraphQL fetches, cookie readers, unfollow POST actions
-│   ├── index.ts            # Entry orchestrator, overlay modal builder, scroll locks
-│   ├── styles.ts           # CSS style sheet containing the glassmorphism system
-│   ├── types.ts            # TypeScript interfaces (UserNode, CacheData)
-│   └── ui.ts               # Core list drawing, event delegation, search/filters, bulk loops
-├── tsconfig.json           # TypeScript configuration options
-└── package.json            # Dev scripts & dependencies (esbuild + typescript)
+│   ├── assets/            # Master SVG vector assets (icon, badges, filters)
+│   ├── api.ts             # GraphQL fetches, cookie readers, unfollow POST actions
+│   ├── index.ts           # Entry orchestrator, overlay modal builder, scroll locks
+│   ├── styles.ts          # CSS style sheet containing the glassmorphism system
+│   ├── svg.d.ts           # TypeScript module declarations for SVG imports
+│   ├── types.ts           # TypeScript interfaces (UserNode, CacheData)
+│   └── ui.ts              # Core list drawing, event delegation, search/filters, bulk loops
+├── tsconfig.json          # TypeScript configuration options
+└── package.json           # Dev scripts & dependencies (esbuild + typescript)
 ```
 
 ---

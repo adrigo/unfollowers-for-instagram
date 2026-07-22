@@ -12,6 +12,11 @@ function wrapIcon(iconSvg: string, title: string): string {
   return `<span title="${title}" style="display: inline-block; vertical-align: middle; margin-left: 0.25rem; line-height: 1; cursor: help; flex-shrink: 0;">${iconSvg}</span>`;
 }
 
+export function setElementHTML(element: HTMLElement, htmlString: string) {
+  const parsed = new DOMParser().parseFromString(htmlString, 'text/html');
+  element.replaceChildren(...Array.from(parsed.body.childNodes));
+}
+
 export function renderCachePrompt(
   bodyEl: HTMLElement,
   cachedData: CacheData,
@@ -21,7 +26,7 @@ export function renderCachePrompt(
 ) {
   const ageString = formatCacheAge(cachedData.timestamp);
 
-  bodyEl.innerHTML = `
+  setElementHTML(bodyEl, `
     <div style="text-align: center; margin: auto; padding: 2.5rem; display: flex; flex-direction: column; gap: 1.5rem; align-items: center; justify-content: center; height: 100%;">
       ${CACHE_SYNC_SVG}
       <div>
@@ -41,7 +46,7 @@ export function renderCachePrompt(
         <strong>Note:</strong> To detect new unfollowers, we will use the cache but we need to do a fresh scan.
       </div>
     </div>
-  `;
+  `);
 
   document.getElementById('iu-use-cache-btn')!.addEventListener('click', onUseCache);
   document.getElementById('iu-import-cache-btn')!.addEventListener('click', onImportCache);
@@ -55,7 +60,7 @@ export function loadCacheWithScanAnimation(
   dsUserId: string,
   onScanFresh?: () => void
 ) {
-  bodyEl.innerHTML = `
+  setElementHTML(bodyEl, `
     <div class="iu-scanner-view">
       <div class="iu-spinner"></div>
       <div>
@@ -66,7 +71,7 @@ export function loadCacheWithScanAnimation(
         <div class="iu-progress-bar" id="iu-progress-bar" style="width: 25%; transition: width 0.3s ease;"></div>
       </div>
     </div>
-  `;
+  `);
 
   const scanStatusEl = document.getElementById('iu-scan-status')!;
   const progressBarEl = document.getElementById('iu-progress-bar')!;
@@ -77,14 +82,14 @@ export function loadCacheWithScanAnimation(
     const result = validateAndParseCacheData(content);
 
     if (result.error || !result.data) {
-      bodyEl.innerHTML = `
+      setElementHTML(bodyEl, `
         <div style="text-align: center; margin: auto; padding: 2rem;">
           <span style="font-size: 3rem;">⚠️</span>
           <h3 style="margin: 1rem 0; color: #f87171;">Import Failed</h3>
           <p style="color: #ada79d; margin-bottom: 1.5rem; line-height: 1.5; max-width: 320px; margin-left: auto; margin-right: auto;">${result.error}</p>
           <button id="iu-reload-btn" class="iu-btn-export" style="background: linear-gradient(135deg, #f97316, #ec4899, #7c3aed); color: #fff; border: none;">Reload Page</button>
         </div>
-      `;
+      `);
       document.getElementById('iu-reload-btn')?.addEventListener('click', () => {
         location.reload();
       });
@@ -107,14 +112,14 @@ export function loadCacheWithScanAnimation(
   };
 
   reader.onerror = () => {
-    bodyEl.innerHTML = `
+    setElementHTML(bodyEl, `
       <div style="text-align: center; margin: auto; padding: 2rem;">
         <span style="font-size: 3rem;">⚠️</span>
         <h3 style="margin: 1rem 0; color: #f87171;">Import Failed</h3>
         <p style="color: #ada79d; margin-bottom: 1.5rem; line-height: 1.5; max-width: 320px; margin-left: auto; margin-right: auto;">Unable to read the selected file.</p>
         <button id="iu-reload-btn" class="iu-btn-export" style="background: linear-gradient(135deg, #f97316, #ec4899, #7c3aed); color: #fff; border: none;">Reload Page</button>
       </div>
-    `;
+    `);
     document.getElementById('iu-reload-btn')?.addEventListener('click', () => {
       location.reload();
     });
@@ -145,7 +150,7 @@ export function renderList(
 
   const selectedUserIds = new Set<string>();
 
-  bodyEl.innerHTML = `
+  setElementHTML(bodyEl, `
     <div class="iu-layout-wrapper">
       <div class="iu-sidebar">
         <!-- Search bar -->
@@ -285,7 +290,7 @@ export function renderList(
         </div>
       </div>
     </div>
-  `;
+  `);
 
   const listEl = document.getElementById('iu-list')!;
   const searchInput = document.getElementById('iu-search') as HTMLInputElement;
@@ -392,15 +397,15 @@ export function renderList(
     countTextEl.textContent = `Showing ${currentFilteredList.length} of ${activeUsers.length} followed accounts.`;
 
     if (currentFilteredList.length === 0) {
-      listEl.innerHTML = `
+      setElementHTML(listEl, `
         <div style="text-align: center; color: #ada79d; padding: 3rem 0;">
           No users match your criteria.
         </div>
-      `;
+      `);
       return;
     }
 
-    listEl.innerHTML = currentFilteredList.map(user => {
+    setElementHTML(listEl, currentFilteredList.map(user => {
       const newBadge = user.isNew ? wrapIcon(NEW_UNFOLLOWER_SVG, 'New Unfollower') : '';
 
       return `
@@ -424,7 +429,7 @@ export function renderList(
         <button class="iu-unfollow-btn" data-id="${user.id}">Unfollow</button>
       </div>
       `;
-    }).join('');
+    }).join(''));
 
     syncSelectAllState();
   };
@@ -738,14 +743,14 @@ export function renderList(
   };
 
   // Set initial trigger content
-  sortTriggerContent.innerHTML = optionMapping[currentSortBy];
+  setElementHTML(sortTriggerContent, optionMapping[currentSortBy]);
 
   // Option select handler
   sortOptions.querySelectorAll('.iu-dropdown-option').forEach(opt => {
     opt.addEventListener('click', () => {
       const val = (opt as HTMLElement).dataset.value!;
       currentSortBy = val;
-      sortTriggerContent.innerHTML = optionMapping[val];
+      setElementHTML(sortTriggerContent, optionMapping[val]);
       sortOptions.classList.remove('show');
       updateUIList();
     });

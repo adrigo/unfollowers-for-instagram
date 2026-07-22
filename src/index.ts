@@ -1,7 +1,7 @@
 import { CSS_STYLES } from './styles';
 import { getCookie, fetchFollowings } from './api';
 import { getCachedFollowings, setCachedFollowings, mergeCacheWithFreshScan } from './storage';
-import { renderList, renderCachePrompt, loadCacheWithScanAnimation } from './ui';
+import { renderList, renderCachePrompt, loadCacheWithScanAnimation, setElementHTML } from './ui';
 import APP_LOGO_SVG from './assets/icon.svg';
 
 (async () => {
@@ -40,7 +40,7 @@ import APP_LOGO_SVG from './assets/icon.svg';
   // Inject Overlay Card
   const overlayEl = document.createElement('div');
   overlayEl.id = 'iu-overlay';
-  overlayEl.innerHTML = `
+  setElementHTML(overlayEl, `
     <div class="iu-card">
       <div class="iu-header">
         <div class="iu-title-group">
@@ -53,7 +53,7 @@ import APP_LOGO_SVG from './assets/icon.svg';
       </div>
       <div class="iu-body" id="iu-body"></div>
     </div>
-  `;
+  `);
   document.body.appendChild(overlayEl);
 
   // Prevent scroll chaining when interacting with overlay backdrop
@@ -118,7 +118,7 @@ import APP_LOGO_SVG from './assets/icon.svg';
     const signal = scanAbortController.signal;
 
     try {
-      bodyEl.innerHTML = `
+      setElementHTML(bodyEl, `
         <div class="iu-scanner-view">
           <div class="iu-spinner"></div>
           <div>
@@ -129,7 +129,7 @@ import APP_LOGO_SVG from './assets/icon.svg';
             <div class="iu-progress-bar" id="iu-progress-bar"></div>
           </div>
         </div>
-      `;
+      `);
 
       const scanStatusEl = document.getElementById('iu-scan-status')!;
       const progressBarEl = document.getElementById('iu-progress-bar')!;
@@ -158,14 +158,14 @@ import APP_LOGO_SVG from './assets/icon.svg';
       }
       console.error('Scan Error:', err);
       const errMsg = err instanceof Error ? err.message : 'An error occurred while loading followings from Instagram.';
-      bodyEl.innerHTML = `
+      setElementHTML(bodyEl, `
         <div style="text-align: center; margin: auto; padding: 2rem;">
           <span style="font-size: 3rem;">⚠️</span>
           <h3 style="margin: 1rem 0; color: #f87171;">Scan Failed</h3>
           <p style="color: #ada79d; margin-bottom: 1.5rem; line-height: 1.5; max-width: 320px; margin-left: auto; margin-right: auto;">${errMsg}</p>
           <button id="iu-reload-btn" class="iu-btn-export" style="background: linear-gradient(135deg, #f97316, #ec4899, #7c3aed); color: #fff; border: none;">Reload Page</button>
         </div>
-      `;
+      `);
 
       document.getElementById('iu-reload-btn')?.addEventListener('click', () => {
         location.reload();

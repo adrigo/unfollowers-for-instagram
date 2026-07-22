@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>IG Unfollowers</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    body {
+      width: 280px;
+      padding: 1rem;
+      background: #161412;
+      color: #f7f1e8;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    }
+    .header {
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      margin-bottom: 1rem;
+      padding-bottom: 0.75rem;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    }
+    .title {
+      font-weight: 700;
+      font-size: 1.05rem;
+      letter-spacing: -0.01em;
+    }
+    .status-card {
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      border-radius: 10px;
+      padding: 0.75rem;
+      margin-bottom: 1rem;
+      font-size: 0.82rem;
+      line-height: 1.4;
+      color: #ada79d;
+    }
+    .status-card a {
+      color: #ec4899;
+      text-decoration: underline;
+      cursor: pointer;
+    }
+    .status-card.on-ig {
+      border-color: rgba(52, 211, 153, 0.3);
+      background: rgba(52, 211, 153, 0.05);
+      color: #34d399;
+    }
+    .btn-launch {
+      width: 100%;
+      padding: 0.75rem;
+      background: linear-gradient(135deg, #f97316, #ec4899, #7c3aed);
+      border: none;
+      border-radius: 10px;
+      color: #fff;
+      font-weight: 700;
+      font-size: 0.9rem;
+      cursor: pointer;
+      transition: opacity 0.2s, transform 0.1s;
+      box-shadow: 0 4px 12px rgba(236, 72, 153, 0.25);
+    }
+    .btn-launch:hover:not(:disabled) {
+      opacity: 0.95;
+      transform: translateY(-1px);
+    }
+    .btn-launch:active:not(:disabled) {
+      transform: translateY(0);
+    }
+    .btn-launch:disabled {
+      opacity: 0.45;
+      cursor: not-allowed;
+      box-shadow: none;
+    }
+    .footer-note {
+      margin-top: 0.75rem;
+      text-align: center;
+      font-size: 0.72rem;
+      color: #777;
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <img src="icon48.png" width="20" height="20" alt="IG Unfollowers" style="display: block;" />
+    <span class="title">IG Unfollowers</span>
+  </div>
+
+  <div id="status-card" class="status-card">
+    Checking active tab status...
+  </div>
+
+  <button id="launch-btn" class="btn-launch" disabled>Launch IG Unfollowers</button>
+
+  <div class="footer-note">
+    100% Client-Side & Private • No Login Required
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>

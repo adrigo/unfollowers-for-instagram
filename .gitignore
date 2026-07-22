@@ -9,3 +9,6 @@ dist/
 
 # Agent-specific directories
 .agents/
+
+# Extension zip
+extension/extension.zip

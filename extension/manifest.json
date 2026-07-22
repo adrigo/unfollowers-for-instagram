@@ -1,0 +1,40 @@
+{
+  "manifest_version": 3,
+  "name": "IG Unfollowers",
+  "version": "1.0.0",
+  "description": "Securely identify non-followers on Instagram directly inside your active browser session.",
+  "permissions": [
+    "activeTab",
+    "scripting"
+  ],
+  "host_permissions": [
+    "https://www.instagram.com/*"
+  ],
+  "background": {
+    "service_worker": "background.js",
+    "scripts": ["background.js"]
+  },
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "IG Unfollowers",
+    "default_icon": {
+      "16": "icon16-dark.png",
+      "48": "icon48-dark.png",
+      "128": "icon128-dark.png"
+    }
+  },
+  "icons": {
+    "16": "icon16.png",
+    "48": "icon48.png",
+    "128": "icon128.png"
+  },
+  "browser_specific_settings": {
+    "gecko": {
+      "id": "ig-unfollowers@adrigo.dev",
+      "strict_min_version": "109.0",
+      "data_collection_permissions": {
+        "required": ["none"]
+      }
+    }
+  }
+}
