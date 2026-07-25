@@ -1,4 +1,4 @@
-import { CSS_STYLES } from './styles';
+import CSS_STYLES from './styles.css';
 import { getCookie, fetchFollowings } from './api';
 import { getCachedFollowings, setCachedFollowings, mergeCacheWithFreshScan } from './storage';
 import { renderList, renderCachePrompt, loadCacheWithScanAnimation, setElementHTML } from './ui';

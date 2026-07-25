@@ -1,4 +1,3 @@
-export const CSS_STYLES = `
   #iu-overlay {
     position: fixed;
     top: 0;
@@ -32,8 +31,15 @@ export const CSS_STYLES = `
   }
 
   @keyframes iu-fade-in {
-    from { opacity: 0; transform: scale(0.95); }
-    to { opacity: 1; transform: scale(1); }
+    from {
+      opacity: 0;
+      transform: scale(0.95);
+    }
+
+    to {
+      opacity: 1;
+      transform: scale(1);
+    }
   }
 
   .iu-header {
@@ -120,6 +126,7 @@ export const CSS_STYLES = `
   .iu-sidebar::-webkit-scrollbar {
     width: 4px;
   }
+
   .iu-sidebar::-webkit-scrollbar-thumb {
     background: rgba(255, 255, 255, 0.08);
     border-radius: 2px;
@@ -176,6 +183,7 @@ export const CSS_STYLES = `
       height: 92vh;
       width: 96%;
     }
+
     .iu-body {
       padding: 0.75rem;
       flex: 1;
@@ -183,6 +191,7 @@ export const CSS_STYLES = `
       display: flex;
       flex-direction: column;
     }
+
     .iu-layout-wrapper {
       flex-direction: column;
       gap: 0.5rem;
@@ -190,6 +199,7 @@ export const CSS_STYLES = `
       min-height: 0;
       overflow: hidden;
     }
+
     .iu-sidebar {
       width: 100%;
       height: auto;
@@ -203,20 +213,24 @@ export const CSS_STYLES = `
       flex-direction: column;
       gap: 0.4rem;
     }
+
     .iu-sidebar-section.iu-search-section,
     .iu-sidebar-section.iu-unfollow-section {
       border-bottom: none;
       padding-bottom: 0;
       width: 100%;
     }
+
     .iu-search-input {
       width: 100%;
       box-sizing: border-box;
     }
+
     #iu-bulk-unfollow-btn {
       width: 100%;
       box-sizing: border-box;
     }
+
     .iu-drawer-toggle-btn {
       display: flex;
       align-items: center;
@@ -233,10 +247,12 @@ export const CSS_STYLES = `
       font-weight: 600;
       cursor: pointer;
     }
+
     .iu-drawer-toggle-btn:hover {
       background: rgba(255, 255, 255, 0.08);
       color: #fff;
     }
+
     .iu-sidebar-drawer {
       display: none;
       flex-direction: column;
@@ -249,9 +265,11 @@ export const CSS_STYLES = `
       border-radius: 10px;
       padding: 0.75rem;
     }
+
     .iu-sidebar-drawer.show-mobile {
       display: flex;
     }
+
     .iu-content-area {
       flex: 1;
       height: 100%;
@@ -260,6 +278,7 @@ export const CSS_STYLES = `
       flex-direction: column;
       overflow: hidden;
     }
+
     .iu-content-header {
       flex-direction: row;
       justify-content: space-between;
@@ -268,11 +287,13 @@ export const CSS_STYLES = `
       flex-wrap: nowrap;
       margin-bottom: 0.4rem;
     }
+
     .iu-content-header .iu-filter-label {
       font-size: 0.78rem;
       white-space: nowrap;
       flex-shrink: 0;
     }
+
     #iu-count-text {
       font-size: 0.75rem;
       white-space: nowrap;
@@ -281,6 +302,7 @@ export const CSS_STYLES = `
       flex-shrink: 1;
       text-align: right;
     }
+
     .iu-list-container {
       flex: 1;
       min-height: 0;
@@ -289,6 +311,7 @@ export const CSS_STYLES = `
       width: 100%;
       box-sizing: border-box;
     }
+
     .iu-list-container:not(.grid-view) .iu-user-card {
       padding: 0.45rem 0.55rem;
       width: 100%;
@@ -298,6 +321,7 @@ export const CSS_STYLES = `
       justify-content: space-between;
       align-items: center;
     }
+
     .iu-list-container:not(.grid-view) .iu-user-info {
       display: flex;
       align-items: center;
@@ -306,6 +330,7 @@ export const CSS_STYLES = `
       min-width: 0;
       overflow: hidden;
     }
+
     .iu-list-container:not(.grid-view) .iu-names {
       display: flex;
       flex-direction: column;
@@ -315,6 +340,7 @@ export const CSS_STYLES = `
       overflow: hidden;
       width: 100%;
     }
+
     .iu-list-container:not(.grid-view) .iu-username-wrapper {
       display: flex;
       flex-direction: row;
@@ -324,6 +350,7 @@ export const CSS_STYLES = `
       min-width: 0;
       overflow: hidden;
     }
+
     .iu-list-container:not(.grid-view) .iu-card-badges {
       display: inline-flex;
       flex-direction: row;
@@ -334,6 +361,7 @@ export const CSS_STYLES = `
       margin-left: 0;
       margin-right: 0.3rem;
     }
+
     .iu-list-container:not(.grid-view) .iu-username {
       display: inline-block;
       flex: 0 1 auto;
@@ -344,6 +372,7 @@ export const CSS_STYLES = `
       white-space: nowrap;
       font-size: 0.88rem !important;
     }
+
     .iu-list-container:not(.grid-view) .iu-fullname {
       display: block;
       width: 100%;
@@ -353,6 +382,7 @@ export const CSS_STYLES = `
       white-space: nowrap;
       font-size: 0.75rem;
     }
+
     .iu-list-container:not(.grid-view) .iu-unfollow-btn {
       width: 78px;
       padding: 0.45rem 0;
@@ -395,7 +425,9 @@ export const CSS_STYLES = `
   }
 
   @keyframes iu-spin {
-    to { transform: rotate(360deg); }
+    to {
+      transform: rotate(360deg);
+    }
   }
 
   .iu-progress-bar-container {
@@ -496,6 +528,7 @@ export const CSS_STYLES = `
   .iu-list-container::-webkit-scrollbar {
     width: 6px;
   }
+
   .iu-list-container::-webkit-scrollbar-thumb {
     background: rgba(255, 255, 255, 0.1);
     border-radius: 4px;
@@ -709,18 +742,23 @@ export const CSS_STYLES = `
   .iu-stat-val {
     font-weight: 700;
   }
+
   .iu-stat-val.non-followers {
     color: #ef4444;
   }
+
   .iu-stat-val.followers {
     color: #34d399;
   }
+
   .iu-stat-val.verified {
     color: #0095f6;
   }
+
   .iu-stat-val.private {
     color: #ffd082;
   }
+
   .iu-stat-val.new-unfollowers {
     color: #f472b6;
   }
@@ -732,6 +770,7 @@ export const CSS_STYLES = `
     width: 100%;
     user-select: none;
   }
+
   .iu-dropdown-trigger {
     display: flex;
     align-items: center;
@@ -745,10 +784,12 @@ export const CSS_STYLES = `
     cursor: pointer;
     transition: border-color 0.2s, background 0.2s;
   }
+
   .iu-dropdown-trigger:hover {
     border-color: #555;
     background: #222;
   }
+
   .iu-dropdown-options {
     display: none;
     position: absolute;
@@ -760,12 +801,14 @@ export const CSS_STYLES = `
     border-radius: 8px;
     margin-top: 0.25rem;
     z-index: 1000;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
     overflow: hidden;
   }
+
   .iu-dropdown-options.show {
     display: block;
   }
+
   .iu-dropdown-option {
     display: flex;
     align-items: center;
@@ -776,8 +819,8 @@ export const CSS_STYLES = `
     cursor: pointer;
     transition: background 0.2s, color 0.2s;
   }
+
   .iu-dropdown-option:hover {
     background: #262626;
     color: #fff;
   }
-`;
