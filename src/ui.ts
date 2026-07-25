@@ -9,7 +9,7 @@ import NON_FOLLOWERS_SVG from './assets/non-follower.svg';
 import CACHE_SYNC_SVG from './assets/cache-sync.svg';
 
 function wrapIcon(iconSvg: string, title: string): string {
-  return `<span title="${title}" style="display: inline-block; vertical-align: middle; margin-left: 0.25rem; line-height: 1; cursor: help; flex-shrink: 0;">${iconSvg}</span>`;
+  return `<span title="${title}" style="display: inline-block; vertical-align: middle; line-height: 1; cursor: help; flex-shrink: 0;">${iconSvg}</span>`;
 }
 
 export function setElementHTML(element: HTMLElement, htmlString: string) {
@@ -153,113 +153,126 @@ export function renderList(
   setElementHTML(bodyEl, `
     <div class="iu-layout-wrapper">
       <div class="iu-sidebar">
-        <!-- Search bar -->
-        <div class="iu-sidebar-section">
-          <div style="font-weight: bold; color: #fff; font-size: 0.82rem; margin-bottom: 0.5rem; text-transform: uppercase; letter-spacing: 0.05em;">Search:</div>
+        <!-- Full-Width Search Bar -->
+        <div class="iu-sidebar-section iu-search-section">
+          <div class="iu-sidebar-title">Search:</div>
           <input type="text" class="iu-search-input" id="iu-search" placeholder="Username or name..." style="width: 100%; box-sizing: border-box;" />
         </div>
 
-        <!-- Actions Group -->
-        <div class="iu-sidebar-section iu-sidebar-actions">
+        <!-- Full-Width Unfollow Action Button -->
+        <div class="iu-sidebar-section iu-unfollow-section">
           <button class="iu-btn-export" id="iu-bulk-unfollow-btn" style="width: 100%; background: #ef4444; border-color: rgba(239, 68, 68, 0.4); text-align: center;" disabled>Unfollow (0)</button>
-          <div class="iu-btn-group">
-            <button class="iu-btn-export" id="iu-layout-btn" style="flex: 1; text-align: center;">Grid View</button>
-            <button class="iu-btn-export" id="iu-sidebar-scan-btn" style="flex: 1; text-align: center;">New Scan</button>
-          </div>
-          <div class="iu-btn-group">
-            <button class="iu-btn-export" id="iu-import-btn" style="flex: 1; text-align: center;">Import</button>
-            <button class="iu-btn-export" id="iu-export-btn" style="flex: 1; text-align: center;">Export</button>
-          </div>
         </div>
 
-        <!-- Sort Custom Dropdown -->
-        <div class="iu-sidebar-section">
-          <div style="font-weight: bold; color: #fff; font-size: 0.82rem; margin-bottom: 0.5rem; text-transform: uppercase; letter-spacing: 0.05em;">Sort By:</div>
-          <div class="iu-custom-dropdown" id="iu-sort-dropdown">
-            <div class="iu-dropdown-trigger" id="iu-sort-trigger">
-              <span id="iu-sort-trigger-content" style="display: flex; align-items: center; gap: 0.4rem;"></span>
-              <span style="font-size: 0.65rem; color: #888;">▼</span>
+        <!-- Mobile Drawer Toggle Button (Visible on mobile screens) -->
+        <button class="iu-btn-export iu-drawer-toggle-btn" id="iu-drawer-toggle">
+          <span>Filters & Options</span>
+          <span id="iu-drawer-arrow" style="font-size: 0.65rem; color: #888;">▼</span>
+        </button>
+
+        <!-- Collapsible Drawer Container (Always visible on desktop, collapsed by default on mobile) -->
+        <div class="iu-sidebar-drawer" id="iu-sidebar-drawer">
+          <!-- Quick Controls (Grid View, New Scan, Import, Export) -->
+          <div class="iu-sidebar-section iu-sidebar-actions">
+            <div class="iu-btn-group">
+              <button class="iu-btn-export" id="iu-layout-btn" style="flex: 1; text-align: center;">Grid View</button>
+              <button class="iu-btn-export" id="iu-sidebar-scan-btn" style="flex: 1; text-align: center;">New Scan</button>
             </div>
-            <div class="iu-dropdown-options" id="iu-sort-options">
-              <div class="iu-dropdown-option" data-value="unfollowed-recent">
-                ${NEW_UNFOLLOWER_SVG} Recently Unfollowed
-              </div>
-              <div class="iu-dropdown-option" data-value="name-asc">
-                <span style="display: inline-block; width: 16px; text-align: center; font-size: 0.75rem; font-weight: bold; color: #aaa; vertical-align: middle;">AZ</span> A-Z (Username)
-              </div>
-              <div class="iu-dropdown-option" data-value="name-desc">
-                <span style="display: inline-block; width: 16px; text-align: center; font-size: 0.75rem; font-weight: bold; color: #aaa; vertical-align: middle;">ZA</span> Z-A (Username)
-              </div>
-              <div class="iu-dropdown-option" data-value="private-first">
-                ${PRIVATE_LOCK_SVG} Private First
-              </div>
-              <div class="iu-dropdown-option" data-value="verified-first">
-                ${VERIFIED_BADGE_SVG} Verified First
-              </div>
+            <div class="iu-btn-group">
+              <button class="iu-btn-export" id="iu-import-btn" style="flex: 1; text-align: center;">Import</button>
+              <button class="iu-btn-export" id="iu-export-btn" style="flex: 1; text-align: center;">Export</button>
             </div>
           </div>
-        </div>
 
-        <!-- Filter Checkboxes -->
-        <div class="iu-sidebar-section">
-          <div style="font-weight: bold; color: #fff; font-size: 0.82rem; margin-bottom: 0.6rem; text-transform: uppercase; letter-spacing: 0.05em;">Filters:</div>
-          <div class="iu-filter-list">
-            <label class="iu-filter-label" style="display: flex; align-items: center; gap: 0.35rem;">
-              <input type="checkbox" id="iu-filter-nonfollowers" ${showNonFollowers ? 'checked' : ''} />
-              ${NON_FOLLOWERS_SVG} Non-followers
-            </label>
-            <label class="iu-filter-label" style="display: flex; align-items: center; gap: 0.35rem;">
-              <input type="checkbox" id="iu-filter-followers" ${showFollowers ? 'checked' : ''} />
-              ${FOLLOWS_YOU_SVG} Followers
-            </label>
-            <label class="iu-filter-label" style="display: flex; align-items: center; gap: 0.35rem;">
-              <input type="checkbox" id="iu-filter-new-unfollowers" ${showNewUnfollowersOnly ? 'checked' : ''} />
-              ${NEW_UNFOLLOWER_SVG} New Unfollowers Only
-            </label>
-            <label class="iu-filter-label" style="display: flex; align-items: center; gap: 0.35rem;">
-              <input type="checkbox" id="iu-filter-verified" ${showVerified ? 'checked' : ''} />
-              ${VERIFIED_BADGE_SVG} Show Verified
-            </label>
-            <label class="iu-filter-label" style="display: flex; align-items: center; gap: 0.35rem;">
-              <input type="checkbox" id="iu-filter-private" ${showPrivate ? 'checked' : ''} />
-              ${PRIVATE_LOCK_SVG} Show Private
-            </label>
+          <!-- Sort Custom Dropdown -->
+          <div class="iu-sidebar-section">
+            <div class="iu-sidebar-title">Sort By:</div>
+            <div class="iu-custom-dropdown" id="iu-sort-dropdown">
+              <div class="iu-dropdown-trigger" id="iu-sort-trigger">
+                <span id="iu-sort-trigger-content" style="display: flex; align-items: center; gap: 0.4rem;"></span>
+                <span style="font-size: 0.65rem; color: #888;">▼</span>
+              </div>
+              <div class="iu-dropdown-options" id="iu-sort-options">
+                <div class="iu-dropdown-option" data-value="unfollowed-recent">
+                  ${NEW_UNFOLLOWER_SVG} Recently Unfollowed
+                </div>
+                <div class="iu-dropdown-option" data-value="name-asc">
+                  <span style="display: inline-block; width: 16px; text-align: center; font-size: 0.75rem; font-weight: bold; color: #aaa; vertical-align: middle;">AZ</span> A-Z (Username)
+                </div>
+                <div class="iu-dropdown-option" data-value="name-desc">
+                  <span style="display: inline-block; width: 16px; text-align: center; font-size: 0.75rem; font-weight: bold; color: #aaa; vertical-align: middle;">ZA</span> Z-A (Username)
+                </div>
+                <div class="iu-dropdown-option" data-value="private-first">
+                  ${PRIVATE_LOCK_SVG} Private First
+                </div>
+                <div class="iu-dropdown-option" data-value="verified-first">
+                  ${VERIFIED_BADGE_SVG} Verified First
+                </div>
+              </div>
+            </div>
           </div>
-        </div>
 
-        <!-- Vertical Stats Dashboard -->
-        <div class="iu-sidebar-section" style="border-bottom: none; padding-bottom: 0;">
-          <div style="font-weight: bold; color: #fff; font-size: 0.82rem; margin-bottom: 0.6rem; text-transform: uppercase; letter-spacing: 0.05em;">Statistics:</div>
-          <div class="iu-stats-vertical">
-            <div class="iu-stat-row">
-              <span style="display: flex; align-items: center; gap: 0.35rem;">
+          <!-- Filter Checkboxes -->
+          <div class="iu-sidebar-section">
+            <div class="iu-sidebar-title">Filters:</div>
+            <div class="iu-filter-list">
+              <label class="iu-filter-label" style="display: flex; align-items: center; gap: 0.35rem;">
+                <input type="checkbox" id="iu-filter-nonfollowers" ${showNonFollowers ? 'checked' : ''} />
                 ${NON_FOLLOWERS_SVG} Non-followers
-              </span>
-              <span id="stat-nonfollowers" class="iu-stat-val non-followers">0</span>
-            </div>
-            <div class="iu-stat-row">
-              <span style="display: flex; align-items: center; gap: 0.35rem;">
-                ${NEW_UNFOLLOWER_SVG} New Unfollowers
-              </span>
-              <span id="stat-new-unfollowers" class="iu-stat-val new-unfollowers">0</span>
-            </div>
-            <div class="iu-stat-row">
-              <span style="display: flex; align-items: center; gap: 0.35rem;">
+              </label>
+              <label class="iu-filter-label" style="display: flex; align-items: center; gap: 0.35rem;">
+                <input type="checkbox" id="iu-filter-followers" ${showFollowers ? 'checked' : ''} />
                 ${FOLLOWS_YOU_SVG} Followers
-              </span>
-              <span id="stat-followers" class="iu-stat-val followers">0</span>
+              </label>
+              <label class="iu-filter-label" style="display: flex; align-items: center; gap: 0.35rem;">
+                <input type="checkbox" id="iu-filter-new-unfollowers" ${showNewUnfollowersOnly ? 'checked' : ''} />
+                ${NEW_UNFOLLOWER_SVG} New Unfollowers Only
+              </label>
+              <label class="iu-filter-label" style="display: flex; align-items: center; gap: 0.35rem;">
+                <input type="checkbox" id="iu-filter-verified" ${showVerified ? 'checked' : ''} />
+                ${VERIFIED_BADGE_SVG} Show Verified
+              </label>
+              <label class="iu-filter-label" style="display: flex; align-items: center; gap: 0.35rem;">
+                <input type="checkbox" id="iu-filter-private" ${showPrivate ? 'checked' : ''} />
+                ${PRIVATE_LOCK_SVG} Show Private
+              </label>
             </div>
-            <div class="iu-stat-row">
-              <span style="display: flex; align-items: center; gap: 0.35rem;">
-                ${VERIFIED_BADGE_SVG} Verified
-              </span>
-              <span id="stat-verified" class="iu-stat-val verified">0</span>
-            </div>
-            <div class="iu-stat-row">
-              <span style="display: flex; align-items: center; gap: 0.35rem;">
-                ${PRIVATE_LOCK_SVG} Private
-              </span>
-              <span id="stat-private" class="iu-stat-val private">0</span>
+          </div>
+
+          <!-- Vertical Stats Dashboard -->
+          <div class="iu-sidebar-section" style="border-bottom: none; padding-bottom: 0;">
+            <div class="iu-sidebar-title">Statistics:</div>
+            <div class="iu-stats-vertical">
+              <div class="iu-stat-row">
+                <span style="display: flex; align-items: center; gap: 0.35rem;">
+                  ${NON_FOLLOWERS_SVG} Non-followers
+                </span>
+                <span id="stat-nonfollowers" class="iu-stat-val non-followers">0</span>
+              </div>
+              <div class="iu-stat-row">
+                <span style="display: flex; align-items: center; gap: 0.35rem;">
+                  ${NEW_UNFOLLOWER_SVG} New Unfollowers
+                </span>
+                <span id="stat-new-unfollowers" class="iu-stat-val new-unfollowers">0</span>
+              </div>
+              <div class="iu-stat-row">
+                <span style="display: flex; align-items: center; gap: 0.35rem;">
+                  ${FOLLOWS_YOU_SVG} Followers
+                </span>
+                <span id="stat-followers" class="iu-stat-val followers">0</span>
+              </div>
+              <div class="iu-stat-row">
+                <span style="display: flex; align-items: center; gap: 0.35rem;">
+                  ${VERIFIED_BADGE_SVG} Verified
+                </span>
+                <span id="stat-verified" class="iu-stat-val verified">0</span>
+              </div>
+              <div class="iu-stat-row">
+                <span style="display: flex; align-items: center; gap: 0.35rem;">
+                  ${PRIVATE_LOCK_SVG} Private
+                </span>
+                <span id="stat-private" class="iu-stat-val private">0</span>
+              </div>
             </div>
           </div>
         </div>
@@ -407,7 +420,7 @@ export function renderList(
       });
     }
 
-    countTextEl.textContent = `Showing ${currentFilteredList.length} of ${activeUsers.length} followed accounts.`;
+    countTextEl.textContent = `Showing ${currentFilteredList.length} of ${activeUsers.length}`;
 
     if (currentFilteredList.length === 0) {
       setElementHTML(listEl, `
@@ -801,6 +814,20 @@ export function renderList(
       if (onScanFresh) {
         isBulkCancelled = true;
         onScanFresh();
+      }
+    });
+  }
+
+  // Mobile Drawer Toggle handler
+  const drawerToggle = document.getElementById('iu-drawer-toggle');
+  const sidebarDrawer = document.getElementById('iu-sidebar-drawer');
+  const drawerArrow = document.getElementById('iu-drawer-arrow');
+
+  if (drawerToggle && sidebarDrawer) {
+    drawerToggle.addEventListener('click', () => {
+      const isExpanded = sidebarDrawer.classList.toggle('show-mobile');
+      if (drawerArrow) {
+        drawerArrow.textContent = isExpanded ? '▲' : '▼';
       }
     });
   }

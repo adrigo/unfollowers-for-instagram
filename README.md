@@ -89,6 +89,7 @@ When you run `npm run package:extension`, the build pipeline automatically:
 
 ## 🛠️ Features
 
+* **Mobile Responsive UI:** Includes a collapsible **Filters & Options** drawer, full-width search input, single-line header counts, text ellipsis truncation (`...`), and fixed unfollow button vertical alignment for phone screens.
 * **Local Storage Caching & Humanized Age:** Stores scanned results locally in `localStorage` and formats cache age dynamically (e.g. `1 day, 2 hours and 10 mins ago`).
 * **Cache Export & Import (Cross-Device Migration):** Export your full cache state as a JSON file (`iu_cache_<user_id>.json`) and import it onto any other browser or computer to move your scan history without re-scanning. Note: Imported files must be a valid JSON file previously exported by this tool (containing `timestamp` and `users`).
 * **Sidebar Quick Controls:** Instant **New Scan**, **Grid View**, **Import**, and **Export** actions accessible right from the sidebar.
@@ -99,7 +100,7 @@ When you run `npm run package:extension`, the build pipeline automatically:
 * **Page Exit Protection:** Warns the user if they try to close or refresh the tab during an active bulk unfollow process to prevent accidental progress loss.
 * **Custom Layouts:** Toggle between a detailed List View or a compact Grid View.
 * **Detailed Statistics Bar:** View live counts of Non-followers, Followers, Verified profiles, and Private accounts at a glance.
-* **Sorting & Filtering:** Sort by Username (A-Z/Z-A), Private First, or Verified First. Filter list by Non-followers, Followers, and Verified tags.
+* **Sorting & Filtering:** Sort by Username (A-Z/Z-A), Private First, or Verified First. Filter list by Non-followers, Followers, New Unfollowers, and Verified tags.
 
 ---
 

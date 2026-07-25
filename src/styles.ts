@@ -116,7 +116,7 @@ export const CSS_STYLES = `
     height: 100%;
     box-sizing: border-box;
   }
-  
+
   .iu-sidebar::-webkit-scrollbar {
     width: 4px;
   }
@@ -152,46 +152,214 @@ export const CSS_STYLES = `
     height: 100%;
   }
 
+  .iu-sidebar-title {
+    font-weight: bold;
+    color: #fff;
+    font-size: 0.82rem;
+    margin-bottom: 0.5rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  .iu-drawer-toggle-btn {
+    display: none;
+  }
+
+  .iu-sidebar-drawer {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+
   @media (max-width: 650px) {
     .iu-card {
-      height: 90vh;
+      height: 92vh;
+      width: 96%;
     }
     .iu-body {
-      padding: 1rem;
+      padding: 0.75rem;
+      flex: 1;
+      min-height: 0;
+      display: flex;
+      flex-direction: column;
     }
     .iu-layout-wrapper {
       flex-direction: column;
-      gap: 0.75rem;
+      gap: 0.5rem;
+      height: 100%;
+      min-height: 0;
+      overflow: hidden;
     }
     .iu-sidebar {
       width: 100%;
       height: auto;
+      flex-shrink: 0;
       border-right: none;
       padding-right: 0;
       border-bottom: 1px solid rgba(255, 255, 255, 0.06);
-      padding-bottom: 0.75rem;
+      padding-bottom: 0.5rem;
       overflow-y: visible;
       display: flex;
-      flex-direction: row;
-      flex-wrap: wrap;
-      gap: 0.75rem;
+      flex-direction: column;
+      gap: 0.4rem;
     }
-    .iu-sidebar-section {
-      flex: 1 1 calc(50% - 0.375rem);
-      min-width: 140px;
+    .iu-sidebar-section.iu-search-section,
+    .iu-sidebar-section.iu-unfollow-section {
       border-bottom: none;
       padding-bottom: 0;
+      width: 100%;
     }
-    .iu-sidebar-section:first-child {
-      flex: 1 1 100%;
+    .iu-search-input {
+      width: 100%;
+      box-sizing: border-box;
     }
-    .iu-sidebar-section:last-child {
-      border-bottom: none;
+    #iu-bulk-unfollow-btn {
+      width: 100%;
+      box-sizing: border-box;
+    }
+    .iu-drawer-toggle-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      text-align: center;
+      width: 100%;
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 10px;
+      padding: 0.55rem 0.85rem;
+      font-size: 0.82rem;
+      color: #ada79d;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .iu-drawer-toggle-btn:hover {
+      background: rgba(255, 255, 255, 0.08);
+      color: #fff;
+    }
+    .iu-sidebar-drawer {
+      display: none;
+      flex-direction: column;
+      gap: 0.65rem;
+      margin-top: 0.25rem;
+      max-height: 50vh;
+      overflow-y: auto;
+      background: rgba(0, 0, 0, 0.3);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 10px;
+      padding: 0.75rem;
+    }
+    .iu-sidebar-drawer.show-mobile {
+      display: flex;
     }
     .iu-content-area {
-      height: auto;
+      flex: 1;
+      height: 100%;
+      min-height: 0;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+    .iu-content-header {
+      flex-direction: row;
+      justify-content: space-between;
+      align-items: center;
+      gap: 0.35rem;
+      flex-wrap: nowrap;
+      margin-bottom: 0.4rem;
+    }
+    .iu-content-header .iu-filter-label {
+      font-size: 0.78rem;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+    #iu-count-text {
+      font-size: 0.75rem;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      flex-shrink: 1;
+      text-align: right;
+    }
+    .iu-list-container {
       flex: 1;
       min-height: 0;
+      overflow-y: auto;
+      overflow-x: hidden;
+      width: 100%;
+      box-sizing: border-box;
+    }
+    .iu-list-container:not(.grid-view) .iu-user-card {
+      padding: 0.45rem 0.55rem;
+      width: 100%;
+      max-width: 100%;
+      box-sizing: border-box;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .iu-list-container:not(.grid-view) .iu-user-info {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      flex: 1 1 0%;
+      min-width: 0;
+      overflow: hidden;
+    }
+    .iu-list-container:not(.grid-view) .iu-names {
+      display: flex;
+      flex-direction: column;
+      gap: 0.1rem;
+      flex: 1 1 0%;
+      min-width: 0;
+      overflow: hidden;
+      width: 100%;
+    }
+    .iu-list-container:not(.grid-view) .iu-username-wrapper {
+      display: flex;
+      flex-direction: row;
+      align-items: center;
+      gap: 0.3rem;
+      width: 100%;
+      min-width: 0;
+      overflow: hidden;
+    }
+    .iu-list-container:not(.grid-view) .iu-card-badges {
+      display: inline-flex;
+      flex-direction: row;
+      align-items: center;
+      gap: 0.25rem;
+      flex-shrink: 0;
+      margin-top: 0;
+      margin-left: 0;
+      margin-right: 0.3rem;
+    }
+    .iu-list-container:not(.grid-view) .iu-username {
+      display: inline-block;
+      flex: 0 1 auto;
+      min-width: 0;
+      max-width: 100%;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      font-size: 0.88rem !important;
+    }
+    .iu-list-container:not(.grid-view) .iu-fullname {
+      display: block;
+      width: 100%;
+      max-width: 100%;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      font-size: 0.75rem;
+    }
+    .iu-list-container:not(.grid-view) .iu-unfollow-btn {
+      width: 78px;
+      padding: 0.45rem 0;
+      text-align: center;
+      font-size: 0.78rem;
+      flex-shrink: 0;
+      margin-left: 0.75rem;
     }
   }
 
