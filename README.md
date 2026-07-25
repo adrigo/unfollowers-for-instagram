@@ -30,14 +30,17 @@ Created by [adrigo](https://adrigo.dev).
 # 1. Install lightweight devDependencies (esbuild & typescript)
 npm install
 
-# 2. Execute technical build script
+# 2. Build TypeScript bundle & sync index.html / extension/index.min.js
 npm run build
+
+# 3. Render PNG icons & package store-ready extension.zip
+npm run package:extension
 ```
 
-This automated build script (`npm run build`) will:
-* Compile and minify TypeScript source files ([src/](./src/)) into [`extension/index.min.js`](./extension/index.min.js) using `esbuild`.
-* Run [scripts/create-extension-icons.js](./scripts/create-extension-icons.js) to render PNG icons from [`src/assets/icon.svg`](./src/assets/icon.svg).
-* Run [scripts/update-html.js](./scripts/update-html.js) to sync the compiled bundle with [`public/index.html`](./public/index.html).
+* **`npm run build`**: Compiles and minifies TypeScript source files ([src/](./src/)) into [`extension/index.min.js`](./extension/index.min.js) and injects the Base64 script into [`public/index.html`](./public/index.html) using `esbuild` and `scripts/update-html.js`.
+* **`npm run package:extension`**: Executes `npm run build`, runs `scripts/create-extension-icons.js` to render crisp active & dark PNG icons from [`src/assets/icon.svg`](./src/assets/icon.svg), and zips `extension.zip` in the project root.
+
+---
 
 ### 2. Open the UI
 Open the generated landing page directly in your browser:
@@ -77,9 +80,10 @@ Once you open `public/index.html` in your browser:
 
 All vector assets live in `src/assets/`. **`src/assets/icon.svg`** serves as the single source of truth for the project's logo and favicon.
 
-When you run `npm run build`, the build script automatically:
+When you run `npm run package:extension`, the build pipeline automatically:
 * Syncs `src/assets/icon.svg` to [`public/favicon.svg`](./public/favicon.svg).
-* Renders crisp active (`icon*.png`) and dark (`icon*-dark.png`) PNG icon variants in [`extension/`](./extension) for browser tab state detection.
+* Renders crisp active (`icon*.png`) and dark (`icon*-dark.png`) PNG icon variants in [`extension/`](./extension) for active browser tab state detection.
+* Packages `extension.zip` in your root project folder ready for web store upload.
 
 ---
 

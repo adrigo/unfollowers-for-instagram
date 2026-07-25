@@ -3,9 +3,9 @@
   "version": "1.0.0",
   "description": "Secure, lightweight browser utility to detect Instagram unfollowers.",
   "scripts": {
-    "build": "esbuild src/index.ts --bundle --loader:.svg=text --minify --outfile=dist/index.min.js && node scripts/create-extension-icons.js && node scripts/update-html.js",
+    "build": "esbuild src/index.ts --bundle --loader:.svg=text --minify --outfile=dist/index.min.js && node scripts/update-html.js",
     "dev": "esbuild src/index.ts --bundle --loader:.svg=text --outfile=dist/index.js --serve=3000",
-    "package:extension": "npm run build && (cd extension && zip -r extension.zip .)"
+    "package:extension": "npm run build && node scripts/create-extension-icons.js && (cd extension && zip -r ../extension.zip . -x extension.zip)"
   },
   "devDependencies": {
     "esbuild": "^0.20.2",
