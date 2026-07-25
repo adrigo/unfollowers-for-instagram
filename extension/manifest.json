@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "IG Unfollowers",
   "version": "1.0.0",
-  "description": "Securely identify non-followers on Instagram directly inside your active browser session.",
+  "description": "Securely identify Instagram accounts you follow who don't follow you back. 100% private, client-side, zero login required.",
   "permissions": [
     "activeTab",
     "scripting"
