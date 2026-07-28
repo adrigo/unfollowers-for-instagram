@@ -3,6 +3,11 @@ import { getCookie, fetchFollowings } from './api';
 import { getCachedFollowings, setCachedFollowings, mergeCacheWithFreshScan } from './storage';
 import { renderList, renderCachePrompt, loadCacheWithScanAnimation, setElementHTML } from './ui';
 import APP_LOGO_SVG from './assets/icon.svg';
+import { version as PKG_VERSION } from '../package.json';
+
+const appVersion = (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.getManifest)
+  ? chrome.runtime.getManifest().version
+  : PKG_VERSION;
 
 (async () => {
   if (location.hostname !== 'www.instagram.com') {
@@ -48,6 +53,7 @@ import APP_LOGO_SVG from './assets/icon.svg';
             ${APP_LOGO_SVG}
           </div>
           <span class="iu-title">IG Unfollowers</span>
+          <span class="iu-version-tag">v${appVersion}</span>
         </div>
         <button class="iu-close-btn" id="iu-close-btn">&times;</button>
       </div>

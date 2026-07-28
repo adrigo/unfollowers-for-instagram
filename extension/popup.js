@@ -16,7 +16,17 @@ function isInstagramUrl(url) {
 document.addEventListener('DOMContentLoaded', async () => {
   const statusCard = document.getElementById('status-card');
   const launchBtn = document.getElementById('launch-btn');
+  const headerVersion = document.getElementById('header-version');
   let activeTab = null;
+
+  const manifest = (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.getManifest)
+    ? chrome.runtime.getManifest()
+    : null;
+  const version = manifest ? manifest.version : '';
+
+  if (headerVersion && version) {
+    headerVersion.textContent = `v${version}`;
+  }
 
   async function checkTabStatus() {
     try {

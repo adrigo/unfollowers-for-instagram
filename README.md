@@ -37,7 +37,7 @@ npm run build
 npm run package:extension
 ```
 
-* **`npm run build`**: Compiles and minifies TypeScript source files ([src/](./src/)) into [`extension/index.min.js`](./extension/index.min.js) and injects the Base64 script into [`public/index.html`](./public/index.html) using `esbuild` and `scripts/update-html.js`.
+* **`npm run build`**: Compiles and minifies TypeScript source files ([src/](./src/)) into [`extension/index.min.js`](./extension/index.min.js), reads `"version"` from `package.json`, automatically syncs version badges across [`public/index.html`](./public/index.html) and [`extension/manifest.json`](./extension/manifest.json), and injects the Base64 script using `esbuild` and `scripts/update-html.js`.
 * **`npm run package:extension`**: Executes `npm run build`, runs `scripts/create-extension-icons.js` to render crisp active & dark PNG icons from [`src/assets/icon.svg`](./src/assets/icon.svg), and zips `extension.zip` in the project root.
 
 ---
@@ -89,6 +89,7 @@ When you run `npm run package:extension`, the build pipeline automatically:
 
 ## 🛠️ Features
 
+* **Single-Source Automated Versioning:** Uses `package.json` as the single source of truth, automatically syncing version badges across the extension popup, injected overlay, and landing page during `npm run build`.
 * **Mobile Responsive UI:** Includes a collapsible **Filters & Options** drawer, full-width search input, single-line header counts, text ellipsis truncation (`...`), and fixed unfollow button vertical alignment for phone screens.
 * **Local Storage Caching & Humanized Age:** Stores scanned results locally in `localStorage` and formats cache age dynamically (e.g. `1 day, 2 hours and 10 mins ago`).
 * **Cache Export & Import (Cross-Device Migration):** Export your full cache state as a JSON file (`iu_cache_<user_id>.json`) and import it onto any other browser or computer to move your scan history without re-scanning. Note: Imported files must be a valid JSON file previously exported by this tool (containing `timestamp` and `users`).

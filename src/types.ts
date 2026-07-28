@@ -18,3 +18,8 @@ export interface UnfollowResult {
   ok: boolean;
   status: number;
 }
+
+declare global {
+  const chrome: any;
+}
+
