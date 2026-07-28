@@ -1,6 +1,6 @@
 # IG Unfollowers
 
-A beautiful, lightweight (~30KB), and secure browser-based utility that helps you identify Instagram accounts you are following but who do not follow you back. 
+A beautiful, lightweight (~30KB), and secure browser-based utility that helps you identify Instagram accounts you are following but who do not follow you back.
 
 > [!NOTE]
 > This tool runs **completely client-side** in your active browser session. It does not require downloading any apps, sharing your credentials (username/password) with third-party sites, or registering for external services.
@@ -15,7 +15,7 @@ Created by [adrigo](https://adrigo.dev).
 2. **Non-Destructive Overlay:** Unlike destructive scripts that clear the browser viewport, this utility injects a beautiful **glassmorphic card modal** directly on top of your active Instagram tab. Closing the modal immediately restores the background page state.
 3. **GraphQL Queries:** The utility queries Instagram's internal GraphQL endpoints using your logged-in browser session cookies (`ds_user_id` and `csrftoken`), scanning your followed users and checking if they follow you back (reading the `follows_viewer` attribute).
 4. **Local Storage Caching:** Saves the followings list in your browser's local cache. Re-running the script allows you to instantly reuse the cached list ("Use Cache") instead of triggering a full fresh network scan.
-5. **Base64 Encapsulation:** The compiled script is encoded into a Base64 string and decoded at runtime using `atob()`. This encapsulates the bookmarklet logic, preventing automated crawlers (like Google Safe Browsing) from performing static analysis of Instagram's API keywords on your landing page and triggering false-positive deceptive site warnings.
+5. **Base64 Encapsulation:** The compiled script is encoded into a Base64 string and decoded at runtime using `atob()`. This encapsulates the script logic, preventing automated crawlers (like Google Safe Browsing) from performing static analysis of Instagram's API keywords on your landing page and triggering false-positive deceptive site warnings.
 
 ---
 
@@ -46,33 +46,20 @@ npm run package:extension
 Open the generated landing page directly in your browser:
 *   [public/index.html](./public/index.html)
 
-This page features a modern glassmorphic look, including a CSS-only visual mockup of the modal overlay, clear execution steps, a draggable Bookmarklet button, and a Code copy panel.
+This page features a modern glassmorphic look, including a CSS-only visual mockup of the modal overlay, direct links to Chrome Web Store and Firefox Add-ons, and a Code copy panel.
 
 ### 3. Run on Instagram
 Once you open `public/index.html` in your browser:
 
-> [!IMPORTANT]
-> **Mobile Browser Support:** Currently, we have not found a reliable way to execute this utility on mobile devices (due to mobile browser sandbox restrictions on `javascript:` URL execution and Instagram's strict Content Security Policy). We are actively researching a solution. For now, please use a desktop browser.
+#### Option A: Official Extension (Chrome, Edge, Brave, Firefox)
+- **Chrome / Edge / Brave / Kiwi Browser (Android):** Install from the [Chrome Web Store](https://chromewebstore.google.com/detail/ig-unfollowers/lejidbigpihdfpeomhfjlgnhjjeicdkk) or load unpacked extension from [`extension/`](./extension).
+- **Firefox:** Install from [Firefox Add-ons](https://addons.mozilla.org/en-US/firefox/addon/ig-unfollowers/) or load temporary add-on via `about:debugging`.
 
-#### Option A: Bookmarklet (Recommended)
-1. **Drag** the **Unfollowers Bookmarklet** button to your browser's Bookmarks Bar (press `Ctrl+Shift+B` or `Cmd+Shift+B` on Mac if hidden).
-2. Go to [instagram.com](https://www.instagram.com) and log into your account.
-3. **Click** the bookmarklet in your bookmarks bar. The overlay modal will slide in instantly.
-
-#### Option B: Developer Console
+#### Option B: Developer Console (Manual Execution)
 1. Click **Copy Code** on the landing page to copy the script bundle.
-2. Go to [instagram.com](https://www.instagram.com) and log in.
+2. Go to [instagram.com](https://www.instagram.com) and log into your account.
 3. Open your browser console (press `F12` or `Ctrl+Shift+J` on Windows, `Cmd+Option+I` on Mac).
 4. Paste the copied code and press **Enter**.
-
-#### Option C: Browser Extension (Chrome, Edge, Firefox)
-* **Chrome / Edge / Brave:**
-  1. Open `chrome://extensions` and enable **Developer mode** (top-right).
-  2. Click **Load unpacked** and select the [`extension/`](./extension) folder.
-* **Firefox:**
-  1. Open `about:debugging#/runtime/this-firefox`.
-  2. Click **Load Temporary Add-on...** and select [`extension/manifest.json`](./extension/manifest.json).
-  3. Go to [instagram.com](https://www.instagram.com) and click the **IG Unfollowers** extension icon!
 
 ---
 
@@ -136,7 +123,7 @@ When you run `npm run package:extension`, the build pipeline automatically:
 │   ├── assets/            # Master SVG vector assets (icon, badges, filters)
 │   ├── api.ts             # GraphQL fetches, cookie readers, unfollow POST actions
 │   ├── index.ts           # Entry orchestrator, overlay modal builder, scroll locks
-│   ├── styles.ts          # CSS style sheet containing the glassmorphism system
+│   ├── styles.css         # CSS style sheet containing the glassmorphism system
 │   ├── svg.d.ts           # TypeScript module declarations for SVG imports
 │   ├── types.ts           # TypeScript interfaces (UserNode, CacheData)
 │   └── ui.ts              # Core list drawing, event delegation, search/filters, bulk loops
