@@ -1,4 +1,4 @@
-import { UserNode, CacheData } from './types';
+import { UserNode, CacheData, UserFilterState } from './types';
 import { unfollowUser } from './api';
 import { setCachedFollowings, getCachedFollowings, validateAndParseCacheData, formatCacheAge } from './storage';
 import VERIFIED_BADGE_SVG from './assets/verified.svg';
@@ -136,11 +136,13 @@ export function renderList(
   onScanFresh?: () => void
 ): { cancelBulk: () => void } {
   let activeUsers = [...initialUsers];
-  let showNonFollowers = true;
-  let showFollowers = false;
-  let showVerified = true;
-  let showPrivate = true;
-  let showNewUnfollowersOnly = false;
+  let filterState: UserFilterState = {
+    showNonFollowers: true,
+    showFollowers: false,
+    showVerified: true,
+    showPrivate: true,
+    showNewUnfollowersOnly: false,
+  };
   let currentSortBy = 'unfollowed-recent';
   let isGridView = false;
 
@@ -374,18 +376,18 @@ export function renderList(
       if (!matchesSearch) return false;
 
       // Follower filter
-      const matchesStatus = (showNonFollowers && !u.followsViewer) || (showFollowers && u.followsViewer);
+      const matchesStatus = (filterState.showNonFollowers && !u.followsViewer) || (filterState.showFollowers && u.followsViewer);
       if (!matchesStatus) return false;
 
       // New Unfollowers filter
-      if (showNewUnfollowersOnly && !u.isNew) return false;
+      if (filterState.showNewUnfollowersOnly && !u.isNew) return false;
 
       // Verified filter
-      const matchesVerified = !u.isVerified || showVerified;
+      const matchesVerified = !u.isVerified || filterState.showVerified;
       if (!matchesVerified) return false;
 
       // Private filter
-      const matchesPrivate = !u.isPrivate || showPrivate;
+      const matchesPrivate = !u.isPrivate || filterState.showPrivate;
       if (!matchesPrivate) return false;
 
       return true;
@@ -702,23 +704,23 @@ export function renderList(
 
   // Change listeners for checkboxes
   nonFollowersCheck.addEventListener('change', () => {
-    showNonFollowers = nonFollowersCheck.checked;
+    filterState.showNonFollowers = nonFollowersCheck.checked;
     updateUIList();
   });
   followersCheck.addEventListener('change', () => {
-    showFollowers = followersCheck.checked;
+    filterState.showFollowers = followersCheck.checked;
     updateUIList();
   });
   newUnfollowersCheck.addEventListener('change', () => {
-    showNewUnfollowersOnly = newUnfollowersCheck.checked;
+    filterState.showNewUnfollowersOnly = newUnfollowersCheck.checked;
     updateUIList();
   });
   verifiedCheck.addEventListener('change', () => {
-    showVerified = verifiedCheck.checked;
+    filterState.showVerified = verifiedCheck.checked;
     updateUIList();
   });
   privateCheck.addEventListener('change', () => {
-    showPrivate = privateCheck.checked;
+    filterState.showPrivate = privateCheck.checked;
     updateUIList();
   });
 
