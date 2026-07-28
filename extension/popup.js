@@ -13,6 +13,10 @@ function isInstagramUrl(url) {
   }
 }
 
+if (typeof navigator !== 'undefined' && /Mobi|Android/i.test(navigator.userAgent)) {
+  document.documentElement.classList.add('is-mobile');
+}
+
 document.addEventListener('DOMContentLoaded', async () => {
   const statusCard = document.getElementById('status-card');
   const launchBtn = document.getElementById('launch-btn');
@@ -36,17 +40,47 @@ document.addEventListener('DOMContentLoaded', async () => {
       statusCard.replaceChildren();
 
       if (tab && isInstagramUrl(tab.url)) {
-        statusCard.className = 'status-card on-ig';
+        let isLoggedIn = true;
+        try {
+          const [res] = await chrome.scripting.executeScript({
+            target: { tabId: tab.id },
+            func: () => {
+              const match = document.cookie.match(/(?:^|; )ds_user_id=([^;]*)/);
+              return Boolean(match && match[1] && match[1] !== '""');
+            }
+          });
+          if (res && typeof res.result === 'boolean') {
+            isLoggedIn = res.result;
+          }
+        } catch (e) {
+          console.warn('Could not verify login state:', e);
+        }
 
-        const strong = document.createElement('strong');
-        strong.textContent = 'Instagram tab detected!';
-        const br = document.createElement('br');
-        const textNode = document.createTextNode('Click below to launch overlay.');
+        if (isLoggedIn) {
+          statusCard.className = 'status-card on-ig';
 
-        statusCard.appendChild(strong);
-        statusCard.appendChild(br);
-        statusCard.appendChild(textNode);
-        launchBtn.disabled = false;
+          const strong = document.createElement('strong');
+          strong.textContent = 'Instagram tab detected!';
+          const br = document.createElement('br');
+          const textNode = document.createTextNode('Click below to launch overlay.');
+
+          statusCard.appendChild(strong);
+          statusCard.appendChild(br);
+          statusCard.appendChild(textNode);
+          launchBtn.disabled = false;
+        } else {
+          statusCard.className = 'status-card not-logged-in';
+
+          const strong = document.createElement('strong');
+          strong.textContent = 'Not Logged In';
+          const br = document.createElement('br');
+          const textNode = document.createTextNode('Please log into Instagram on this tab first, then open this extension.');
+
+          statusCard.appendChild(strong);
+          statusCard.appendChild(br);
+          statusCard.appendChild(textNode);
+          launchBtn.disabled = true;
+        }
       } else {
         statusCard.className = 'status-card';
 

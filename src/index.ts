@@ -3,6 +3,7 @@ import { getCookie, fetchFollowings } from './api';
 import { getCachedFollowings, setCachedFollowings, mergeCacheWithFreshScan } from './storage';
 import { renderList, renderCachePrompt, loadCacheWithScanAnimation, setElementHTML } from './ui';
 import APP_LOGO_SVG from './assets/icon.svg';
+import LOCK_ICON_SVG from './assets/lock.svg';
 import { version as PKG_VERSION } from '../package.json';
 
 const appVersion = (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.getManifest)
@@ -19,7 +20,49 @@ const appVersion = (typeof chrome !== 'undefined' && chrome.runtime && chrome.ru
   const csrfToken = getCookie('csrftoken');
 
   if (!ds_user_id) {
-    alert('Please make sure you are logged in to Instagram on this tab first.');
+    const existingModal = document.getElementById('iu-overlay');
+    const existingStyles = document.getElementById('iu-styles');
+    if (existingModal) existingModal.remove();
+    if (existingStyles) existingStyles.remove();
+
+    const styleEl = document.createElement('style');
+    styleEl.id = 'iu-styles';
+    styleEl.textContent = CSS_STYLES;
+    document.head.appendChild(styleEl);
+
+    const overlayEl = document.createElement('div');
+    overlayEl.id = 'iu-overlay';
+    setElementHTML(overlayEl, `
+      <div class="iu-card" style="max-width: 560px; width: 92%; height: auto; margin: auto;">
+        <div class="iu-header">
+          <div class="iu-title-group">
+            <div class="iu-logo">${APP_LOGO_SVG}</div>
+            <span class="iu-title">IG Unfollowers</span>
+            <span class="iu-version-tag">v${appVersion}</span>
+          </div>
+          <button class="iu-close-btn" id="iu-close-btn">&times;</button>
+        </div>
+        <div style="padding: 3rem 2rem; text-align: center; display: flex; flex-direction: column; align-items: center; gap: 1.5rem;">
+          ${LOCK_ICON_SVG}
+          <div>
+            <h3 style="font-size: 1.5rem; font-weight: 700; color: #f87171; margin-bottom: 0.75rem;">Login Required</h3>
+            <p style="color: #ada79d; font-size: 1rem; line-height: 1.6; max-width: 440px; margin: 0 auto;">
+              You are currently not logged into Instagram. Please log into your account on this tab first, then launch the scanner again.
+            </p>
+          </div>
+          <button id="iu-login-close-btn" class="iu-btn-export" style="background: linear-gradient(135deg, #f97316, #ec4899, #7c3aed); color: #fff; border: none; font-weight: 700; height: 46px; padding: 0 2rem; font-size: 0.95rem; border-radius: 12px; cursor: pointer;">Got It</button>
+        </div>
+      </div>
+    `);
+    document.body.appendChild(overlayEl);
+
+    const closeHandler = () => {
+      overlayEl.remove();
+      styleEl.remove();
+    };
+
+    document.getElementById('iu-close-btn')?.addEventListener('click', closeHandler);
+    document.getElementById('iu-login-close-btn')?.addEventListener('click', closeHandler);
     return;
   }
 

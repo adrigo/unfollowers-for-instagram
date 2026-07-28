@@ -10,12 +10,26 @@
       margin: 0;
       padding: 0;
     }
+    html {
+      width: 320px;
+      min-height: 190px;
+      background: #161412;
+    }
     body {
-      width: 280px;
-      padding: 1rem;
+      width: 320px;
+      min-height: 190px;
+      margin: 0 auto;
+      padding: 1.1rem;
       background: #161412;
       color: #f7f1e8;
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      box-sizing: border-box;
+      display: flex;
+      flex-direction: column;
+    }
+    html.is-mobile, html.is-mobile body {
+      width: 100% !important;
+      min-width: 100% !important;
     }
     .header {
       display: flex;
@@ -60,6 +74,11 @@
       border-color: rgba(52, 211, 153, 0.3);
       background: rgba(52, 211, 153, 0.05);
       color: #34d399;
+    }
+    .status-card.not-logged-in {
+      border-color: rgba(248, 113, 113, 0.3);
+      background: rgba(248, 113, 113, 0.05);
+      color: #f87171;
     }
     .btn-launch {
       width: 100%;

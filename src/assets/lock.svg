@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="56" height="56" viewBox="0 0 24 24">
+  <defs>
+    <linearGradient id="iu-lock-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#f97316" />
+      <stop offset="50%" stop-color="#ec4899" />
+      <stop offset="100%" stop-color="#7c3aed" />
+    </linearGradient>
+  </defs>
+  <path fill="url(#iu-lock-grad)" d="M17.44 9.33h-1.1V6.4a4.34 4.34 0 0 0-8.68 0v2.93h-1.1a2.5 2.5 0 0 0-2.5 2.5v7.61a2.507 2.507 0 0 0 2.5 2.5h10.88a2.507 2.507 0 0 0 2.5-2.5v-7.61a2.5 2.5 0 0 0-2.5-2.5M8.66 6.4a3.34 3.34 0 0 1 6.68 0v2.93H8.66Zm10.28 13.04a1.51 1.51 0 0 1-1.5 1.5H6.56a1.51 1.51 0 0 1-1.5-1.5v-7.61a1.5 1.5 0 0 1 1.5-1.5h10.88a1.5 1.5 0 0 1 1.5 1.5Z"/>
+  <path fill="url(#iu-lock-grad)" d="M13 14.95a.98.98 0 0 1-.5.86v1.5a.5.5 0 0 1-1 0v-1.5a.98.98 0 0 1-.5-.86a1 1 0 0 1 2 0"/>
+</svg>
