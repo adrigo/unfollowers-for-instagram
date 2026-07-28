@@ -1,17 +1,15 @@
-import { UserNode, UnfollowResult } from './types';
+import { UserNode, UnfollowResult, ScanProgressCallback, GraphQLResponse } from './types';
 
-// Helper function to read cookies
+// Helper function to read cookies robustly
 export const getCookie = (name: string): string | null => {
-  const value = `; ${document.cookie}`;
-  const parts = value.split(`; ${name}=`);
-  if (parts.length === 2) return parts.pop()!.split(';').shift()!;
-  return null;
+  const match = document.cookie.match(new RegExp(`(?:^|; )${name}=([^;]*)`));
+  return match && match[1] ? decodeURIComponent(match[1]) : null;
 };
 
 // Fetch all followed users via Instagram GraphQL API
 export const fetchFollowings = async (
   userId: string,
-  onProgress: (scanned: number, total: number) => void,
+  onProgress: ScanProgressCallback,
   signal?: AbortSignal
 ): Promise<UserNode[]> => {
   const followedUsers: UserNode[] = [];
@@ -42,9 +40,9 @@ export const fetchFollowings = async (
       throw new Error(`Failed to query Instagram API (Status ${res.status})`);
     }
 
-    const resJson = await res.json();
+    const resJson: GraphQLResponse = await res.json();
     if (resJson.errors && resJson.errors.length > 0) {
-      throw new Error(resJson.errors[0].message || 'Instagram API Error');
+      throw new Error(resJson.errors[0]?.message || 'Instagram API Error');
     }
     if (!resJson.data?.user?.edge_follow) {
       throw new Error('Invalid API response structure. Please make sure you are logged in and try again.');
@@ -67,9 +65,9 @@ export const fetchFollowings = async (
         username: node.username,
         fullName: node.full_name || '',
         profilePicUrl: node.profile_pic_url,
-        isPrivate: node.is_private,
-        isVerified: node.is_verified,
-        followsViewer: node.follows_viewer
+        isPrivate: Boolean(node.is_private),
+        isVerified: Boolean(node.is_verified),
+        followsViewer: Boolean(node.follows_viewer)
       });
     }
 

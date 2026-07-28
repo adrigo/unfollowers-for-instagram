@@ -37,17 +37,28 @@ export const validateAndParseCacheData = (jsonString: string): { data?: CacheDat
     if (!Array.isArray(parsed.users)) {
       return { error: 'Missing or invalid "users" field. It must be an array of users.' };
     }
-    // Verify user array elements contain basic user properties
-    const isValidUsers = parsed.users.every(
-      (u: unknown) => u && typeof u === 'object' && typeof (u as Record<string, unknown>).id === 'string' && typeof (u as Record<string, unknown>).username === 'string'
-    );
-    if (!isValidUsers) {
-      return { error: 'Invalid user objects in "users" array. Each user must have an "id" and "username".' };
+    // Verify user array elements contain basic user properties and normalize fields
+    const sanitizedUsers: UserNode[] = [];
+    for (const u of parsed.users) {
+      if (!u || typeof u !== 'object' || typeof u.id !== 'string' || typeof u.username !== 'string') {
+        return { error: 'Invalid user objects in "users" array. Each user must have an "id" and "username".' };
+      }
+      sanitizedUsers.push({
+        id: u.id,
+        username: u.username,
+        fullName: typeof u.fullName === 'string' ? u.fullName : '',
+        profilePicUrl: typeof u.profilePicUrl === 'string' ? u.profilePicUrl : '',
+        isPrivate: Boolean(u.isPrivate),
+        isVerified: Boolean(u.isVerified),
+        followsViewer: Boolean(u.followsViewer),
+        isNew: Boolean(u.isNew)
+      });
     }
+
     return {
       data: {
         timestamp: parsed.timestamp,
-        users: parsed.users
+        users: sanitizedUsers
       }
     };
   } catch (e) {
