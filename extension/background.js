@@ -35,7 +35,7 @@ async function syncAllTabs() {
         await updateActionIcon(tab.id, tab.url);
       }
     }
-  } catch (err) {}
+  } catch (err) { }
 }
 
 // Initial tab icon synchronization on worker startup
@@ -50,7 +50,7 @@ chrome.tabs.onActivated.addListener(async (activeInfo) => {
     if (tab && tab.url) {
       await updateActionIcon(activeInfo.tabId, tab.url);
     }
-  } catch (err) {}
+  } catch (err) { }
 });
 
 chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {

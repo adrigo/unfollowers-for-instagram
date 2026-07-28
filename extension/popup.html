@@ -1,8 +1,9 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>IG Unfollowers</title>
   <style>
     * {
@@ -10,11 +11,13 @@
       margin: 0;
       padding: 0;
     }
+
     html {
       width: 320px;
       min-height: 190px;
       background: #161412;
     }
+
     body {
       width: 320px;
       min-height: 190px;
@@ -27,10 +30,13 @@
       display: flex;
       flex-direction: column;
     }
-    html.is-mobile, html.is-mobile body {
+
+    html.is-mobile,
+    html.is-mobile body {
       width: 100% !important;
       min-width: 100% !important;
     }
+
     .header {
       display: flex;
       align-items: center;
@@ -39,11 +45,13 @@
       padding-bottom: 0.75rem;
       border-bottom: 1px solid rgba(255, 255, 255, 0.08);
     }
+
     .title {
       font-weight: 700;
       font-size: 1.05rem;
       letter-spacing: -0.01em;
     }
+
     .version-badge {
       margin-left: auto;
       font-size: 0.7rem;
@@ -55,6 +63,7 @@
       border: 1px solid rgba(255, 255, 255, 0.1);
       line-height: 1;
     }
+
     .status-card {
       background: rgba(255, 255, 255, 0.03);
       border: 1px solid rgba(255, 255, 255, 0.06);
@@ -65,21 +74,25 @@
       line-height: 1.4;
       color: #ada79d;
     }
+
     .status-card a {
       color: #ec4899;
       text-decoration: underline;
       cursor: pointer;
     }
+
     .status-card.on-ig {
       border-color: rgba(52, 211, 153, 0.3);
       background: rgba(52, 211, 153, 0.05);
       color: #34d399;
     }
+
     .status-card.not-logged-in {
       border-color: rgba(248, 113, 113, 0.3);
       background: rgba(248, 113, 113, 0.05);
       color: #f87171;
     }
+
     .btn-launch {
       width: 100%;
       padding: 0.75rem;
@@ -93,18 +106,22 @@
       transition: opacity 0.2s, transform 0.1s;
       box-shadow: 0 4px 12px rgba(236, 72, 153, 0.25);
     }
+
     .btn-launch:hover:not(:disabled) {
       opacity: 0.95;
       transform: translateY(-1px);
     }
+
     .btn-launch:active:not(:disabled) {
       transform: translateY(0);
     }
+
     .btn-launch:disabled {
       opacity: 0.45;
       cursor: not-allowed;
       box-shadow: none;
     }
+
     .footer-note {
       margin-top: 0.75rem;
       text-align: center;
@@ -113,6 +130,7 @@
     }
   </style>
 </head>
+
 <body>
   <div class="header">
     <img src="icon48.png" width="20" height="20" alt="IG Unfollowers" style="display: block;" />
@@ -132,4 +150,5 @@
 
   <script src="popup.js"></script>
 </body>
+
 </html>

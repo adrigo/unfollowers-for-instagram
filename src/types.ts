@@ -70,11 +70,9 @@ declare global {
   // eslint-disable-next-line no-var
   var chrome: {
     runtime?: {
-      getManifest?: () => { version: string; [key: string]: unknown };
+      getManifest?: () => { version: string;[key: string]: unknown };
       [key: string]: unknown;
     };
     [key: string]: unknown;
   } | undefined;
 }
-
-

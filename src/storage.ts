@@ -154,8 +154,8 @@ export const formatCacheAge = (timestamp: number): string => {
   const ageText = parts.length === 1
     ? parts[0]
     : parts.length === 2
-    ? `${parts[0]} and ${parts[1]}`
-    : `${parts.slice(0, -1).join(', ')} and ${parts[parts.length - 1]}`;
+      ? `${parts[0]} and ${parts[1]}`
+      : `${parts.slice(0, -1).join(', ')} and ${parts[parts.length - 1]}`;
 
   return `${ageText} ago`;
 };

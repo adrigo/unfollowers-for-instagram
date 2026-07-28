@@ -353,7 +353,7 @@ export function renderList(
 
   const setBulkInputsDisabled = (disabled: boolean) => {
     [selectAllCheck, searchInput, nonFollowersCheck, followersCheck,
-     newUnfollowersCheck, verifiedCheck, privateCheck, layoutBtn, exportBtn
+      newUnfollowersCheck, verifiedCheck, privateCheck, layoutBtn, exportBtn
     ].forEach(el => (el as HTMLButtonElement | HTMLInputElement).disabled = disabled);
     if (customSortDropdown) {
       customSortDropdown.style.pointerEvents = disabled ? 'none' : 'auto';
