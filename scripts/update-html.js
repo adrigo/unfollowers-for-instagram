@@ -29,13 +29,17 @@ try {
   const version = pkg.version;
 
   // Replace version numbers in index.html dynamically
-  indexHtml = indexHtml.replace(/IG Unfollowers v\d+\.\d+\.\d+/g, `IG Unfollowers v${version}`);
+  indexHtml = indexHtml.replace(/Unfollowers for Instagram v\d+\.\d+\.\d+/g, `Unfollowers for Instagram v${version}`);
   indexHtml = indexHtml.replace(/class="mockup-version-tag">v\d+\.\d+\.\d+</g, `class="mockup-version-tag">v${version}<`);
   indexHtml = indexHtml.replace(/id="bundle-version-badge">v\d+\.\d+\.\d+</g, `id="bundle-version-badge">v${version}<`);
 
   const startIndex = rawStartIndex + START_MARKER.length;
   const updatedHtml = indexHtml.substring(0, startIndex) + escapedCode + indexHtml.substring(endIndex);
   fs.writeFileSync(indexPath, updatedHtml, 'utf8');
+
+  // Copy minified JS bundle into extension/
+  const extMinPath = path.join(__dirname, '../extension/index.min.js');
+  fs.copyFileSync(minifiedPath, extMinPath);
 
   // Sync extension/manifest.json version with package.json
   const manifestPath = path.join(__dirname, '../extension/manifest.json');

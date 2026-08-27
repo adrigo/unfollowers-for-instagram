@@ -219,23 +219,23 @@ export function renderList(
             <div class="iu-sidebar-title">Filters:</div>
             <div class="iu-filter-list">
               <label class="iu-filter-label" style="display: flex; align-items: center; gap: 0.35rem;">
-                <input type="checkbox" id="iu-filter-nonfollowers" ${showNonFollowers ? 'checked' : ''} />
+                <input type="checkbox" id="iu-filter-nonfollowers" ${filterState.showNonFollowers ? 'checked' : ''} />
                 ${NON_FOLLOWERS_SVG} Non-followers
               </label>
               <label class="iu-filter-label" style="display: flex; align-items: center; gap: 0.35rem;">
-                <input type="checkbox" id="iu-filter-followers" ${showFollowers ? 'checked' : ''} />
+                <input type="checkbox" id="iu-filter-followers" ${filterState.showFollowers ? 'checked' : ''} />
                 ${FOLLOWS_YOU_SVG} Followers
               </label>
               <label class="iu-filter-label" style="display: flex; align-items: center; gap: 0.35rem;">
-                <input type="checkbox" id="iu-filter-new-unfollowers" ${showNewUnfollowersOnly ? 'checked' : ''} />
+                <input type="checkbox" id="iu-filter-new-unfollowers" ${filterState.showNewUnfollowersOnly ? 'checked' : ''} />
                 ${NEW_UNFOLLOWER_SVG} New Unfollowers Only
               </label>
               <label class="iu-filter-label" style="display: flex; align-items: center; gap: 0.35rem;">
-                <input type="checkbox" id="iu-filter-verified" ${showVerified ? 'checked' : ''} />
+                <input type="checkbox" id="iu-filter-verified" ${filterState.showVerified ? 'checked' : ''} />
                 ${VERIFIED_BADGE_SVG} Show Verified
               </label>
               <label class="iu-filter-label" style="display: flex; align-items: center; gap: 0.35rem;">
-                <input type="checkbox" id="iu-filter-private" ${showPrivate ? 'checked' : ''} />
+                <input type="checkbox" id="iu-filter-private" ${filterState.showPrivate ? 'checked' : ''} />
                 ${PRIVATE_LOCK_SVG} Show Private
               </label>
             </div>
