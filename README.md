@@ -1,9 +1,11 @@
-# IG Unfollowers
+# Unfollowers for Instagram (UIG)
 
-A beautiful, lightweight (~53KB), and secure browser-based utility that helps you identify Instagram accounts you are following but who do not follow you back.
+A beautiful, lightweight (~30KB), and secure browser-based utility that helps you identify accounts you are following but who do not follow you back. 
 
 > [!NOTE]
 > This tool runs **completely client-side** in your active browser session. It does not require downloading any apps, sharing your credentials (username/password) with third-party sites, or registering for external services.
+>
+> **Unfollowers for Instagram is an independent project and is not affiliated with, endorsed by, or associated with Instagram™ or Meta Platforms, Inc. Instagram™ is a trademark of Meta Platforms, Inc.**
 
 Created by [adrigo](https://adrigo.dev).
 
@@ -11,7 +13,7 @@ Created by [adrigo](https://adrigo.dev).
 
 ## ⚡ How It Works
 
-1. **Self-Contained Bundle:** The project bundles and minifies the source files into a single self-executing JavaScript snippet using `esbuild` in virtually **~5ms**.
+1. **Self-Contained Bundle:** The project bundles and minifies the source files into a single self-executing JavaScript snippet using `esbuild` in **~5ms**.
 2. **Non-Destructive Overlay:** Unlike destructive scripts that clear the browser viewport, this utility injects a beautiful **glassmorphic card modal** directly on top of your active Instagram tab. Closing the modal immediately restores the background page state.
 3. **GraphQL Queries:** The utility queries Instagram's internal GraphQL endpoints using your logged-in browser session cookies (`ds_user_id` and `csrftoken`), scanning your followed users and checking if they follow you back (reading the `follows_viewer` attribute).
 4. **Local Storage Caching:** Saves the followings list in your browser's local cache. Re-running the script allows you to instantly reuse the cached list ("Use Cache") instead of triggering a full fresh network scan.
@@ -38,7 +40,7 @@ npm run package:extension
 ```
 
 * **`npm run build`**: Compiles and minifies TypeScript source files ([src/](./src/)) into [`extension/index.min.js`](./extension/index.min.js), reads `"version"` from `package.json`, automatically syncs version badges across [`public/index.html`](./public/index.html) and [`extension/manifest.json`](./extension/manifest.json), and injects the Base64 script using `esbuild` and `scripts/update-html.js`.
-* **`npm run package:extension`**: Executes `npm run build`, runs `scripts/create-extension-icons.js` to render crisp active & dark PNG icons from [`src/assets/icon.svg`](./src/assets/icon.svg), and zips `extension.zip` in the project root.
+* **`npm run package:extension`**: Executes `npm run build`, runs `scripts/create-extension-icons.js` to render crisp active & dark PNG icons from [`src/assets/icon.svg`](./src/assets/icon.svg), and packages `extension.zip` in the project root.
 
 ---
 
@@ -52,8 +54,8 @@ This page features a modern glassmorphic look, including a CSS-only visual mocku
 Once you open `public/index.html` in your browser:
 
 #### Option A: Official Extension (Chrome, Edge, Brave, Firefox)
-- **Chrome / Edge / Brave / Kiwi Browser (Android):** Install from the [Chrome Web Store](https://chromewebstore.google.com/detail/ig-unfollowers/lejidbigpihdfpeomhfjlgnhjjeicdkk) or load unpacked extension from [`extension/`](./extension).
-- **Firefox:** Install from [Firefox Add-ons](https://addons.mozilla.org/en-US/firefox/addon/ig-unfollowers/) or load temporary add-on via `about:debugging`.
+- **Chrome / Edge / Brave / Kiwi Browser (Android):** Install from the [Chrome Web Store](https://chromewebstore.google.com/detail/unfollowers-for-instagram/lejidbigpihdfpeomhfjlgnhjjeicdkk) or load unpacked extension from [`extension/`](./extension).
+- **Firefox:** Install from [Firefox Add-ons](https://addons.mozilla.org/en-US/firefox/addon/unfollowers-for-instagram/) or load temporary add-on via `about:debugging`.
 
 #### Option B: Developer Console (Manual Execution)
 1. Click **Copy Code** on the landing page to copy the script bundle.
