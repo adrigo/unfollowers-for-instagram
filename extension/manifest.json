@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
-  "name": "IG Unfollowers",
-  "version": "1.2.0",
-  "description": "Securely identify Instagram accounts you follow who don't follow you back. 100% private, client-side, zero login required.",
+  "name": "Unfollowers for Instagram",
+  "version": "1.3.0",
+  "description": "Identify accounts you follow that don't follow you back. 100% private & client-side. Not affiliated with Instagram or Meta.",
   "permissions": [
     "activeTab",
     "scripting"
@@ -18,7 +18,7 @@
   },
   "action": {
     "default_popup": "popup.html",
-    "default_title": "IG Unfollowers",
+    "default_title": "Unfollowers for Instagram",
     "default_icon": {
       "16": "icon16-dark.png",
       "48": "icon48-dark.png",

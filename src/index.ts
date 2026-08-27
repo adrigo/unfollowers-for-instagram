@@ -37,7 +37,7 @@ const appVersion = (typeof chrome !== 'undefined' && chrome.runtime && chrome.ru
         <div class="iu-header">
           <div class="iu-title-group">
             <div class="iu-logo">${APP_LOGO_SVG}</div>
-            <span class="iu-title">IG Unfollowers</span>
+            <span class="iu-title">Unfollowers for Instagram</span>
             <span class="iu-version-tag">v${appVersion}</span>
           </div>
           <button class="iu-close-btn" id="iu-close-btn">&times;</button>
@@ -95,7 +95,7 @@ const appVersion = (typeof chrome !== 'undefined' && chrome.runtime && chrome.ru
           <div class="iu-logo">
             ${APP_LOGO_SVG}
           </div>
-          <span class="iu-title">IG Unfollowers</span>
+          <span class="iu-title">Unfollowers for Instagram</span>
           <span class="iu-version-tag">v${appVersion}</span>
         </div>
         <button class="iu-close-btn" id="iu-close-btn">&times;</button>

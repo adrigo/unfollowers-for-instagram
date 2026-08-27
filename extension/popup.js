@@ -1,5 +1,5 @@
 /**
- * IG Unfollowers - Popup Controller
+ * Unfollowers for Instagram - Popup Controller
  * Manages active tab status detection, script injection, and live tab navigation sync.
  */
 

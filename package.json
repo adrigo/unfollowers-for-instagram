@@ -1,13 +1,14 @@
 {
-  "name": "ig-unfollowers",
-  "version": "1.2.0",
-  "description": "Secure, lightweight browser utility to detect Instagram unfollowers.",
+  "name": "unfollowers-for-instagram",
+  "version": "1.3.0",
+  "description": "Identify accounts you follow that don't follow you back. 100% private, client-side, zero login required.",
   "scripts": {
     "build": "esbuild src/index.ts --bundle --loader:.svg=text --loader:.css=text --minify --outfile=dist/index.min.js && node scripts/update-html.js",
     "dev": "esbuild src/index.ts --bundle --loader:.svg=text --loader:.css=text --outfile=dist/index.js --serve=3000",
     "package:extension": "npm run build && node scripts/create-extension-icons.js && (cd extension && zip -r ../extension.zip . -x extension.zip)"
   },
   "devDependencies": {
+    "@resvg/resvg-js-cli": "^2.6.2",
     "esbuild": "^0.20.2",
     "typescript": "^5.4.5"
   }

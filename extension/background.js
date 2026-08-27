@@ -1,5 +1,5 @@
 /**
- * IG Unfollowers - Background Service Worker
+ * Unfollowers for Instagram - Background Service Worker
  * Manages active tab status detection and dynamic toolbar icon state.
  */
 
