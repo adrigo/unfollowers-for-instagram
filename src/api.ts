@@ -74,8 +74,9 @@ export const fetchFollowings = async (
     hasNext = edgeFollow.page_info.has_next_page;
     endCursor = edgeFollow.page_info.end_cursor;
 
-    // Yield thread to keep browser UI active
-    await new Promise(resolve => setTimeout(resolve, 50));
+    // Randomized delay between 500ms and 1000ms to prevent Instagram rate limits / security checkpoints
+    const delay = 500 + Math.random() * 500;
+    await new Promise(resolve => setTimeout(resolve, delay));
   }
 
   // Sort alphabetically by username

@@ -84,7 +84,7 @@ When you run `npm run package:extension`, the build pipeline automatically:
 * **Cache Export & Import (Cross-Device Migration):** Export your full cache state as a JSON file (`iu_cache_<user_id>.json`) and import it onto any other browser or computer to move your scan history without re-scanning. Note: Imported files must be a valid JSON file previously exported by this tool (containing `timestamp` and `users`).
 * **Sidebar Quick Controls:** Instant **New Scan**, **Grid View**, **Import**, and **Export** actions accessible right from the sidebar.
 * **Sequential Bulk Unfollow:** Select multiple users and unfollow them sequentially with a dedicated pause/cancel progress banner.
-* **Randomized Timing Delays (Anti-Spam):** Pauses requests with a random timing jitter between `2.0s` and `3.5s` to mimic human pacing and prevent automated bot detection.
+* **Randomized Timing Delays (Anti-Spam):** Applies a randomized timing jitter (`500ms`–`1000ms` per batch of 50 users for GraphQL scans, and `2.0s`–`3.5s` per unfollow) to mimic human pacing and prevent automated security checkpoints.
 * **Auto-Pause on Rate Limits:** Intercepts HTTP 429 (Too Many Requests) errors from Instagram, automatically pausing the bulk loop and prompting the user to wait instead of letting subsequent requests fail.
 * **Network Scan Abort Safety:** Closing the modal immediately calls `abort()` on an active `AbortController`, halting background GraphQL calls and avoiding rate limits.
 * **Page Exit Protection:** Warns the user if they try to close or refresh the tab during an active bulk unfollow process to prevent accidental progress loss.
@@ -98,6 +98,9 @@ When you run `npm run package:extension`, the build pipeline automatically:
 
 > [!WARNING]
 > **Use Moderately:** Interacting with private APIs too quickly can flag your account. We recommend running scans no more than once every 10-15 minutes, and unfollowing users in moderation.
+
+> [!TIP]
+> **Humanized Request Pacing:** GraphQL pagination queries automatically apply a 500ms–1000ms randomized delay per batch of 50 users (~15s for 1,000 followings). This prevents burst request spikes and protects your account against automated security checkpoints.
 
 > [!TIP]
 > **Audit Friendly:** The code contains zero external dependencies or remote script calls. You can easily audit [src/api.ts](./src/api.ts) to verify that no data is ever stored, collected, or transmitted to third-party servers.
