@@ -1,6 +1,6 @@
 # Unfollowers for Instagram (UIG)
 
-A beautiful, lightweight (~30KB), and secure browser-based utility that helps you identify accounts you are following but who do not follow you back. 
+A beautiful, lightweight (~54KB), and secure browser-based utility that helps you identify accounts you are following but who do not follow you back.
 
 > [!NOTE]
 > This tool runs **completely client-side** in your active browser session. It does not require downloading any apps, sharing your credentials (username/password) with third-party sites, or registering for external services.
