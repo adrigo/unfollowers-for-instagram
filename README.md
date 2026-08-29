@@ -29,7 +29,7 @@ Created by [adrigo](https://adrigo.dev).
 - **Package Manager:** npm >= 9.0.0
 
 ```bash
-# 1. Install lightweight devDependencies (esbuild & typescript)
+# 1. Install lightweight devDependencies (esbuild, typescript & @resvg/resvg-js)
 npm install
 
 # 2. Build TypeScript bundle & sync index.html / extension/index.min.js
@@ -133,7 +133,7 @@ When you run `npm run package:extension`, the build pipeline automatically:
 │   ├── types.ts           # TypeScript interfaces (UserNode, CacheData)
 │   └── ui.ts              # Core list drawing, event delegation, search/filters, bulk loops
 ├── tsconfig.json          # TypeScript configuration options
-└── package.json           # Dev scripts & dependencies (esbuild + typescript)
+└── package.json           # Dev scripts & dependencies (esbuild + typescript + resvg)
 ```
 
 ---
