@@ -1,6 +1,6 @@
 const fs = require('fs');
 const path = require('path');
-const { execSync } = require('child_process');
+const { Resvg } = require('@resvg/resvg-js');
 
 const masterSvgPath = path.join(__dirname, '../src/assets/icon.svg');
 const extDir = path.join(__dirname, '../extension');
@@ -18,29 +18,40 @@ if (!fs.existsSync(extDir)) {
 // Copy master SVG to public/favicon.svg
 fs.copyFileSync(masterSvgPath, publicFaviconPath);
 
+const masterSvgBuffer = fs.readFileSync(masterSvgPath);
+
+function renderPng(svgInput, size, outPath) {
+  const resvg = new Resvg(svgInput, {
+    fitTo: {
+      mode: 'width',
+      value: size,
+    },
+  });
+  const pngData = resvg.render();
+  const pngBuffer = pngData.asPng();
+  fs.writeFileSync(outPath, pngBuffer);
+}
+
 // Render crisp active PNG icon sizes
 [16, 48, 128].forEach(size => {
   const outPath = path.join(extDir, `icon${size}.png`);
-  execSync(`npx -y @resvg/resvg-js-cli --fit-width ${size} "${masterSvgPath}" "${outPath}"`, { stdio: 'inherit' });
+  renderPng(masterSvgBuffer, size, outPath);
 });
 
 // Create dark/inactive SVG variant
-const masterSvgContent = fs.readFileSync(masterSvgPath, 'utf-8');
+const masterSvgContent = masterSvgBuffer.toString('utf-8');
 const darkSvgContent = masterSvgContent
   .replace(/#f97316/g, '#3a3430')
   .replace(/#ec4899/g, '#44323c')
   .replace(/#7c3aed/g, '#352b44')
   .replace(/#ffffff/g, '#777068');
 
-const darkSvgTempPath = path.join(extDir, 'temp-dark.svg');
-fs.writeFileSync(darkSvgTempPath, darkSvgContent);
+const darkSvgBuffer = Buffer.from(darkSvgContent, 'utf-8');
 
 // Render crisp dark PNG icon sizes for non-IG tabs
 [16, 48, 128].forEach(size => {
   const outPath = path.join(extDir, `icon${size}-dark.png`);
-  execSync(`npx -y @resvg/resvg-js-cli --fit-width ${size} "${darkSvgTempPath}" "${outPath}"`, { stdio: 'inherit' });
+  renderPng(darkSvgBuffer, size, outPath);
 });
-
-fs.unlinkSync(darkSvgTempPath);
 
 console.log('Successfully synced public/favicon.svg and rendered active/dark extension icon PNGs from src/assets/icon.svg!');

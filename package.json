@@ -8,7 +8,7 @@
     "package:extension": "npm run build && node scripts/create-extension-icons.js && (cd extension && zip -r ../extension.zip . -x extension.zip)"
   },
   "devDependencies": {
-    "@resvg/resvg-js-cli": "^2.6.2",
+    "@resvg/resvg-js": "^2.6.2",
     "esbuild": "^0.20.2",
     "typescript": "^5.4.5"
   }
