@@ -10,5 +10,5 @@ dist/
 # Agent-specific directories
 .agents/
 
-# Built extension zip
-extension.zip
+# Built package archives
+*.zip
