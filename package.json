@@ -5,7 +5,7 @@
   "scripts": {
     "build": "esbuild src/index.ts --bundle --loader:.svg=text --loader:.css=text --minify --outfile=dist/index.min.js && node scripts/update-html.js",
     "dev": "esbuild src/index.ts --bundle --loader:.svg=text --loader:.css=text --outfile=dist/index.js --serve=3000",
-    "package:extension": "npm run build && node scripts/create-extension-icons.js && (cd extension && zip -r ../extension.zip . -x extension.zip)"
+    "package:extension": "npm run build && node scripts/create-extension-icons.js && (cd extension && zip -q -r ../extension.zip . -x extension.zip)"
   },
   "devDependencies": {
     "@resvg/resvg-js": "^2.6.2",

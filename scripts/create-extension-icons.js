@@ -1,6 +1,5 @@
 const fs = require('fs');
 const path = require('path');
-const { Resvg } = require('@resvg/resvg-js');
 
 const masterSvgPath = path.join(__dirname, '../src/assets/icon.svg');
 const extDir = path.join(__dirname, '../extension');
@@ -14,6 +13,33 @@ if (!fs.existsSync(masterSvgPath)) {
 if (!fs.existsSync(extDir)) {
   fs.mkdirSync(extDir, { recursive: true });
 }
+
+// Check if icons are already up to date
+const isForce = process.argv.includes('--force');
+const masterStat = fs.statSync(masterSvgPath);
+const targetFiles = [
+  publicFaviconPath,
+  path.join(extDir, 'icon16.png'),
+  path.join(extDir, 'icon48.png'),
+  path.join(extDir, 'icon128.png'),
+  path.join(extDir, 'icon16-dark.png'),
+  path.join(extDir, 'icon48-dark.png'),
+  path.join(extDir, 'icon128-dark.png'),
+];
+
+const allExistAndFresh = !isForce && targetFiles.every(file => {
+  if (!fs.existsSync(file)) return false;
+  const fileStat = fs.statSync(file);
+  return fileStat.mtimeMs >= masterStat.mtimeMs;
+});
+
+if (allExistAndFresh) {
+  console.log('Extension icons are up to date.');
+  process.exit(0);
+}
+
+// Lazy-require @resvg/resvg-js only when rendering is actually required
+const { Resvg } = require('@resvg/resvg-js');
 
 // Copy master SVG to public/favicon.svg
 fs.copyFileSync(masterSvgPath, publicFaviconPath);
