@@ -501,6 +501,12 @@
       transform: translateY(-3px);
     }
 
+    .feature-header {
+      display: flex;
+      align-items: center;
+      gap: 0.85rem;
+    }
+
     .feature-icon {
       width: 40px;
       height: 40px;
@@ -511,6 +517,7 @@
       align-items: center;
       justify-content: center;
       color: var(--ig-pink);
+      flex-shrink: 0;
     }
 
     .feature-title {
@@ -625,8 +632,6 @@
       color: var(--text-muted);
       line-height: 1.55;
     }
-
-
 
     footer {
       text-align: center;
@@ -746,7 +751,6 @@
       .hero-desc {
         text-align: center;
       }
-
 
     }
   </style>
@@ -1258,100 +1262,114 @@
     <!-- Feature Grid -->
     <div class="features-grid">
       <div class="feature-card">
-        <div class="feature-icon">
-          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 1024 1024">
-            <path fill="currentColor"
-              d="M224 448a32 32 0 0 0-32 32v384a32 32 0 0 0 32 32h576a32 32 0 0 0 32-32V480a32 32 0 0 0-32-32zm0-64h576a96 96 0 0 1 96 96v384a96 96 0 0 1-96 96H224a96 96 0 0 1-96-96V480a96 96 0 0 1 96-96" />
-            <path fill="currentColor"
-              d="M512 544a32 32 0 0 1 32 32v192a32 32 0 1 1-64 0V576a32 32 0 0 1 32-32m192-160v-64a192 192 0 1 0-384 0v64zM512 64a256 256 0 0 1 256 256v128H256V320A256 256 0 0 1 512 64" />
-          </svg>
+        <div class="feature-header">
+          <div class="feature-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 1024 1024">
+              <path fill="currentColor"
+                d="M224 448a32 32 0 0 0-32 32v384a32 32 0 0 0 32 32h576a32 32 0 0 0 32-32V480a32 32 0 0 0-32-32zm0-64h576a96 96 0 0 1 96 96v384a96 96 0 0 1-96 96H224a96 96 0 0 1-96-96V480a96 96 0 0 1 96-96" />
+              <path fill="currentColor"
+                d="M512 544a32 32 0 0 1 32 32v192a32 32 0 1 1-64 0V576a32 32 0 0 1 32-32m192-160v-64a192 192 0 1 0-384 0v64zM512 64a256 256 0 0 1 256 256v128H256V320A256 256 0 0 1 512 64" />
+            </svg>
+          </div>
+          <h3 class="feature-title">Privacy First</h3>
         </div>
-        <h3 class="feature-title">Privacy First</h3>
         <p class="feature-desc">No login required. The utility queries the Instagram API inside your own active tab,
           keeping credentials fully secure.</p>
       </div>
 
       <div class="feature-card">
-        <div class="feature-icon">
-          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">
-            <path fill="currentColor"
-              d="M14 14.252v2.09A6 6 0 0 0 6 22H4a8 8 0 0 1 10-7.749M12 13c-3.315 0-6-2.685-6-6s2.685-6 6-6s6 2.685 6 6s-2.685 6-6 6m0-2c2.21 0 4-1.79 4-4s-1.79-4-4-4s-4 1.79-4 4s1.79 4 4 4m7 6.586l2.121-2.121l1.415 1.414L20.414 19l2.121 2.121l-1.414 1.415L19 20.414l-2.121 2.121l-1.415-1.414L17.587 19l-2.121-2.121l1.414-1.415z" />
-          </svg>
+        <div class="feature-header">
+          <div class="feature-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">
+              <path fill="currentColor"
+                d="M14 14.252v2.09A6 6 0 0 0 6 22H4a8 8 0 0 1 10-7.749M12 13c-3.315 0-6-2.685-6-6s2.685-6 6-6s6 2.685 6 6s-2.685 6-6 6m0-2c2.21 0 4-1.79 4-4s-1.79-4-4-4s-4 1.79-4 4s1.79 4 4 4m7 6.586l2.121-2.121l1.415 1.414L20.414 19l2.121 2.121l-1.414 1.415L19 20.414l-2.121 2.121l-1.415-1.414L17.587 19l-2.121-2.121l1.414-1.415z" />
+            </svg>
+          </div>
+          <h3 class="feature-title">Sequential Bulk Unfollow</h3>
         </div>
-        <h3 class="feature-title">Sequential Bulk Unfollow</h3>
         <p class="feature-desc">Select multiple accounts and unfollow them sequentially with configurable human-like
           delays to bypass Instagram's spam detection.</p>
       </div>
       <div class="feature-card">
-        <div class="feature-icon">
-          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">
-            <g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2">
-              <path d="M4 6a8 3 0 1 0 16 0A8 3 0 1 0 4 6" />
-              <path d="M4 6v6a8 3 0 0 0 16 0V6" />
-              <path d="M4 12v6a8 3 0 0 0 16 0v-6" />
-            </g>
-          </svg>
+        <div class="feature-header">
+          <div class="feature-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">
+              <g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2">
+                <path d="M4 6a8 3 0 1 0 16 0A8 3 0 1 0 4 6" />
+                <path d="M4 6v6a8 3 0 0 0 16 0V6" />
+                <path d="M4 12v6a8 3 0 0 0 16 0v-6" />
+              </g>
+            </svg>
+          </div>
+          <h3 class="feature-title">Local Caching</h3>
         </div>
-        <h3 class="feature-title">Local Caching</h3>
         <p class="feature-desc">Stores scanned data directly in your browser's local storage. Re-open the overlay to
           immediately analyze cached lists with human-readable age timestamps (e.g., 1 day, 2 hours ago).</p>
       </div>
 
       <div class="feature-card">
-        <div class="feature-icon">
-          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" style="color: #f472b6;">
-            <g fill="none" fill-rule="evenodd">
-              <path
-                d="m12.594 23.258l-.012.002l-.071.035l-.02.004l-.014-.004l-.071-.036q-.016-.004-.024.006l-.004.01l-.017.428l.005.02l.01.013l.104.074l.015.004l.012-.004l.104-.074l.012-.016l.004-.017l-.017-.427q-.004-.016-.016-.018m.264-.113l-.014.002l-.184.093l-.01.01-.003.011l.018.43l.005.012l.008.008l.201.092q.019.005.029-.008l.004-.014l-.034-.614q-.005-.019-.02-.022m-.715.002a.02.02 0 0 0-.027.006l-.006.014l-.034.614q.001.018.017.024l.015-.002l.201-.093l.01-.008l.003-.011l.018-.43l-.003-.012l-.01-.01z" />
-              <path fill="currentColor"
-                d="M11 2a5 5 0 1 0 0 10a5 5 0 0 0 0-10M8 7a3 3 0 1 1 6 0a3 3 0 0 1-6 0M4 18.5c0-.18.09-.489.413-.899c.316-.4.804-.828 1.451-1.222C7.157 15.589 8.977 15 11 15q.563 0 1.105.059a1 1 0 1 0 .211-1.99A13 13 0 0 0 11 13c-2.395 0-4.575.694-6.178 1.672c-.8.488-1.484 1.064-1.978 1.69C2.358 16.976 2 17.713 2 18.5c0 .845.411 1.511 1.003 1.986c.56.45 1.299.748 2.084.956C6.665 21.859 8.771 22 11 22l.685-.005a1 1 0 1 0-.027-2L11 20c-2.19 0-4.083-.143-5.4-.492c-.663-.175-1.096-.382-1.345-.582C4.037 18.751 4 18.622 4 18.5M18 14a1 1 0 0 1 1 1v3a1 1 0 1 1-2 0v-3a1 1 0 0 1 1-1m0 6a1 1 0 0 0-.117 1.993l.119.007a1 1 0 0 0 .117-1.993z" />
-            </g>
-          </svg>
+        <div class="feature-header">
+          <div class="feature-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" style="color: #f472b6;">
+              <g fill="none" fill-rule="evenodd">
+                <path
+                  d="m12.594 23.258l-.012.002l-.071.035l-.02.004l-.014-.004l-.071-.036q-.016-.004-.024.006l-.004.01l-.017.428l.005.02l.01.013l.104.074l.015.004l.012-.004l.104-.074l.012-.016l.004-.017l-.017-.427q-.004-.016-.016-.018m.264-.113l-.014.002l-.184.093l-.01.01-.003.011l.018.43l.005.012l.008.008l.201.092q.019.005.029-.008l.004-.014l-.034-.614q-.005-.019-.02-.022m-.715.002a.02.02 0 0 0-.027.006l-.006.014l-.034.614q.001.018.017.024l.015-.002l.201-.093l.01-.008l.003-.011l.018-.43l-.003-.012l-.01-.01z" />
+                <path fill="currentColor"
+                  d="M11 2a5 5 0 1 0 0 10a5 5 0 0 0 0-10M8 7a3 3 0 1 1 6 0a3 3 0 0 1-6 0M4 18.5c0-.18.09-.489.413-.899c.316-.4.804-.828 1.451-1.222C7.157 15.589 8.977 15 11 15q.563 0 1.105.059a1 1 0 1 0 .211-1.99A13 13 0 0 0 11 13c-2.395 0-4.575.694-6.178 1.672c-.8.488-1.484 1.064-1.978 1.69C2.358 16.976 2 17.713 2 18.5c0 .845.411 1.511 1.003 1.986c.56.45 1.299.748 2.084.956C6.665 21.859 8.771 22 11 22l.685-.005a1 1 0 1 0-.027-2L11 20c-2.19 0-4.083-.143-5.4-.492c-.663-.175-1.096-.382-1.345-.582C4.037 18.751 4 18.622 4 18.5M18 14a1 1 0 0 1 1 1v3a1 1 0 1 1-2 0v-3a1 1 0 0 1 1-1m0 6a1 1 0 0 0-.117 1.993l.119.007a1 1 0 0 0 .117-1.993z" />
+              </g>
+            </svg>
+          </div>
+          <h3 class="feature-title">New Unfollowers Alerts</h3>
         </div>
-        <h3 class="feature-title">New Unfollowers Alerts</h3>
         <p class="feature-desc">Instantly highlights new accounts that unfollowed you since your last query by comparing
           current API data against your cached baseline.</p>
       </div>
 
       <div class="feature-card">
-        <div class="feature-icon">
-          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">
-            <path fill="none" stroke="currentColor" stroke-width="1.5"
-              d="M3 7.4V3.6a.6.6 0 0 1 .6-.6h5.8a.6.6 0 0 1 .6.6v3.8a.6.6 0 0 1-.6.6H3.6a.6.6 0 0 1-.6-.6Zm11 13v-3.8a.6.6 0 0 1 .6.6h5.8a.6.6 0 0 1 .6.6v3.8a.6.6 0 0 1-.6.6h-5.8a.6.6 0 0 1-.6-.6Zm0-8V3.6a.6.6 0 0 1 .6-.6h5.8a.6.6 0 0 1 .6.6v8.8a.6.6 0 0 1-.6.6h-5.8a.6.6 0 0 1-.6-.6Zm-11 8v-8.8a.6.6 0 0 1 .6-.6h5.8a.6.6 0 0 1 .6.6v8.8a.6.6 0 0 1-.6.6H3.6a.6.6 0 0 1-.6-.6Z" />
-          </svg>
+        <div class="feature-header">
+          <div class="feature-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">
+              <path fill="none" stroke="currentColor" stroke-width="1.5"
+                d="M3 7.4V3.6a.6.6 0 0 1 .6-.6h5.8a.6.6 0 0 1 .6.6v3.8a.6.6 0 0 1-.6.6H3.6a.6.6 0 0 1-.6-.6Zm11 13v-3.8a.6.6 0 0 1 .6.6h5.8a.6.6 0 0 1 .6.6v3.8a.6.6 0 0 1-.6.6h-5.8a.6.6 0 0 1-.6-.6Zm0-8V3.6a.6.6 0 0 1 .6-.6h5.8a.6.6 0 0 1 .6.6v8.8a.6.6 0 0 1-.6.6h-5.8a.6.6 0 0 1-.6-.6Zm-11 8v-8.8a.6.6 0 0 1 .6-.6h5.8a.6.6 0 0 1 .6.6v8.8a.6.6 0 0 1-.6.6H3.6a.6.6 0 0 1-.6-.6Z" />
+            </svg>
+          </div>
+          <h3 class="feature-title">Custom Layouts & Quick Scan</h3>
         </div>
-        <h3 class="feature-title">Custom Layouts & Quick Scan</h3>
         <p class="feature-desc">Toggle between List View or Grid View, and run instant fresh scans directly from the
           sidebar actions panel.</p>
       </div>
 
       <div class="feature-card">
-        <div class="feature-icon">
-          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">
-            <g fill="none" stroke="currentColor" stroke-linejoin="round" stroke-width="2">
-              <path stroke-linecap="round" d="M7 21a2 2 0 0 1-2-2V3h9l5 5v11a2 2 0 0 1-2 2z" />
-              <path d="M13 3v6h6" />
-              <path stroke-linecap="round" d="M9 13h6m-6 4h6" />
-            </g>
-          </svg>
+        <div class="feature-header">
+          <div class="feature-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">
+              <g fill="none" stroke="currentColor" stroke-linejoin="round" stroke-width="2">
+                <path stroke-linecap="round" d="M7 21a2 2 0 0 1-2-2V3h9l5 5v11a2 2 0 0 1-2 2z" />
+                <path d="M13 3v6h6" />
+                <path stroke-linecap="round" d="M9 13h6m-6 4h6" />
+              </g>
+            </svg>
+          </div>
+          <h3 class="feature-title">Cache Export & Import</h3>
         </div>
-        <h3 class="feature-title">Cache Export & Import</h3>
         <p class="feature-desc">Export your cached followings list as a JSON backup and import it onto another browser
           or device to migrate your scan data without re-scanning.</p>
       </div>
 
       <div class="feature-card">
-        <div class="feature-icon">
-          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">
-            <g fill="currentColor">
-              <path
-                d="M12 14a1 1 0 0 1-1-1v-3a1 1 0 1 1 2 0v3a1 1 0 0 1-1 1m-1.5 2.5a1.5 1.5 0 1 1 3 0a1.5 1.5 0 0 1-3 0" />
-              <path
-                d="M10.23 3.216c.75-1.425 2.79-1.425 3.54 0l8.343 15.852C22.814 20.4 21.85 22 20.343 22H3.657c-1.505 0-2.47-1.6-1.77-2.931zM20.344 20L12 4.147L3.656 20z" />
-            </g>
-          </svg>
+        <div class="feature-header">
+          <div class="feature-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">
+              <g fill="currentColor">
+                <path
+                  d="M12 14a1 1 0 0 1-1-1v-3a1 1 0 1 1 2 0v3a1 1 0 0 1-1 1m-1.5 2.5a1.5 1.5 0 1 1 3 0a1.5 1.5 0 0 1-3 0" />
+                <path
+                  d="M10.23 3.216c.75-1.425 2.79-1.425 3.54 0l8.343 15.852C22.814 20.4 21.85 22 20.343 22H3.657c-1.505 0-2.47-1.6-1.77-2.931zM20.344 20L12 4.147L3.656 20z" />
+              </g>
+            </svg>
+          </div>
+          <h3 class="feature-title">Humanized Anti-Block Controls</h3>
         </div>
-        <h3 class="feature-title">Humanized Anti-Block Controls</h3>
         <p class="feature-desc">Applies randomized 500ms–1000ms request delays per batch (~15s for 1,000 followings) and
           auto-pauses on HTTP 429 to safeguard your account against security checkpoints.</p>
       </div>
