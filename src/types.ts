@@ -19,34 +19,33 @@ export interface UnfollowResult {
   status: number;
 }
 
-export interface GraphQLEdgeNode {
-  id: string;
+// Instagram private REST API v1 — /api/v1/friendships/<userId>/following/
+export interface V1FriendshipUser {
+  pk: string;
   username: string;
-  full_name?: string;
+  full_name: string;
   profile_pic_url: string;
   is_private: boolean;
   is_verified: boolean;
-  follows_viewer: boolean;
 }
 
-export interface GraphQLPageInfo {
-  has_next_page: boolean;
-  end_cursor: string;
+export interface V1FriendshipsResponse {
+  users: V1FriendshipUser[];
+  next_max_id?: string;
+  big_list?: boolean;
+  status: string;
 }
 
-export interface GraphQLEdgeFollow {
-  count: number;
-  page_info: GraphQLPageInfo;
-  edges: Array<{ node: GraphQLEdgeNode }>;
+// Instagram private REST API v1 — POST /api/v1/friendships/show_many/
+export interface FriendshipStatus {
+  following: boolean;
+  followed_by: boolean;    // true = that user follows the authenticated user
+  is_private?: boolean;
 }
 
-export interface GraphQLResponse {
-  data?: {
-    user?: {
-      edge_follow?: GraphQLEdgeFollow;
-    };
-  };
-  errors?: Array<{ message?: string }>;
+export interface ShowManyResponse {
+  friendship_statuses: Record<string, FriendshipStatus>;
+  status: string;
 }
 
 export type SortOption =
@@ -56,7 +55,7 @@ export type SortOption =
   | 'private-first'
   | 'verified-first';
 
-export type ScanProgressCallback = (scanned: number, total: number) => void;
+export type ScanProgressCallback = (scanned: number, total: number, phase?: 'following' | 'followers') => void;
 
 export interface UserFilterState {
   showNonFollowers: boolean;
