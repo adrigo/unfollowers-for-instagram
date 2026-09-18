@@ -15,9 +15,16 @@ Created by [adrigo](https://adrigo.dev).
 
 1. **Self-Contained Bundle:** The project bundles and minifies the source files into a single self-executing JavaScript snippet using `esbuild` in **~5ms**.
 2. **Non-Destructive Overlay:** Unlike destructive scripts that clear the browser viewport, this utility injects a beautiful **glassmorphic card modal** directly on top of your active Instagram tab. Closing the modal immediately restores the background page state.
-3. **GraphQL Queries:** The utility queries Instagram's internal GraphQL endpoints using your logged-in browser session cookies (`ds_user_id` and `csrftoken`), scanning your followed users and checking if they follow you back (reading the `follows_viewer` attribute).
+3. **2-Phase REST API Scanning:** Instagram has deprecated its internal GraphQL endpoints for friendship queries. The utility now queries Instagram's private REST API v1 (`/api/v1/friendships/`) in two sequential phases (Phase 1: Following list, Phase 2: Followers list) using your active session cookies (`ds_user_id` and `csrftoken`).
 4. **Local Storage Caching:** Saves the followings list in your browser's local cache. Re-running the script allows you to instantly reuse the cached list ("Use Cache") instead of triggering a full fresh network scan.
 5. **Base64 Encapsulation:** The compiled script is encoded into a Base64 string and decoded at runtime using `atob()`. This encapsulates the script logic, preventing automated crawlers (like Google Safe Browsing) from performing static analysis of Instagram's API keywords on your landing page and triggering false-positive deceptive site warnings.
+
+> [!IMPORTANT]
+> **GraphQL Endpoint Deprecation & 2-Phase Scanning:** Instagram deprecated its internal GraphQL endpoints for friendship lists. The scanner now operates via Instagram REST API v1 in **2 sequential phases**:
+> 1. **Phase 1 (Following List):** Fetches the full list of accounts you follow.
+> 2. **Phase 2 (Followers List):** Fetches your followers list to compare and determine followback status (`followsViewer`).
+>
+> **Note on Speed:** Because both lists must be fetched sequentially with anti-spam rate limiting, full network scans take slightly longer to complete safely than before. However, local storage caching allows instant re-runs without repeating full network scans.
 
 ---
 
@@ -84,9 +91,9 @@ When you run `npm run package:extension`, the build pipeline automatically:
 * **Cache Export & Import (Cross-Device Migration):** Export your full cache state as a JSON file (`iu_cache_<user_id>.json`) and import it onto any other browser or computer to move your scan history without re-scanning. Note: Imported files must be a valid JSON file previously exported by this tool (containing `timestamp` and `users`).
 * **Sidebar Quick Controls:** Instant **New Scan**, **Grid View**, **Import**, and **Export** actions accessible right from the sidebar.
 * **Sequential Bulk Unfollow:** Select multiple users and unfollow them sequentially with a dedicated pause/cancel progress banner.
-* **Randomized Timing Delays (Anti-Spam):** Applies a randomized timing jitter (`500ms`–`1000ms` per batch of 50 users for GraphQL scans, and `2.0s`–`3.5s` per unfollow) to mimic human pacing and prevent automated security checkpoints.
+* **Randomized Timing Delays (Anti-Spam):** Applies a randomized timing jitter (`300ms`–`600ms` per page of 50 users for REST API scans, and `2.0s`–`3.5s` per unfollow) to mimic human pacing and prevent automated security checkpoints.
 * **Auto-Pause on Rate Limits:** Intercepts HTTP 429 (Too Many Requests) errors from Instagram, automatically pausing the bulk loop and prompting the user to wait instead of letting subsequent requests fail.
-* **Network Scan Abort Safety:** Closing the modal immediately calls `abort()` on an active `AbortController`, halting background GraphQL calls and avoiding rate limits.
+* **Network Scan Abort Safety:** Closing the modal immediately calls `abort()` on an active `AbortController`, halting background API calls and avoiding rate limits.
 * **Page Exit Protection:** Warns the user if they try to close or refresh the tab during an active bulk unfollow process to prevent accidental progress loss.
 * **Custom Layouts:** Toggle between a detailed List View or a compact Grid View.
 * **Detailed Statistics Bar:** View live counts of Non-followers, Followers, Verified profiles, and Private accounts at a glance.
@@ -100,7 +107,7 @@ When you run `npm run package:extension`, the build pipeline automatically:
 > **Use Moderately:** Interacting with private APIs too quickly can flag your account. We recommend running scans no more than once every 10-15 minutes, and unfollowing users in moderation.
 
 > [!TIP]
-> **Humanized Request Pacing:** GraphQL pagination queries automatically apply a 500ms–1000ms randomized delay per batch of 50 users (~15s for 1,000 followings). This prevents burst request spikes and protects your account against automated security checkpoints.
+> **Humanized Request Pacing:** REST API pagination queries automatically apply a 300ms–600ms randomized delay per page of 50 users. This prevents burst request spikes and protects your account against automated security checkpoints.
 
 > [!TIP]
 > **Audit Friendly:** The code contains zero external dependencies or remote script calls. You can easily audit [src/api.ts](./src/api.ts) to verify that no data is ever stored, collected, or transmitted to third-party servers.

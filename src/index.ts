@@ -177,16 +177,33 @@ const appVersion = (typeof chrome !== 'undefined' && chrome.runtime && chrome.ru
           <div class="iu-progress-bar-container">
             <div class="iu-progress-bar" id="iu-progress-bar"></div>
           </div>
+          <div style="margin-top: 0.75rem; background: rgba(59, 130, 246, 0.08); border: 1px solid rgba(59, 130, 246, 0.2); border-radius: 10px; padding: 0.75rem 1rem; font-size: 0.8rem; color: #93c5fd; max-width: 420px; text-align: left; line-height: 1.45; box-sizing: border-box;">
+            <strong>Note:</strong> Due to recent internal changes on Instagram, scanning now runs in two safe stages (scanning your followings first, then checking followbacks). It takes a few extra seconds, but keeps your scan accurate and account safe.
+          </div>
         </div>
       `);
 
       const scanStatusEl = document.getElementById('iu-scan-status')!;
       const progressBarEl = document.getElementById('iu-progress-bar')!;
 
-      const followedUsers = await fetchFollowings(ds_user_id, (scanned, total) => {
-        const percentage = Math.round((scanned / total) * 100);
-        progressBarEl.style.width = `${percentage}%`;
-        scanStatusEl.textContent = `Scanned ${scanned} of ${total} followings (${percentage}%)...`;
+      const followedUsers = await fetchFollowings(ds_user_id, (scanned, total, phase) => {
+        const isFollowers = phase === 'followers';
+        const label = isFollowers ? 'Scanning followers list' : 'Scanning following list';
+
+        if (total > 0) {
+          // Show real per-phase percentage; split bar into two halves:
+          // following → 0–50 %, followers → 50–100 %
+          const phasePercent = Math.min(100, Math.round((scanned / total) * 100));
+          const barWidth = isFollowers
+            ? 50 + Math.round(phasePercent / 2)
+            : Math.round(phasePercent / 2);
+          progressBarEl.style.width = `${barWidth}%`;
+          scanStatusEl.textContent = `${label}: ${scanned} of ~${total} (${phasePercent}%)...`;
+        } else {
+          // Fallback when profile info is unavailable
+          progressBarEl.style.width = isFollowers ? '75%' : '25%';
+          scanStatusEl.textContent = `${label}: ${scanned} accounts...`;
+        }
       }, signal);
 
       // Get previous cache before overwriting it
