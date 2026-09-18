@@ -46,8 +46,8 @@ npm run build
 npm run package:extension
 ```
 
-* **`npm run build`**: Compiles and minifies TypeScript source files ([src/](./src/)) into [`extension/index.min.js`](./extension/index.min.js), reads `"version"` from `package.json`, automatically syncs version badges across [`public/index.html`](./public/index.html) and [`extension/manifest.json`](./extension/manifest.json), and injects the Base64 script using `esbuild` and `scripts/update-html.js`.
-* **`npm run package:extension`**: Executes `npm run build`, runs `scripts/create-extension-icons.js` to render crisp active & dark PNG icons from [`src/assets/icon.svg`](./src/assets/icon.svg), and packages `extension.zip` in the project root.
+* **`npm run package:extension`**: Executes `npm run build`, runs `scripts/create-extension-icons.js` to render PNG icons, bundles `source-code.zip` for Firefox source code review, and packages store-ready `extension.zip` in the root folder.
+* **`npm run package:source`**: Generates `source-code.zip` containing all original TypeScript source files and build configurations (excluding `node_modules` and compiled assets) required for store source code reviews.
 
 ---
 
