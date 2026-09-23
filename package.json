@@ -1,6 +1,6 @@
 {
   "name": "unfollowers-for-instagram",
-  "version": "1.3.2",
+  "version": "1.4.0",
   "description": "Identify accounts you follow that don't follow you back. 100% private, client-side, zero login required.",
   "scripts": {
     "typecheck": "tsc --noEmit",
