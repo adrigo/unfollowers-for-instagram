@@ -1,6 +1,6 @@
 # Unfollowers for Instagram (UIG)
 
-A beautiful, lightweight (~54KB), and secure browser-based utility that helps you identify accounts you are following but who do not follow you back.
+A beautiful, lightweight (~58KB, ~15KB gzipped), and secure browser-based utility that helps you identify accounts you are following but who do not follow you back.
 
 > [!NOTE]
 > This tool runs **completely client-side** in your active browser session. It does not require downloading any apps, sharing your credentials (username/password) with third-party sites, or registering for external services.
@@ -16,8 +16,8 @@ Created by [adrigo](https://adrigo.dev).
 1. **Self-Contained Bundle:** The project bundles and minifies the source files into a single self-executing JavaScript snippet using `esbuild` in **~5ms**.
 2. **Non-Destructive Overlay:** Unlike destructive scripts that clear the browser viewport, this utility injects a beautiful **glassmorphic card modal** directly on top of your active Instagram tab. Closing the modal immediately restores the background page state.
 3. **2-Phase REST API Scanning:** Instagram has deprecated its internal GraphQL endpoints for friendship queries. The utility now queries Instagram's private REST API v1 (`/api/v1/friendships/`) in two sequential phases (Phase 1: Following list, Phase 2: Followers list) using your active session cookies (`ds_user_id` and `csrftoken`).
-4. **Local Storage Caching:** Saves the followings list in your browser's local cache. Re-running the script allows you to instantly reuse the cached list ("Use Cache") instead of triggering a full fresh network scan.
-5. **Base64 Encapsulation:** The compiled script is encoded into a Base64 string and decoded at runtime using `atob()`. This encapsulates the script logic, preventing automated crawlers (like Google Safe Browsing) from performing static analysis of Instagram's API keywords on your landing page and triggering false-positive deceptive site warnings.
+4. **Stable Pagination:** The following list is requested ordered by follow date (`order=date_followed_latest`). Instagram's default ranking can reshuffle mid-scan, which made its offset-based pagination silently skip accounts.
+5. **Local Storage Caching:** Saves the followings list in your browser's local cache. Re-running the script allows you to instantly reuse the cached list ("Use Cache") instead of triggering a full fresh network scan. Comparing a fresh scan against the cache flags **new unfollowers**.
 
 > [!IMPORTANT]
 > **GraphQL Endpoint Deprecation & 2-Phase Scanning:** Instagram deprecated its internal GraphQL endpoints for friendship lists. The scanner now operates via Instagram REST API v1 in **2 sequential phases**:
@@ -55,7 +55,7 @@ npm run package:extension
 Open the generated landing page directly in your browser:
 *   [public/index.html](./public/index.html)
 
-This page features a modern glassmorphic look, including a CSS-only visual mockup of the modal overlay, direct links to Chrome Web Store and Firefox Add-ons, and a Code copy panel.
+This page features a modern glassmorphic look, including a CSS-only visual mockup of the modal overlay and direct links to Chrome Web Store and Firefox Add-ons.
 
 ### 3. Run on Instagram
 Once you open `public/index.html` in your browser:
@@ -64,8 +64,11 @@ Once you open `public/index.html` in your browser:
 - **Chrome / Edge / Brave / Kiwi Browser (Android):** Install from the [Chrome Web Store](https://chromewebstore.google.com/detail/unfollowers-for-instagram/lejidbigpihdfpeomhfjlgnhjjeicdkk) or load unpacked extension from [`extension/`](./extension).
 - **Firefox:** Install from [Firefox Add-ons](https://addons.mozilla.org/en-US/firefox/addon/unfollowers-for-instagram/) or load temporary add-on via `about:debugging`.
 
+> [!NOTE]
+> **Firefox site access:** Firefox lets users turn off an extension's access to `www.instagram.com` (`about:addons` → extension → Permissions). The scanner still launches without it, but the toolbar icon can't detect Instagram tabs. The popup shows an **Allow access to instagram.com** button when access is missing.
+
 #### Option B: Developer Console (Manual Execution)
-1. Click **Copy Code** on the landing page to copy the script bundle.
+1. Run `npm run build` and copy the contents of `dist/index.min.js`.
 2. Go to [instagram.com](https://www.instagram.com) and log into your account.
 3. Open your browser console (press `F12` or `Ctrl+Shift+J` on Windows, `Cmd+Option+I` on Mac).
 4. Paste the copied code and press **Enter**.
@@ -91,13 +94,17 @@ When you run `npm run package:extension`, the build pipeline automatically:
 * **Cache Export & Import (Cross-Device Migration):** Export your full cache state as a JSON file (`iu_cache_<user_id>.json`) and import it onto any other browser or computer to move your scan history without re-scanning. Note: Imported files must be a valid JSON file previously exported by this tool (containing `timestamp` and `users`).
 * **Sidebar Quick Controls:** Instant **New Scan**, **Grid View**, **Import**, and **Export** actions accessible right from the sidebar.
 * **Sequential Bulk Unfollow:** Select multiple users and unfollow them sequentially with a dedicated pause/cancel progress banner.
-* **Randomized Timing Delays (Anti-Spam):** Applies a randomized timing jitter (`300ms`–`600ms` per page of 50 users for REST API scans, and `2.0s`–`3.5s` per unfollow) to mimic human pacing and prevent automated security checkpoints.
+* **Randomized Timing Delays (Anti-Spam):** Applies a randomized timing jitter (`300ms`–`600ms` per page for REST API scans, and `2.0s`–`3.5s` per unfollow) to mimic human pacing and prevent automated security checkpoints.
+* **Scan Retries with Backoff:** Rate limits (HTTP 429), server errors, and network drops during a scan are retried after waiting 30s, 60s, then 120s, with the wait shown in the scanner.
 * **Auto-Pause on Rate Limits:** Intercepts HTTP 429 (Too Many Requests) errors from Instagram, automatically pausing the bulk loop and prompting the user to wait instead of letting subsequent requests fail.
+* **Incomplete Scan Warning:** Shows a warning above the list when the followers list comes back far below your profile's follower count, since missing followers would otherwise appear as non-followers.
+* **New Unfollower Detection:** Accounts that followed you in the previous scan but no longer do are flagged with a badge and can be filtered.
 * **Network Scan Abort Safety:** Closing the modal immediately calls `abort()` on an active `AbortController`, halting background API calls and avoiding rate limits.
 * **Page Exit Protection:** Warns the user if they try to close or refresh the tab during an active bulk unfollow process to prevent accidental progress loss.
 * **Custom Layouts:** Toggle between a detailed List View or a compact Grid View.
 * **Detailed Statistics Bar:** View live counts of Non-followers, Followers, Verified profiles, and Private accounts at a glance.
-* **Sorting & Filtering:** Sort by Username (A-Z/Z-A), Private First, or Verified First. Filter list by Non-followers, Followers, New Unfollowers, and Verified tags.
+* **Sorting & Filtering:** Sort by Recently Unfollowed, Username (A-Z/Z-A), Private First, or Verified First. Filter list by Non-followers, Followers, New Unfollowers, Verified, and Private tags.
+* **Safe Rendering:** All Instagram profile data and imported values are HTML-escaped before rendering, and imported backups are strictly validated (numeric IDs, valid usernames, `https://` avatar URLs).
 
 ---
 
@@ -107,7 +114,7 @@ When you run `npm run package:extension`, the build pipeline automatically:
 > **Use Moderately:** Interacting with private APIs too quickly can flag your account. We recommend running scans no more than once every 10-15 minutes, and unfollowing users in moderation.
 
 > [!TIP]
-> **Humanized Request Pacing:** REST API pagination queries automatically apply a 300ms–600ms randomized delay per page of 50 users. This prevents burst request spikes and protects your account against automated security checkpoints.
+> **Humanized Request Pacing:** REST API pagination queries automatically apply a 300ms–600ms randomized delay per page (Instagram serves up to 25 users per page). This prevents burst request spikes and protects your account against automated security checkpoints.
 
 > [!TIP]
 > **Audit Friendly:** The code contains zero external dependencies or remote script calls. You can easily audit [src/api.ts](./src/api.ts) to verify that no data is ever stored, collected, or transmitted to third-party servers.
@@ -130,14 +137,17 @@ When you run `npm run package:extension`, the build pipeline automatically:
 │   └── index.html         # Redesigned glassmorphic landing page template
 ├── scripts/
 │   ├── create-extension-icons.js # Syncs master SVG and generates active/dark PNGs
-│   └── update-html.js     # Post-build script to inject code into index.html
+│   ├── create-source-zip.js # Bundles source-code.zip for store source reviews
+│   └── update-html.js     # Post-build script: syncs version and copies bundle to extension/
 ├── src/
 │   ├── assets/            # Master SVG vector assets (icon, badges, filters)
-│   ├── api.ts             # GraphQL fetches, cookie readers, unfollow POST actions
+│   ├── api.ts             # REST API scan with retries, cookie readers, unfollow POST actions
+│   ├── css.d.ts           # TypeScript module declarations for CSS imports
 │   ├── index.ts           # Entry orchestrator, overlay modal builder, scroll locks
+│   ├── storage.ts         # LocalStorage cache, import validation, new-unfollower merge
 │   ├── styles.css         # CSS style sheet containing the glassmorphism system
 │   ├── svg.d.ts           # TypeScript module declarations for SVG imports
-│   ├── types.ts           # TypeScript interfaces (UserNode, CacheData)
+│   ├── types.ts           # TypeScript interfaces (UserNode, CacheData, API responses)
 │   └── ui.ts              # Core list drawing, event delegation, search/filters, bulk loops
 ├── tsconfig.json          # TypeScript configuration options
 └── package.json           # Dev scripts & dependencies (esbuild + typescript + resvg)
