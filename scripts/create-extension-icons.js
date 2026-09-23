@@ -27,11 +27,13 @@ const targetFiles = [
   path.join(extDir, 'icon128-dark.png'),
 ];
 
-const allExistAndFresh = !isForce && targetFiles.every(file => {
-  if (!fs.existsSync(file)) return false;
-  const fileStat = fs.statSync(file);
-  return fileStat.mtimeMs >= masterStat.mtimeMs;
-});
+const allExistAndFresh =
+  !isForce &&
+  targetFiles.every((file) => {
+    if (!fs.existsSync(file)) return false;
+    const fileStat = fs.statSync(file);
+    return fileStat.mtimeMs >= masterStat.mtimeMs;
+  });
 
 if (allExistAndFresh) {
   console.log('Extension icons are up to date.');
@@ -59,7 +61,7 @@ function renderPng(svgInput, size, outPath) {
 }
 
 // Render crisp active PNG icon sizes
-[16, 48, 128].forEach(size => {
+[16, 48, 128].forEach((size) => {
   const outPath = path.join(extDir, `icon${size}.png`);
   renderPng(masterSvgBuffer, size, outPath);
 });
@@ -75,9 +77,11 @@ const darkSvgContent = masterSvgContent
 const darkSvgBuffer = Buffer.from(darkSvgContent, 'utf-8');
 
 // Render crisp dark PNG icon sizes for non-IG tabs
-[16, 48, 128].forEach(size => {
+[16, 48, 128].forEach((size) => {
   const outPath = path.join(extDir, `icon${size}-dark.png`);
   renderPng(darkSvgBuffer, size, outPath);
 });
 
-console.log('Successfully synced public/favicon.svg and rendered active/dark extension icon PNGs from src/assets/icon.svg!');
+console.log(
+  'Successfully synced public/favicon.svg and rendered active/dark extension icon PNGs from src/assets/icon.svg!'
+);

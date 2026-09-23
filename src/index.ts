@@ -1,15 +1,16 @@
-import CSS_STYLES from './styles.css';
-import { getCookie, fetchFollowings } from './api';
-import { getCachedFollowings, setCachedFollowings, mergeCacheWithFreshScan } from './storage';
-import { renderList, renderCachePrompt, renderError, loadCacheWithScanAnimation, setElementHTML } from './ui';
+import { version as PKG_VERSION } from '../package.json';
+import { fetchFollowings, getCookie } from './api';
 import APP_LOGO_SVG from './assets/icon.svg';
 import LOCK_ICON_SVG from './assets/lock.svg';
-import { version as PKG_VERSION } from '../package.json';
-import type { UserNode, CacheData } from './types';
+import { getCachedFollowings, mergeCacheWithFreshScan, setCachedFollowings } from './storage';
+import CSS_STYLES from './styles.css';
+import type { CacheData, UserNode } from './types';
+import { loadCacheWithScanAnimation, renderCachePrompt, renderError, renderList, setElementHTML } from './ui';
 
-const appVersion = (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.getManifest)
-  ? chrome.runtime.getManifest().version
-  : PKG_VERSION;
+const appVersion =
+  typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.getManifest
+    ? chrome.runtime.getManifest().version
+    : PKG_VERSION;
 
 (async () => {
   if (location.hostname !== 'www.instagram.com') {
@@ -32,7 +33,9 @@ const appVersion = (typeof chrome !== 'undefined' && chrome.runtime && chrome.ru
 
     const overlayEl = document.createElement('div');
     overlayEl.id = 'iu-overlay';
-    setElementHTML(overlayEl, `
+    setElementHTML(
+      overlayEl,
+      `
       <div class="iu-card" style="max-width: 560px; width: 92%; height: auto; margin: auto;">
         <div class="iu-header">
           <div class="iu-title-group">
@@ -53,7 +56,8 @@ const appVersion = (typeof chrome !== 'undefined' && chrome.runtime && chrome.ru
           <button id="iu-login-close-btn" class="iu-btn-export" style="background: linear-gradient(135deg, #f97316, #ec4899, #7c3aed); color: #fff; border: none; font-weight: 700; height: 46px; padding: 0 2rem; font-size: 0.95rem; border-radius: 12px; cursor: pointer;">Got It</button>
         </div>
       </div>
-    `);
+    `
+    );
     document.body.appendChild(overlayEl);
 
     const closeHandler = () => {
@@ -88,7 +92,9 @@ const appVersion = (typeof chrome !== 'undefined' && chrome.runtime && chrome.ru
   // Inject Overlay Card
   const overlayEl = document.createElement('div');
   overlayEl.id = 'iu-overlay';
-  setElementHTML(overlayEl, `
+  setElementHTML(
+    overlayEl,
+    `
     <div class="iu-card">
       <div class="iu-header">
         <div class="iu-title-group">
@@ -102,22 +108,31 @@ const appVersion = (typeof chrome !== 'undefined' && chrome.runtime && chrome.ru
       </div>
       <div class="iu-body" id="iu-body"></div>
     </div>
-  `);
+  `
+  );
   document.body.appendChild(overlayEl);
 
   // Prevent scroll chaining when interacting with overlay backdrop
-  overlayEl.addEventListener('wheel', (e) => {
-    const card = overlayEl.querySelector('.iu-card');
-    if (card && !card.contains(e.target as Node)) {
-      e.preventDefault();
-    }
-  }, { passive: false });
-  overlayEl.addEventListener('touchmove', (e) => {
-    const card = overlayEl.querySelector('.iu-card');
-    if (card && !card.contains(e.target as Node)) {
-      e.preventDefault();
-    }
-  }, { passive: false });
+  overlayEl.addEventListener(
+    'wheel',
+    (e) => {
+      const card = overlayEl.querySelector('.iu-card');
+      if (card && !card.contains(e.target as Node)) {
+        e.preventDefault();
+      }
+    },
+    { passive: false }
+  );
+  overlayEl.addEventListener(
+    'touchmove',
+    (e) => {
+      const card = overlayEl.querySelector('.iu-card');
+      if (card && !card.contains(e.target as Node)) {
+        e.preventDefault();
+      }
+    },
+    { passive: false }
+  );
 
   // Store original overflow values to allow proper restoration
   if (document.body.dataset.iuOriginalOverflow === undefined) {
@@ -162,10 +177,16 @@ const appVersion = (typeof chrome !== 'undefined' && chrome.runtime && chrome.ru
   // Render the list view, cancelling any bulk run owned by a previous list
   const showList = (users: UserNode[], notice?: string) => {
     currentListController?.cancelBulk();
-    currentListController = renderList(bodyEl, users, ds_user_id, {
-      onScanFresh: startScanning,
-      onImport: () => handleImport(() => showList(getCachedFollowings(ds_user_id)?.users ?? users)),
-    }, notice);
+    currentListController = renderList(
+      bodyEl,
+      users,
+      ds_user_id,
+      {
+        onScanFresh: startScanning,
+        onImport: () => handleImport(() => showList(getCachedFollowings(ds_user_id)?.users ?? users)),
+      },
+      notice
+    );
   };
 
   const startScanning = async () => {
@@ -178,7 +199,9 @@ const appVersion = (typeof chrome !== 'undefined' && chrome.runtime && chrome.ru
     const signal = scanAbortController.signal;
 
     try {
-      setElementHTML(bodyEl, `
+      setElementHTML(
+        bodyEl,
+        `
         <div class="iu-scanner-view">
           <div class="iu-spinner"></div>
           <div>
@@ -192,32 +215,36 @@ const appVersion = (typeof chrome !== 'undefined' && chrome.runtime && chrome.ru
             <strong>Note:</strong> Due to recent internal changes on Instagram, scanning now runs in two safe stages (scanning your followings first, then checking followbacks). It takes a few extra seconds, but keeps your scan accurate and account safe.
           </div>
         </div>
-      `);
+      `
+      );
 
       const scanStatusEl = document.getElementById('iu-scan-status')!;
       const progressBarEl = document.getElementById('iu-progress-bar')!;
 
-      const { users: followedUsers, warning } = await fetchFollowings(ds_user_id, (scanned, total, phase) => {
-        const isFollowers = phase === 'followers';
-        const label = isFollowers ? 'Scanning followers list' : 'Scanning following list';
+      const { users: followedUsers, warning } = await fetchFollowings(
+        ds_user_id,
+        (scanned, total, phase) => {
+          const isFollowers = phase === 'followers';
+          const label = isFollowers ? 'Scanning followers list' : 'Scanning following list';
 
-        if (total > 0) {
-          // Show real per-phase percentage; split bar into two halves:
-          // following → 0–50 %, followers → 50–100 %
-          const phasePercent = Math.min(100, Math.round((scanned / total) * 100));
-          const barWidth = isFollowers
-            ? 50 + Math.round(phasePercent / 2)
-            : Math.round(phasePercent / 2);
-          progressBarEl.style.width = `${barWidth}%`;
-          scanStatusEl.textContent = `${label}: ${scanned} of ~${total} (${phasePercent}%)...`;
-        } else {
-          // Fallback when profile info is unavailable
-          progressBarEl.style.width = isFollowers ? '75%' : '25%';
-          scanStatusEl.textContent = `${label}: ${scanned} accounts...`;
-        }
-      }, (waitMs, attempt, maxAttempts) => {
-        scanStatusEl.textContent = `Instagram is limiting requests. Pausing ${Math.round(waitMs / 1000)}s before retrying (attempt ${attempt} of ${maxAttempts})...`;
-      }, signal);
+          if (total > 0) {
+            // Show real per-phase percentage; split bar into two halves:
+            // following → 0–50 %, followers → 50–100 %
+            const phasePercent = Math.min(100, Math.round((scanned / total) * 100));
+            const barWidth = isFollowers ? 50 + Math.round(phasePercent / 2) : Math.round(phasePercent / 2);
+            progressBarEl.style.width = `${barWidth}%`;
+            scanStatusEl.textContent = `${label}: ${scanned} of ~${total} (${phasePercent}%)...`;
+          } else {
+            // Fallback when profile info is unavailable
+            progressBarEl.style.width = isFollowers ? '75%' : '25%';
+            scanStatusEl.textContent = `${label}: ${scanned} accounts...`;
+          }
+        },
+        (waitMs, attempt, maxAttempts) => {
+          scanStatusEl.textContent = `Instagram is limiting requests. Pausing ${Math.round(waitMs / 1000)}s before retrying (attempt ${attempt} of ${maxAttempts})...`;
+        },
+        signal
+      );
 
       // Get previous cache before overwriting it
       const prevCache = getCachedFollowings(ds_user_id);

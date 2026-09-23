@@ -47,8 +47,8 @@ npm run package:extension
 ```
 
 * **`npm run package:extension`**: Executes `npm run build`, runs `scripts/create-extension-icons.js` to render PNG icons, bundles `source-code.zip` for Firefox source code review, and packages store-ready `extension.zip` in the root folder.
-* **`npm run typecheck`** / **`npm run lint`**: Type-check with `tsc` and lint with [Biome](https://biomejs.dev). Both run automatically before every `npm run build`.
-* **`npm run format`**: Format source files with Biome.
+* **`npm run typecheck`** / **`npm run lint`**: Type-check with `tsc` and check linting, formatting, and import order with [Biome](https://biomejs.dev). Both run automatically before every `npm run build`.
+* **`npm run format`**: Apply Biome lint fixes, formatting, and import sorting.
 * **`npm run package:source`**: Generates `source-code.zip` containing all original TypeScript source files and build configurations (excluding `node_modules` and compiled assets) required for store source code reviews.
 
 ---

@@ -16,7 +16,10 @@ try {
 
   // Replace version numbers in index.html dynamically
   indexHtml = indexHtml.replace(/Unfollowers for Instagram v\d+\.\d+\.\d+/g, `Unfollowers for Instagram v${version}`);
-  indexHtml = indexHtml.replace(/class="mockup-version-tag">v\d+\.\d+\.\d+</g, `class="mockup-version-tag">v${version}<`);
+  indexHtml = indexHtml.replace(
+    /class="mockup-version-tag">v\d+\.\d+\.\d+</g,
+    `class="mockup-version-tag">v${version}<`
+  );
   fs.writeFileSync(indexPath, indexHtml, 'utf8');
 
   // Copy minified JS bundle into extension/

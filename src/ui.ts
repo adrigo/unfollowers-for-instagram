@@ -1,12 +1,12 @@
-import type { UserNode, CacheData, UserFilterState } from './types';
 import { unfollowUser } from './api';
-import { setCachedFollowings, getCachedFollowings, validateAndParseCacheData, formatCacheAge } from './storage';
-import VERIFIED_BADGE_SVG from './assets/verified.svg';
-import NEW_UNFOLLOWER_SVG from './assets/new-unfollower.svg';
-import PRIVATE_LOCK_SVG from './assets/private.svg';
-import FOLLOWS_YOU_SVG from './assets/follows-you.svg';
-import NON_FOLLOWERS_SVG from './assets/non-follower.svg';
 import CACHE_SYNC_SVG from './assets/cache-sync.svg';
+import FOLLOWS_YOU_SVG from './assets/follows-you.svg';
+import NEW_UNFOLLOWER_SVG from './assets/new-unfollower.svg';
+import NON_FOLLOWERS_SVG from './assets/non-follower.svg';
+import PRIVATE_LOCK_SVG from './assets/private.svg';
+import VERIFIED_BADGE_SVG from './assets/verified.svg';
+import { formatCacheAge, getCachedFollowings, setCachedFollowings, validateAndParseCacheData } from './storage';
+import type { CacheData, UserFilterState, UserNode } from './types';
 
 function wrapIcon(iconSvg: string, title: string): string {
   return `<span title="${title}" style="display: inline-block; vertical-align: middle; line-height: 1; cursor: help; flex-shrink: 0;">${iconSvg}</span>`;
@@ -21,7 +21,7 @@ export function setElementHTML(element: HTMLElement, htmlString: string) {
 // interpolating it into HTML strings. DOMParser does not neutralize inline event handlers.
 const HTML_ESCAPES: Record<string, string> = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' };
 export function escapeHtml(value: string): string {
-  return value.replace(/[&<>"']/g, ch => HTML_ESCAPES[ch]);
+  return value.replace(/[&<>"']/g, (ch) => HTML_ESCAPES[ch]);
 }
 
 export function renderError(
@@ -30,14 +30,17 @@ export function renderError(
   message: string,
   action: { label: string; onClick: () => void }
 ) {
-  setElementHTML(bodyEl, `
+  setElementHTML(
+    bodyEl,
+    `
     <div style="text-align: center; margin: auto; padding: 2rem;">
       <span style="font-size: 3rem;">⚠️</span>
       <h3 style="margin: 1rem 0; color: #f87171;">${escapeHtml(title)}</h3>
       <p style="color: #ada79d; margin-bottom: 1.5rem; line-height: 1.5; max-width: 320px; margin-left: auto; margin-right: auto;">${escapeHtml(message)}</p>
       <button id="iu-error-action-btn" class="iu-btn-export" style="background: linear-gradient(135deg, #f97316, #ec4899, #7c3aed); color: #fff; border: none;">${escapeHtml(action.label)}</button>
     </div>
-  `);
+  `
+  );
   document.getElementById('iu-error-action-btn')?.addEventListener('click', action.onClick);
 }
 
@@ -55,7 +58,9 @@ export function renderCachePrompt(
 ) {
   const ageString = formatCacheAge(cachedData.timestamp);
 
-  setElementHTML(bodyEl, `
+  setElementHTML(
+    bodyEl,
+    `
     <div style="text-align: center; margin: auto; padding: 2.5rem; display: flex; flex-direction: column; gap: 1.5rem; align-items: center; justify-content: center; height: 100%;">
       ${CACHE_SYNC_SVG}
       <div>
@@ -75,7 +80,8 @@ export function renderCachePrompt(
         <strong>Note:</strong> To detect new unfollowers, we will use the cache but we need to do a fresh scan.
       </div>
     </div>
-  `);
+  `
+  );
 
   document.getElementById('iu-use-cache-btn')!.addEventListener('click', onUseCache);
   document.getElementById('iu-import-cache-btn')!.addEventListener('click', onImportCache);
@@ -89,7 +95,9 @@ export function loadCacheWithScanAnimation(
   onLoaded: (users: UserNode[]) => void,
   onBack: () => void
 ) {
-  setElementHTML(bodyEl, `
+  setElementHTML(
+    bodyEl,
+    `
     <div class="iu-scanner-view">
       <div class="iu-spinner"></div>
       <div>
@@ -100,7 +108,8 @@ export function loadCacheWithScanAnimation(
         <div class="iu-progress-bar" id="iu-progress-bar" style="width: 25%; transition: width 0.3s ease;"></div>
       </div>
     </div>
-  `);
+  `
+  );
 
   const scanStatusEl = document.getElementById('iu-scan-status')!;
   const progressBarEl = document.getElementById('iu-progress-bar')!;
@@ -163,7 +172,9 @@ export function renderList(
 
   const selectedUserIds = new Set<string>();
 
-  setElementHTML(bodyEl, `
+  setElementHTML(
+    bodyEl,
+    `
     <div class="iu-layout-wrapper">
       <div class="iu-sidebar">
         <!-- Full-Width Search Bar -->
@@ -318,7 +329,8 @@ export function renderList(
         </div>
       </div>
     </div>
-  `);
+  `
+  );
 
   const listEl = document.getElementById('iu-list')!;
   const searchInput = document.getElementById('iu-search') as HTMLInputElement;
@@ -345,7 +357,11 @@ export function renderList(
   let currentFilteredList: UserNode[] = [];
 
   const updateStatsCounters = () => {
-    let nonFollowers = 0, newUnfollowers = 0, followers = 0, verified = 0, privateCount = 0;
+    let nonFollowers = 0,
+      newUnfollowers = 0,
+      followers = 0,
+      verified = 0,
+      privateCount = 0;
     for (const u of activeUsers) {
       if (!u.followsViewer) nonFollowers++;
       if (!u.followsViewer && u.isNew) newUnfollowers++;
@@ -367,9 +383,17 @@ export function renderList(
   };
 
   const setBulkInputsDisabled = (disabled: boolean) => {
-    [selectAllCheck, searchInput, nonFollowersCheck, followersCheck,
-      newUnfollowersCheck, verifiedCheck, privateCheck, layoutBtn, exportBtn
-    ].forEach(el => {
+    [
+      selectAllCheck,
+      searchInput,
+      nonFollowersCheck,
+      followersCheck,
+      newUnfollowersCheck,
+      verifiedCheck,
+      privateCheck,
+      layoutBtn,
+      exportBtn,
+    ].forEach((el) => {
       (el as HTMLButtonElement | HTMLInputElement).disabled = disabled;
     });
     if (customSortDropdown) {
@@ -379,19 +403,21 @@ export function renderList(
   };
 
   const syncSelectAllState = () => {
-    const allVisibleSelected = currentFilteredList.length > 0 && currentFilteredList.every(u => selectedUserIds.has(u.id));
+    const allVisibleSelected =
+      currentFilteredList.length > 0 && currentFilteredList.every((u) => selectedUserIds.has(u.id));
     selectAllCheck.checked = allVisibleSelected;
   };
   const updateUIList = () => {
     const term = searchInput.value.toLowerCase().trim();
 
-    currentFilteredList = activeUsers.filter(u => {
+    currentFilteredList = activeUsers.filter((u) => {
       // Search filter
       const matchesSearch = u.username.toLowerCase().includes(term) || u.fullName.toLowerCase().includes(term);
       if (!matchesSearch) return false;
 
       // Follower filter
-      const matchesStatus = (filterState.showNonFollowers && !u.followsViewer) || (filterState.showFollowers && u.followsViewer);
+      const matchesStatus =
+        (filterState.showNonFollowers && !u.followsViewer) || (filterState.showFollowers && u.followsViewer);
       if (!matchesStatus) return false;
 
       // New Unfollowers filter
@@ -440,24 +466,30 @@ export function renderList(
     countTextEl.textContent = `Showing ${currentFilteredList.length} of ${activeUsers.length}`;
 
     if (currentFilteredList.length === 0) {
-      setElementHTML(listEl, `
+      setElementHTML(
+        listEl,
+        `
         <div style="text-align: center; color: #ada79d; padding: 3rem 0;">
           No users match your criteria.
         </div>
-      `);
+      `
+      );
       return;
     }
 
-    setElementHTML(listEl, currentFilteredList.map(user => {
-      const newBadge = user.isNew ? wrapIcon(NEW_UNFOLLOWER_SVG, 'New Unfollower') : '';
+    setElementHTML(
+      listEl,
+      currentFilteredList
+        .map((user) => {
+          const newBadge = user.isNew ? wrapIcon(NEW_UNFOLLOWER_SVG, 'New Unfollower') : '';
 
-      const id = escapeHtml(user.id);
-      const username = escapeHtml(user.username);
-      const avatar = user.profilePicUrl
-        ? `<img class="iu-avatar" src="${escapeHtml(user.profilePicUrl)}" alt="${username}" />`
-        : `<img class="iu-avatar iu-avatar-fallback" alt="" />`;
+          const id = escapeHtml(user.id);
+          const username = escapeHtml(user.username);
+          const avatar = user.profilePicUrl
+            ? `<img class="iu-avatar" src="${escapeHtml(user.profilePicUrl)}" alt="${username}" />`
+            : `<img class="iu-avatar iu-avatar-fallback" alt="" />`;
 
-      return `
+          return `
       <div class="iu-user-card" id="card-${id}">
         <div class="iu-user-info">
           <input type="checkbox" class="iu-user-checkbox" data-id="${id}" ${selectedUserIds.has(user.id) ? 'checked' : ''} ${isBulkRunning ? 'disabled' : ''} />
@@ -478,7 +510,9 @@ export function renderList(
         <button class="iu-unfollow-btn" data-id="${id}" ${isBulkRunning ? 'disabled' : ''}>Unfollow</button>
       </div>
       `;
-    }).join(''));
+        })
+        .join('')
+    );
 
     syncSelectAllState();
   };
@@ -495,7 +529,7 @@ export function renderList(
         btn.style.color = '#ada79d';
 
         // Remove from local lists
-        activeUsers = activeUsers.filter(u => u.id !== user.id);
+        activeUsers = activeUsers.filter((u) => u.id !== user.id);
         selectedUserIds.delete(user.id);
 
         // Save to local cache
@@ -523,14 +557,18 @@ export function renderList(
 
   // Replace broken avatars (expired CDN URLs from old caches or imports) with a placeholder.
   // 'error' does not bubble, so listen in the capture phase.
-  listEl.addEventListener('error', (e) => {
-    const img = e.target;
-    if (img instanceof HTMLImageElement && img.classList.contains('iu-avatar')) {
-      img.removeAttribute('src');
-      img.alt = '';
-      img.classList.add('iu-avatar-fallback');
-    }
-  }, true);
+  listEl.addEventListener(
+    'error',
+    (e) => {
+      const img = e.target;
+      if (img instanceof HTMLImageElement && img.classList.contains('iu-avatar')) {
+        img.removeAttribute('src');
+        img.alt = '';
+        img.classList.add('iu-avatar-fallback');
+      }
+    },
+    true
+  );
 
   // Event Delegation: Checkbox Change Listener
   listEl.addEventListener('change', (e) => {
@@ -555,7 +593,7 @@ export function renderList(
     const target = e.target as HTMLElement;
     if (target.classList.contains('iu-unfollow-btn') && !isBulkRunning) {
       const id = target.getAttribute('data-id')!;
-      const user = activeUsers.find(u => u.id === id);
+      const user = activeUsers.find((u) => u.id === id);
       if (user) {
         if (confirm(`Are you sure you want to unfollow @${user.username}?`)) {
           await triggerUnfollow(user, target as HTMLButtonElement);
@@ -567,14 +605,14 @@ export function renderList(
   // Select All visible handler
   selectAllCheck.addEventListener('change', () => {
     const isChecked = selectAllCheck.checked;
-    currentFilteredList.forEach(u => {
+    currentFilteredList.forEach((u) => {
       if (isChecked) {
         selectedUserIds.add(u.id);
       } else {
         selectedUserIds.delete(u.id);
       }
     });
-    listEl.querySelectorAll('.iu-user-checkbox').forEach(cb => {
+    listEl.querySelectorAll('.iu-user-checkbox').forEach((cb) => {
       const id = cb.getAttribute('data-id')!;
       (cb as HTMLInputElement).checked = selectedUserIds.has(id);
     });
@@ -585,7 +623,9 @@ export function renderList(
   pauseBtn.addEventListener('click', () => {
     isBulkPaused = !isBulkPaused;
     pauseBtn.textContent = isBulkPaused ? 'Resume' : 'Pause';
-    pauseBtn.style.background = isBulkPaused ? 'linear-gradient(135deg, #f97316, #ec4899, #7c3aed)' : 'rgba(255, 255, 255, 0.08)';
+    pauseBtn.style.background = isBulkPaused
+      ? 'linear-gradient(135deg, #f97316, #ec4899, #7c3aed)'
+      : 'rgba(255, 255, 255, 0.08)';
     pauseBtn.style.color = '#fff';
   });
 
@@ -598,7 +638,11 @@ export function renderList(
     const idsArray = Array.from(selectedUserIds);
     if (idsArray.length === 0) return;
 
-    if (!confirm(`Are you sure you want to unfollow ${idsArray.length} selected accounts?\nThis will process them sequentially with a safe 2-second delay.`)) {
+    if (
+      !confirm(
+        `Are you sure you want to unfollow ${idsArray.length} selected accounts?\nThis will process them sequentially with a safe 2-second delay.`
+      )
+    ) {
       return;
     }
 
@@ -623,7 +667,7 @@ export function renderList(
 
     // Disable all checkboxes and single-unfollow buttons in the cards
     isBulkRunning = true;
-    listEl.querySelectorAll('.iu-user-checkbox, .iu-unfollow-btn').forEach(el => {
+    listEl.querySelectorAll('.iu-user-checkbox, .iu-unfollow-btn').forEach((el) => {
       (el as HTMLInputElement | HTMLButtonElement).disabled = true;
     });
 
@@ -639,7 +683,7 @@ export function renderList(
         // Handle pause loop
         while (isBulkPaused) {
           if (isBulkCancelled) break;
-          await new Promise(resolve => setTimeout(resolve, 250));
+          await new Promise((resolve) => setTimeout(resolve, 250));
         }
 
         if (isBulkCancelled) {
@@ -647,7 +691,7 @@ export function renderList(
         }
 
         const id = idsArray[i];
-        const user = activeUsers.find(u => u.id === id);
+        const user = activeUsers.find((u) => u.id === id);
         if (!user) continue;
 
         progressText.textContent = `Unfollowing: ${i + 1} / ${idsArray.length} (@${user.username})`;
@@ -663,7 +707,7 @@ export function renderList(
 
           if (res.ok) {
             successCount++;
-            activeUsers = activeUsers.filter(u => u.id !== id);
+            activeUsers = activeUsers.filter((u) => u.id !== id);
             selectedUserIds.delete(id);
 
             if (cardBtn) {
@@ -682,7 +726,9 @@ export function renderList(
                 cardBtn.textContent = 'Unfollow';
               }
 
-              alert('Instagram rate limit detected (HTTP 429). The bulk unfollow process has been automatically paused. Please wait a few minutes before resuming to avoid account restrictions.');
+              alert(
+                'Instagram rate limit detected (HTTP 429). The bulk unfollow process has been automatically paused. Please wait a few minutes before resuming to avoid account restrictions.'
+              );
               i--;
               continue;
             }
@@ -708,9 +754,9 @@ export function renderList(
             if (isBulkCancelled) break;
             while (isBulkPaused) {
               if (isBulkCancelled) break;
-              await new Promise(resolve => setTimeout(resolve, 250));
+              await new Promise((resolve) => setTimeout(resolve, 250));
             }
-            await new Promise(resolve => setTimeout(resolve, 250));
+            await new Promise((resolve) => setTimeout(resolve, 250));
             delayPassed += 250;
           }
         }
@@ -784,14 +830,14 @@ export function renderList(
     'name-asc': `<span style="display: inline-block; width: 16px; text-align: center; font-size: 0.75rem; font-weight: bold; color: #aaa; vertical-align: middle;">AZ</span> A-Z (Username)`,
     'name-desc': `<span style="display: inline-block; width: 16px; text-align: center; font-size: 0.75rem; font-weight: bold; color: #aaa; vertical-align: middle;">ZA</span> Z-A (Username)`,
     'private-first': `${PRIVATE_LOCK_SVG} Private First`,
-    'verified-first': `${VERIFIED_BADGE_SVG} Verified First`
+    'verified-first': `${VERIFIED_BADGE_SVG} Verified First`,
   };
 
   // Set initial trigger content
   setElementHTML(sortTriggerContent, optionMapping[currentSortBy]);
 
   // Option select handler
-  sortOptions.querySelectorAll('.iu-dropdown-option').forEach(opt => {
+  sortOptions.querySelectorAll('.iu-dropdown-option').forEach((opt) => {
     opt.addEventListener('click', () => {
       const val = (opt as HTMLElement).dataset.value!;
       currentSortBy = val;
@@ -816,12 +862,12 @@ export function renderList(
     const currentCache = getCachedFollowings(dsUserId);
     const cacheToExport: CacheData = {
       timestamp: currentCache?.timestamp || Date.now(),
-      users: activeUsers
+      users: activeUsers,
     };
     const dataStr = `data:text/json;charset=utf-8,${encodeURIComponent(JSON.stringify(cacheToExport, null, 2))}`;
     const downloadAnchor = document.createElement('a');
-    downloadAnchor.setAttribute("href", dataStr);
-    downloadAnchor.setAttribute("download", `iu_cache_${dsUserId || 'export'}.json`);
+    downloadAnchor.setAttribute('href', dataStr);
+    downloadAnchor.setAttribute('download', `iu_cache_${dsUserId || 'export'}.json`);
     document.body.appendChild(downloadAnchor);
     downloadAnchor.click();
     downloadAnchor.remove();
@@ -859,6 +905,6 @@ export function renderList(
   return {
     cancelBulk: () => {
       isBulkCancelled = true;
-    }
+    },
   };
 }

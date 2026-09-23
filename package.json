@@ -4,8 +4,8 @@
   "description": "Identify accounts you follow that don't follow you back. 100% private, client-side, zero login required.",
   "scripts": {
     "typecheck": "tsc --noEmit",
-    "lint": "biome lint",
-    "format": "biome format --write",
+    "lint": "biome check",
+    "format": "biome check --write",
     "build": "npm run typecheck && npm run lint && esbuild src/index.ts --bundle --loader:.svg=text --loader:.css=text --minify --outfile=dist/index.min.js && node scripts/update-html.js",
     "dev": "esbuild src/index.ts --bundle --loader:.svg=text --loader:.css=text --outfile=dist/index.js --serve=3000",
     "package:extension": "npm run build && node scripts/create-extension-icons.js && npm run package:source && (cd extension && zip -q -r ../extension.zip . -x extension.zip)",

@@ -25,9 +25,8 @@ document.addEventListener('DOMContentLoaded', async () => {
   const headerVersion = document.getElementById('header-version');
   let activeTab = null;
 
-  const manifest = (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.getManifest)
-    ? chrome.runtime.getManifest()
-    : null;
+  const manifest =
+    typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.getManifest ? chrome.runtime.getManifest() : null;
   const version = manifest ? manifest.version : '';
 
   if (headerVersion && version) {
@@ -49,7 +48,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             func: () => {
               const match = document.cookie.match(/(?:^|; )ds_user_id=([^;]*)/);
               return Boolean(match?.[1] && match[1] !== '""');
-            }
+            },
           });
           if (res && typeof res.result === 'boolean') {
             isLoggedIn = res.result;
@@ -76,7 +75,9 @@ document.addEventListener('DOMContentLoaded', async () => {
           const strong = document.createElement('strong');
           strong.textContent = 'Not Logged In';
           const br = document.createElement('br');
-          const textNode = document.createTextNode('Please log into Instagram on this tab first, then open this extension.');
+          const textNode = document.createTextNode(
+            'Please log into Instagram on this tab first, then open this extension.'
+          );
 
           statusCard.appendChild(strong);
           statusCard.appendChild(br);
@@ -149,7 +150,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     try {
       await chrome.scripting.executeScript({
         target: { tabId: activeTab.id },
-        files: ['index.min.js']
+        files: ['index.min.js'],
       });
       window.close();
     } catch (err) {

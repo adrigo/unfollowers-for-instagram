@@ -425,7 +425,7 @@
 }
 
 .iu-spinner::after {
-  content: '';
+  content: "";
   position: absolute;
   top: 5px;
   left: 5px;
@@ -486,7 +486,9 @@
   font-weight: 600;
   font-size: 0.88rem;
   cursor: pointer;
-  transition: background 0.2s, border-color 0.2s;
+  transition:
+    background 0.2s,
+    border-color 0.2s;
   white-space: nowrap;
   flex-shrink: 0;
 }
@@ -499,7 +501,6 @@
   opacity: 0.4;
   cursor: not-allowed;
 }
-
 
 .iu-filter-label {
   display: flex;
@@ -638,7 +639,9 @@
   font-weight: 600;
   font-size: 0.85rem;
   cursor: pointer;
-  transition: opacity 0.2s, background 0.2s;
+  transition:
+    opacity 0.2s,
+    background 0.2s;
 }
 
 .iu-unfollow-btn:hover:not(:disabled) {
@@ -774,7 +777,6 @@
   color: #f472b6;
 }
 
-
 /* Custom Dropdown Styles */
 .iu-custom-dropdown {
   position: relative;
@@ -793,7 +795,9 @@
   color: #dbdbdb;
   font-size: 0.85rem;
   cursor: pointer;
-  transition: border-color 0.2s, background 0.2s;
+  transition:
+    border-color 0.2s,
+    background 0.2s;
 }
 
 .iu-dropdown-trigger:hover {
@@ -828,7 +832,9 @@
   color: #dbdbdb;
   font-size: 0.85rem;
   cursor: pointer;
-  transition: background 0.2s, color 0.2s;
+  transition:
+    background 0.2s,
+    color 0.2s;
 }
 
 .iu-dropdown-option:hover {

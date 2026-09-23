@@ -8,7 +8,7 @@ function crc32(buf) {
   for (let i = 0; i < buf.length; i++) {
     let c = buf[i];
     for (let j = 0; j < 8; j++) {
-      c = (c & 1) ? (0xEDB88320 ^ (c >>> 1)) : (c >>> 1);
+      c = c & 1 ? 0xedb88320 ^ (c >>> 1) : c >>> 1;
     }
     crc = (crc >>> 8) ^ c;
   }
@@ -29,7 +29,7 @@ const includePaths = [
   'biome.json',
   'README.md',
   '.gitignore',
-  '.nvmrc'
+  '.nvmrc',
 ];
 
 function getAllFiles(dir, fileList = []) {
@@ -59,7 +59,7 @@ for (const item of includePaths) {
 }
 
 // Filter out generated artifacts, minified files, zip files, and git objects
-filesToZip = filesToZip.filter(file => {
+filesToZip = filesToZip.filter((file) => {
   const rel = path.relative(rootDir, file).replace(/\\/g, '/');
   if (rel === 'extension/index.min.js') return false;
   if (rel.endsWith('.zip')) return false;

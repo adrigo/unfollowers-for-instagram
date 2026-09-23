@@ -39,7 +39,7 @@ export interface V1FriendshipsResponse {
 // Instagram private REST API v1 — POST /api/v1/friendships/show_many/
 export interface FriendshipStatus {
   following: boolean;
-  followed_by: boolean;    // true = that user follows the authenticated user
+  followed_by: boolean; // true = that user follows the authenticated user
   is_private?: boolean;
 }
 
@@ -48,12 +48,7 @@ export interface ShowManyResponse {
   status: string;
 }
 
-export type SortOption =
-  | 'unfollowed-recent'
-  | 'name-asc'
-  | 'name-desc'
-  | 'private-first'
-  | 'verified-first';
+export type SortOption = 'unfollowed-recent' | 'name-asc' | 'name-desc' | 'private-first' | 'verified-first';
 
 export type ScanProgressCallback = (scanned: number, total: number, phase?: 'following' | 'followers') => void;
 
@@ -75,11 +70,13 @@ export interface UserFilterState {
 
 declare global {
   // eslint-disable-next-line no-var
-  var chrome: {
-    runtime?: {
-      getManifest?: () => { version: string;[key: string]: unknown };
-      [key: string]: unknown;
-    };
-    [key: string]: unknown;
-  } | undefined;
+  var chrome:
+    | {
+        runtime?: {
+          getManifest?: () => { version: string; [key: string]: unknown };
+          [key: string]: unknown;
+        };
+        [key: string]: unknown;
+      }
+    | undefined;
 }

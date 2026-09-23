@@ -1,4 +1,12 @@
-import type { UserNode, UnfollowResult, ScanProgressCallback, ScanRetryCallback, ScanResult, V1FriendshipUser, V1FriendshipsResponse } from './types';
+import type {
+  ScanProgressCallback,
+  ScanResult,
+  ScanRetryCallback,
+  UnfollowResult,
+  UserNode,
+  V1FriendshipsResponse,
+  V1FriendshipUser,
+} from './types';
 
 // Instagram web app ID — static client ID used by instagram.com's own frontend.
 const INSTAGRAM_WEB_APP_ID = '936619743392459';
@@ -67,7 +75,9 @@ const parseJsonResponse = async <T>(res: Response, endpointName: string): Promis
     return JSON.parse(text) as T;
   } catch {
     if (text.includes('<html') || text.includes('<!DOCTYPE') || text.includes('<body')) {
-      throw new Error(`Instagram returned an HTML page (login/redirect) instead of data for ${endpointName}. Please make sure you are logged in on instagram.com.`);
+      throw new Error(
+        `Instagram returned an HTML page (login/redirect) instead of data for ${endpointName}. Please make sure you are logged in on instagram.com.`
+      );
     }
     throw new Error(`Unexpected non-JSON response received from Instagram (${endpointName}).`);
   }
@@ -88,7 +98,10 @@ const fetchUserCounts = async (
       credentials: 'include',
     });
     if (!res.ok) return { followingCount: 0, followerCount: 0 };
-    const data = await parseJsonResponse<{ user?: { following_count?: number; follower_count?: number } }>(res, 'user info');
+    const data = await parseJsonResponse<{ user?: { following_count?: number; follower_count?: number } }>(
+      res,
+      'user info'
+    );
     return {
       followingCount: data?.user?.following_count ?? 0,
       followerCount: data?.user?.follower_count ?? 0,
@@ -201,7 +214,9 @@ const fetchAllFriendships = async (
     await sleep(300 + Math.random() * 300, signal);
   }
 
-  console.info(`[Unfollowers] ${type}: ${seen.size} unique accounts in ${pages} pages${truncated ? ' (stopped early)' : ''}`);
+  console.info(
+    `[Unfollowers] ${type}: ${seen.size} unique accounts in ${pages} pages${truncated ? ' (stopped early)' : ''}`
+  );
   return { users: Array.from(seen.values()), truncated };
 };
 
@@ -239,10 +254,10 @@ export const fetchFollowings = async (
     signal
   );
 
-  const followerIds = new Set(rawFollowers.map(u => u.pk));
+  const followerIds = new Set(rawFollowers.map((u) => u.pk));
 
   // Map to internal UserNode shape (deduplicated)
-  const followedUsers: UserNode[] = rawFollowing.map(u => ({
+  const followedUsers: UserNode[] = rawFollowing.map((u) => ({
     id: u.pk,
     username: u.username,
     fullName: u.full_name || '',

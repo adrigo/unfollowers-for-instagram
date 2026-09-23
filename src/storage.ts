@@ -1,4 +1,4 @@
-import type { UserNode, CacheData } from './types';
+import type { CacheData, UserNode } from './types';
 
 // Get cached followings list from LocalStorage
 export const getCachedFollowings = (userId: string): CacheData | null => {
@@ -21,7 +21,7 @@ export const setCachedFollowings = (userId: string, users: UserNode[], customTim
     localStorage.setItem(key, JSON.stringify({ timestamp, users } satisfies CacheData));
   } catch {
     try {
-      const slimUsers = users.map(u => ({ ...u, profilePicUrl: '' }));
+      const slimUsers = users.map((u) => ({ ...u, profilePicUrl: '' }));
       localStorage.setItem(key, JSON.stringify({ timestamp, users: slimUsers } satisfies CacheData));
     } catch (e) {
       console.error('Failed to save followings cache:', e);
@@ -50,25 +50,28 @@ export const validateAndParseCacheData = (jsonString: string): { data?: CacheDat
       }
       // Imported files are untrusted: only accept values shaped like real Instagram data
       if (!/^\d+$/.test(u.id) || !/^[A-Za-z0-9._]{1,30}$/.test(u.username)) {
-        return { error: `Invalid user entry "${String(u.username).slice(0, 30)}". User IDs must be numeric and usernames must be valid Instagram handles.` };
+        return {
+          error: `Invalid user entry "${String(u.username).slice(0, 30)}". User IDs must be numeric and usernames must be valid Instagram handles.`,
+        };
       }
       sanitizedUsers.push({
         id: u.id,
         username: u.username,
         fullName: typeof u.fullName === 'string' ? u.fullName : '',
-        profilePicUrl: typeof u.profilePicUrl === 'string' && u.profilePicUrl.startsWith('https://') ? u.profilePicUrl : '',
+        profilePicUrl:
+          typeof u.profilePicUrl === 'string' && u.profilePicUrl.startsWith('https://') ? u.profilePicUrl : '',
         isPrivate: Boolean(u.isPrivate),
         isVerified: Boolean(u.isVerified),
         followsViewer: Boolean(u.followsViewer),
-        isNew: Boolean(u.isNew)
+        isNew: Boolean(u.isNew),
       });
     }
 
     return {
       data: {
         timestamp: parsed.timestamp,
-        users: sanitizedUsers
-      }
+        users: sanitizedUsers,
+      },
     };
   } catch {
     return { error: 'Failed to parse JSON file. Ensure the file contains valid JSON.' };
@@ -76,10 +79,7 @@ export const validateAndParseCacheData = (jsonString: string): { data?: CacheDat
 };
 
 // Merge fresh scan results with previous cached entries to preserve unfollower metadata
-export const mergeCacheWithFreshScan = (
-  freshUsers: UserNode[],
-  previousCache: CacheData | null
-): UserNode[] => {
+export const mergeCacheWithFreshScan = (freshUsers: UserNode[], previousCache: CacheData | null): UserNode[] => {
   const previousMap = new Map<string, UserNode>();
   if (previousCache?.users) {
     for (const u of previousCache.users) {
@@ -87,7 +87,7 @@ export const mergeCacheWithFreshScan = (
     }
   }
 
-  return freshUsers.map(u => {
+  return freshUsers.map((u) => {
     // If they follow us back, they don't have unfollower metadata
     if (u.followsViewer) {
       return u;
@@ -101,27 +101,27 @@ export const mergeCacheWithFreshScan = (
           // Confirmed new unfollower: they followed us in previous scan, but not now
           return {
             ...u,
-            isNew: true
+            isNew: true,
           };
         } else {
           // Already an unfollower
           return {
             ...u,
-            isNew: false
+            isNew: false,
           };
         }
       } else {
         // New following: not in previous cache, and they don't follow us back
         return {
           ...u,
-          isNew: false
+          isNew: false,
         };
       }
     } else {
       // First scan: baseline detection
       return {
         ...u,
-        isNew: false
+        isNew: false,
       };
     }
   });
@@ -160,11 +160,12 @@ export const formatCacheAge = (timestamp: number): string => {
     return 'just now';
   }
 
-  const ageText = parts.length === 1
-    ? parts[0]
-    : parts.length === 2
-      ? `${parts[0]} and ${parts[1]}`
-      : `${parts.slice(0, -1).join(', ')} and ${parts[parts.length - 1]}`;
+  const ageText =
+    parts.length === 1
+      ? parts[0]
+      : parts.length === 2
+        ? `${parts[0]} and ${parts[1]}`
+        : `${parts.slice(0, -1).join(', ')} and ${parts[parts.length - 1]}`;
 
   return `${ageText} ago`;
 };
