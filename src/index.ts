@@ -1,10 +1,11 @@
 import CSS_STYLES from './styles.css';
 import { getCookie, fetchFollowings } from './api';
 import { getCachedFollowings, setCachedFollowings, mergeCacheWithFreshScan } from './storage';
-import { renderList, renderCachePrompt, loadCacheWithScanAnimation, setElementHTML } from './ui';
+import { renderList, renderCachePrompt, renderError, loadCacheWithScanAnimation, setElementHTML } from './ui';
 import APP_LOGO_SVG from './assets/icon.svg';
 import LOCK_ICON_SVG from './assets/lock.svg';
 import { version as PKG_VERSION } from '../package.json';
+import { UserNode, CacheData } from './types';
 
 const appVersion = (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.getManifest)
   ? chrome.runtime.getManifest().version
@@ -17,7 +18,6 @@ const appVersion = (typeof chrome !== 'undefined' && chrome.runtime && chrome.ru
   }
 
   const ds_user_id = getCookie('ds_user_id');
-  const csrfToken = getCookie('csrftoken');
 
   if (!ds_user_id) {
     const existingModal = document.getElementById('iu-overlay');
@@ -159,7 +159,18 @@ const appVersion = (typeof chrome !== 'undefined' && chrome.runtime && chrome.ru
   // Fetch Followings Logic
   const bodyEl = document.getElementById('iu-body')!;
 
+  // Render the list view, cancelling any bulk run owned by a previous list
+  const showList = (users: UserNode[], notice?: string) => {
+    currentListController?.cancelBulk();
+    currentListController = renderList(bodyEl, users, ds_user_id, {
+      onScanFresh: startScanning,
+      onImport: () => handleImport(() => showList(getCachedFollowings(ds_user_id)?.users ?? users)),
+    }, notice);
+  };
+
   const startScanning = async () => {
+    currentListController?.cancelBulk();
+    currentListController = null;
     if (scanAbortController) {
       scanAbortController.abort();
     }
@@ -186,7 +197,7 @@ const appVersion = (typeof chrome !== 'undefined' && chrome.runtime && chrome.ru
       const scanStatusEl = document.getElementById('iu-scan-status')!;
       const progressBarEl = document.getElementById('iu-progress-bar')!;
 
-      const followedUsers = await fetchFollowings(ds_user_id, (scanned, total, phase) => {
+      const { users: followedUsers, warning } = await fetchFollowings(ds_user_id, (scanned, total, phase) => {
         const isFollowers = phase === 'followers';
         const label = isFollowers ? 'Scanning followers list' : 'Scanning following list';
 
@@ -204,6 +215,8 @@ const appVersion = (typeof chrome !== 'undefined' && chrome.runtime && chrome.ru
           progressBarEl.style.width = isFollowers ? '75%' : '25%';
           scanStatusEl.textContent = `${label}: ${scanned} accounts...`;
         }
+      }, (waitMs, attempt, maxAttempts) => {
+        scanStatusEl.textContent = `Instagram is limiting requests. Pausing ${Math.round(waitMs / 1000)}s before retrying (attempt ${attempt} of ${maxAttempts})...`;
       }, signal);
 
       // Get previous cache before overwriting it
@@ -216,7 +229,7 @@ const appVersion = (typeof chrome !== 'undefined' && chrome.runtime && chrome.ru
       setCachedFollowings(ds_user_id, mergedUsers);
 
       // Render List View
-      currentListController = renderList(bodyEl, mergedUsers, csrfToken || '', ds_user_id, startScanning);
+      showList(mergedUsers, warning);
     } catch (err) {
       if (err instanceof DOMException && err.name === 'AbortError') {
         console.log('Scan successfully aborted.');
@@ -224,38 +237,27 @@ const appVersion = (typeof chrome !== 'undefined' && chrome.runtime && chrome.ru
       }
       console.error('Scan Error:', err);
       const errMsg = err instanceof Error ? err.message : 'An error occurred while loading followings from Instagram.';
-      setElementHTML(bodyEl, `
-        <div style="text-align: center; margin: auto; padding: 2rem;">
-          <span style="font-size: 3rem;">⚠️</span>
-          <h3 style="margin: 1rem 0; color: #f87171;">Scan Failed</h3>
-          <p style="color: #ada79d; margin-bottom: 1.5rem; line-height: 1.5; max-width: 320px; margin-left: auto; margin-right: auto;">${errMsg}</p>
-          <button id="iu-reload-btn" class="iu-btn-export" style="background: linear-gradient(135deg, #f97316, #ec4899, #7c3aed); color: #fff; border: none;">Reload Page</button>
-        </div>
-      `);
-
-      document.getElementById('iu-reload-btn')?.addEventListener('click', () => {
-        location.reload();
-      });
+      renderError(bodyEl, 'Scan Failed', errMsg, { label: 'Try Again', onClick: startScanning });
     }
   };
 
-  // Helper to trigger file import on initial screen
-  const handleInitialImport = () => {
-    let fileInput = document.getElementById('iu-initial-import-input') as HTMLInputElement;
+  // Pick a JSON backup and load it; onBack restores the previous view if the import fails
+  const handleImport = (onBack: () => void) => {
+    let fileInput = document.getElementById('iu-import-input') as HTMLInputElement | null;
     if (!fileInput) {
       fileInput = document.createElement('input');
       fileInput.type = 'file';
-      fileInput.id = 'iu-initial-import-input';
+      fileInput.id = 'iu-import-input';
       fileInput.accept = '.json';
       fileInput.style.display = 'none';
-      document.body.appendChild(fileInput);
+      overlayEl.appendChild(fileInput);
     }
 
-    fileInput.onchange = (e) => {
-      const file = (e.target as HTMLInputElement).files?.[0];
+    fileInput.onchange = () => {
+      const file = fileInput.files?.[0];
       if (!file) return;
 
-      loadCacheWithScanAnimation(file, bodyEl, csrfToken || '', ds_user_id, startScanning);
+      loadCacheWithScanAnimation(file, bodyEl, ds_user_id, (users) => showList(users), onBack);
       fileInput.value = '';
     };
 
@@ -263,21 +265,19 @@ const appVersion = (typeof chrome !== 'undefined' && chrome.runtime && chrome.ru
   };
 
   // Check cache data
-  const cachedData = getCachedFollowings(ds_user_id);
-  if (cachedData) {
+  const showCachePrompt = (cachedData: CacheData) => {
     renderCachePrompt(
       bodyEl,
       cachedData,
-      () => {
-        currentListController = renderList(bodyEl, cachedData.users, csrfToken || '', ds_user_id, startScanning);
-      },
-      () => {
-        handleInitialImport();
-      },
-      () => {
-        startScanning();
-      }
+      () => showList(cachedData.users),
+      () => handleImport(() => showCachePrompt(cachedData)),
+      () => startScanning()
     );
+  };
+
+  const cachedData = getCachedFollowings(ds_user_id);
+  if (cachedData) {
+    showCachePrompt(cachedData);
   } else {
     startScanning();
   }

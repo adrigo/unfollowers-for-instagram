@@ -11,16 +11,21 @@ export const getCachedFollowings = (userId: string): CacheData | null => {
   }
 };
 
-// Save followings list to LocalStorage cache
+// Save followings list to LocalStorage cache.
+// Large accounts can exceed the ~5MB quota; profile picture URLs are the bulk of the
+// payload and expire after a few days anyway, so retry without them before giving up.
 export const setCachedFollowings = (userId: string, users: UserNode[], customTimestamp?: number): void => {
+  const key = `iu_cache_${userId}`;
+  const timestamp = customTimestamp ?? Date.now();
   try {
-    const data: CacheData = {
-      timestamp: customTimestamp ?? Date.now(),
-      users
-    };
-    localStorage.setItem(`iu_cache_${userId}`, JSON.stringify(data));
-  } catch (e) {
-    console.error('Failed to save followings cache:', e);
+    localStorage.setItem(key, JSON.stringify({ timestamp, users } satisfies CacheData));
+  } catch {
+    try {
+      const slimUsers = users.map(u => ({ ...u, profilePicUrl: '' }));
+      localStorage.setItem(key, JSON.stringify({ timestamp, users: slimUsers } satisfies CacheData));
+    } catch (e) {
+      console.error('Failed to save followings cache:', e);
+    }
   }
 };
 
@@ -43,11 +48,15 @@ export const validateAndParseCacheData = (jsonString: string): { data?: CacheDat
       if (!u || typeof u !== 'object' || typeof u.id !== 'string' || typeof u.username !== 'string') {
         return { error: 'Invalid user objects in "users" array. Each user must have an "id" and "username".' };
       }
+      // Imported files are untrusted: only accept values shaped like real Instagram data
+      if (!/^\d+$/.test(u.id) || !/^[A-Za-z0-9._]{1,30}$/.test(u.username)) {
+        return { error: `Invalid user entry "${String(u.username).slice(0, 30)}". User IDs must be numeric and usernames must be valid Instagram handles.` };
+      }
       sanitizedUsers.push({
         id: u.id,
         username: u.username,
         fullName: typeof u.fullName === 'string' ? u.fullName : '',
-        profilePicUrl: typeof u.profilePicUrl === 'string' ? u.profilePicUrl : '',
+        profilePicUrl: typeof u.profilePicUrl === 'string' && u.profilePicUrl.startsWith('https://') ? u.profilePicUrl : '',
         isPrivate: Boolean(u.isPrivate),
         isVerified: Boolean(u.isVerified),
         followsViewer: Boolean(u.followsViewer),

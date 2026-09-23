@@ -1,7 +1,37 @@
-import { UserNode, UnfollowResult, ScanProgressCallback, V1FriendshipUser, V1FriendshipsResponse } from './types';
+import { UserNode, UnfollowResult, ScanProgressCallback, ScanRetryCallback, ScanResult, V1FriendshipUser, V1FriendshipsResponse } from './types';
 
 // Instagram web app ID — static client ID used by instagram.com's own frontend.
 const INSTAGRAM_WEB_APP_ID = '936619743392459';
+
+// Backoff schedule used when Instagram rate limits us or the network drops mid-scan.
+const RETRY_DELAYS_MS = [30_000, 60_000, 120_000];
+
+// Accounts per page. Instagram caps list pages at 25 whatever count is requested, and
+// may return a few less (deactivated or restricted accounts are dropped from the page).
+const PAGE_SIZE = 25;
+
+// Safety net against a pagination cursor that never ends (125k accounts).
+const MAX_PAGES = 5000;
+
+// Errors worth retrying after a pause (rate limits, server errors, network drops).
+class RetryableError extends Error {}
+
+const abortError = () => new DOMException('Scan aborted by user', 'AbortError');
+
+// setTimeout that rejects immediately when the scan is aborted
+const sleep = (ms: number, signal?: AbortSignal): Promise<void> =>
+  new Promise((resolve, reject) => {
+    if (signal?.aborted) return reject(abortError());
+    const onAbort = () => {
+      clearTimeout(timer);
+      reject(abortError());
+    };
+    const timer = setTimeout(() => {
+      signal?.removeEventListener('abort', onAbort);
+      resolve();
+    }, ms);
+    signal?.addEventListener('abort', onAbort, { once: true });
+  });
 
 // Helper function to read cookies robustly
 export const getCookie = (name: string): string | null => {
@@ -71,23 +101,36 @@ const fetchFriendshipsPage = async (
   maxId: string,
   signal?: AbortSignal
 ): Promise<V1FriendshipsResponse> => {
-  const params = new URLSearchParams({ count: '50' });
+  const params = new URLSearchParams({ count: String(PAGE_SIZE) });
+  // The following list is ranked by default, and that ranking can change between page
+  // requests, making the offset cursor skip accounts. Follow date is a stable order.
+  // The followers endpoint does not support this parameter.
+  if (type === 'following') params.set('order', 'date_followed_latest');
   if (maxId) params.set('max_id', maxId);
 
   const url = `https://www.instagram.com/api/v1/friendships/${userId}/${type}/?${params}`;
-  const res = await fetch(url, {
-    signal,
-    headers: {
-      'x-ig-app-id': INSTAGRAM_WEB_APP_ID,
-      'x-requested-with': 'XMLHttpRequest',
-      'x-asbd-id': '198387',
-    },
-    credentials: 'include',
-  });
+  let res: Response;
+  try {
+    res = await fetch(url, {
+      signal,
+      headers: {
+        'x-ig-app-id': INSTAGRAM_WEB_APP_ID,
+        'x-requested-with': 'XMLHttpRequest',
+        'x-asbd-id': '198387',
+      },
+      credentials: 'include',
+    });
+  } catch (err) {
+    if (err instanceof DOMException && err.name === 'AbortError') throw err;
+    throw new RetryableError('Network error while contacting Instagram. Check your connection and try again.');
+  }
 
   if (!res.ok) {
     if (res.status === 429) {
-      throw new Error('Rate limit exceeded (HTTP 429). Please wait a few minutes before scanning again.');
+      throw new RetryableError('Rate limit exceeded (HTTP 429). Please wait a few minutes before scanning again.');
+    }
+    if (res.status >= 500) {
+      throw new RetryableError(`Instagram is having trouble right now (Status ${res.status}). Please try again later.`);
     }
     throw new Error(`Failed to query Instagram API (Status ${res.status}). Make sure you are logged in.`);
   }
@@ -99,60 +142,96 @@ const fetchFriendshipsPage = async (
   return data;
 };
 
+// Fetch a page, pausing and retrying on rate limits or transient failures.
+const fetchFriendshipsPageWithRetry = async (
+  userId: string,
+  type: 'following' | 'followers',
+  maxId: string,
+  onRetry: ScanRetryCallback | undefined,
+  signal?: AbortSignal
+): Promise<V1FriendshipsResponse> => {
+  for (let attempt = 0; ; attempt++) {
+    try {
+      return await fetchFriendshipsPage(userId, type, maxId, signal);
+    } catch (err) {
+      if (!(err instanceof RetryableError) || attempt >= RETRY_DELAYS_MS.length) throw err;
+      const waitMs = RETRY_DELAYS_MS[attempt];
+      onRetry?.(waitMs, attempt + 1, RETRY_DELAYS_MS.length, err.message);
+      await sleep(waitMs, signal);
+    }
+  }
+};
+
 // Walk all pages of following or followers list and return deduplicated users.
+// `truncated` is set only when the MAX_PAGES safety net cut the walk short.
 const fetchAllFriendships = async (
   userId: string,
   type: 'following' | 'followers',
   onPageFetched: (fetched: number) => void,
+  onRetry: ScanRetryCallback | undefined,
   signal?: AbortSignal
-): Promise<V1FriendshipUser[]> => {
+): Promise<{ users: V1FriendshipUser[]; truncated: boolean }> => {
   const seen = new Map<string, V1FriendshipUser>();
   let maxId = '';
+  let truncated = true;
+  let pages = 0;
 
-  for (let page = 0; page < 400; page++) {
-    if (signal?.aborted) {
-      throw new DOMException('Scan aborted by user', 'AbortError');
-    }
+  for (let page = 0; page < MAX_PAGES; page++) {
+    if (signal?.aborted) throw abortError();
 
-    const data = await fetchFriendshipsPage(userId, type, maxId, signal);
+    const data = await fetchFriendshipsPageWithRetry(userId, type, maxId, onRetry, signal);
+    pages++;
     for (const user of data.users) {
       seen.set(user.pk, user);
     }
     onPageFetched(seen.size);
 
-    if (!data.next_max_id) break;
+    // No cursor, or a repeated one (Instagram repeats it on the last page), means the end
+    if (!data.next_max_id || data.next_max_id === maxId) {
+      truncated = false;
+      break;
+    }
     maxId = data.next_max_id;
 
     // Randomized delay between 300ms and 600ms
-    const delay = 300 + Math.random() * 300;
-    await new Promise(resolve => setTimeout(resolve, delay));
+    await sleep(300 + Math.random() * 300, signal);
   }
 
-  return Array.from(seen.values());
+  console.info(`[Unfollowers] ${type}: ${seen.size} unique accounts in ${pages} pages${truncated ? ' (stopped early)' : ''}`);
+  return { users: Array.from(seen.values()), truncated };
 };
+
+// Profile counts include deactivated, suspended and restricted accounts that the list
+// endpoints never return, so gaps of ~5% are normal. Only a large gap suggests the
+// API silently stopped paginating early.
+const isFarBelowCount = (fetched: number, expected: number): boolean =>
+  expected > 0 && expected - fetched > Math.max(20, expected * 0.1);
 
 // Fetch all followed users via Instagram private REST API v1.
 export const fetchFollowings = async (
   userId: string,
   onProgress: ScanProgressCallback,
+  onRetry?: ScanRetryCallback,
   signal?: AbortSignal
-): Promise<UserNode[]> => {
+): Promise<ScanResult> => {
   // Step 0 — get following and follower counts upfront for accurate progress percentage calculation
   const { followingCount, followerCount } = await fetchUserCounts(userId, signal);
 
   // Phase 1 — fetch the list of accounts this user follows
-  const rawFollowing = await fetchAllFriendships(
+  const { users: rawFollowing, truncated: followingTruncated } = await fetchAllFriendships(
     userId,
     'following',
     (count) => onProgress(count, followingCount, 'following'),
+    onRetry,
     signal
   );
 
   // Phase 2 — fetch the list of accounts that follow this user
-  const rawFollowers = await fetchAllFriendships(
+  const { users: rawFollowers, truncated: followersTruncated } = await fetchAllFriendships(
     userId,
     'followers',
     (count) => onProgress(count, followerCount, 'followers'),
+    onRetry,
     signal
   );
 
@@ -170,12 +249,24 @@ export const fetchFollowings = async (
   }));
 
   followedUsers.sort((a, b) => a.username.localeCompare(b.username));
-  return followedUsers;
+
+  // A partial followers list would wrongly flag real followers as non-followers.
+  // A partial following list is harmless (accounts are just missing), so only warn
+  // about it when pagination actually broke off.
+  let warning: string | undefined;
+  if (followersTruncated || isFarBelowCount(rawFollowers.length, followerCount)) {
+    warning = `Only ${rawFollowers.length} of ~${followerCount} followers could be loaded. Some accounts marked as non-followers may actually follow you, so double-check before unfollowing.`;
+  } else if (followingTruncated) {
+    warning = `Only ${rawFollowing.length} of ~${followingCount} followed accounts could be loaded. The list may be missing some accounts.`;
+  }
+
+  return { users: followedUsers, warning };
 };
 
 // Unfollow a specific user by ID
-export const unfollowUser = async (userId: string, csrfToken: string): Promise<UnfollowResult> => {
-  const token = csrfToken || getCsrfToken();
+// The CSRF token is read fresh on every call, since Instagram can rotate it mid-session.
+export const unfollowUser = async (userId: string): Promise<UnfollowResult> => {
+  const token = getCsrfToken();
   const response = await fetch(`https://www.instagram.com/web/friendships/${userId}/unfollow/`, {
     method: 'POST',
     headers: {

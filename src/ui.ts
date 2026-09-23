@@ -17,6 +17,35 @@ export function setElementHTML(element: HTMLElement, htmlString: string) {
   element.replaceChildren(...Array.from(parsed.body.childNodes));
 }
 
+// Escape untrusted text (Instagram profile data, imported files, error messages) before
+// interpolating it into HTML strings. DOMParser does not neutralize inline event handlers.
+const HTML_ESCAPES: Record<string, string> = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' };
+export function escapeHtml(value: string): string {
+  return value.replace(/[&<>"']/g, ch => HTML_ESCAPES[ch]);
+}
+
+export function renderError(
+  bodyEl: HTMLElement,
+  title: string,
+  message: string,
+  action: { label: string; onClick: () => void }
+) {
+  setElementHTML(bodyEl, `
+    <div style="text-align: center; margin: auto; padding: 2rem;">
+      <span style="font-size: 3rem;">⚠️</span>
+      <h3 style="margin: 1rem 0; color: #f87171;">${escapeHtml(title)}</h3>
+      <p style="color: #ada79d; margin-bottom: 1.5rem; line-height: 1.5; max-width: 320px; margin-left: auto; margin-right: auto;">${escapeHtml(message)}</p>
+      <button id="iu-error-action-btn" class="iu-btn-export" style="background: linear-gradient(135deg, #f97316, #ec4899, #7c3aed); color: #fff; border: none;">${escapeHtml(action.label)}</button>
+    </div>
+  `);
+  document.getElementById('iu-error-action-btn')?.addEventListener('click', action.onClick);
+}
+
+export interface ListActions {
+  onScanFresh: () => void;
+  onImport: () => void;
+}
+
 export function renderCachePrompt(
   bodyEl: HTMLElement,
   cachedData: CacheData,
@@ -56,9 +85,9 @@ export function renderCachePrompt(
 export function loadCacheWithScanAnimation(
   file: File,
   bodyEl: HTMLElement,
-  csrfToken: string,
   dsUserId: string,
-  onScanFresh?: () => void
+  onLoaded: (users: UserNode[]) => void,
+  onBack: () => void
 ) {
   setElementHTML(bodyEl, `
     <div class="iu-scanner-view">
@@ -82,47 +111,28 @@ export function loadCacheWithScanAnimation(
     const result = validateAndParseCacheData(content);
 
     if (result.error || !result.data) {
-      setElementHTML(bodyEl, `
-        <div style="text-align: center; margin: auto; padding: 2rem;">
-          <span style="font-size: 3rem;">⚠️</span>
-          <h3 style="margin: 1rem 0; color: #f87171;">Import Failed</h3>
-          <p style="color: #ada79d; margin-bottom: 1.5rem; line-height: 1.5; max-width: 320px; margin-left: auto; margin-right: auto;">${result.error}</p>
-          <button id="iu-reload-btn" class="iu-btn-export" style="background: linear-gradient(135deg, #f97316, #ec4899, #7c3aed); color: #fff; border: none;">Reload Page</button>
-        </div>
-      `);
-      document.getElementById('iu-reload-btn')?.addEventListener('click', () => {
-        location.reload();
-      });
+      renderError(bodyEl, 'Import Failed', result.error ?? 'Unknown error.', { label: 'Back', onClick: onBack });
       return;
     }
+    const importedUsers = result.data.users;
 
     progressBarEl.style.width = '70%';
-    scanStatusEl.textContent = `Loading ${result.data.users.length} users from cache...`;
+    scanStatusEl.textContent = `Loading ${importedUsers.length} users from cache...`;
 
-    setCachedFollowings(dsUserId, result.data.users, result.data.timestamp);
+    setCachedFollowings(dsUserId, importedUsers, result.data.timestamp);
 
     setTimeout(() => {
       progressBarEl.style.width = '100%';
       scanStatusEl.textContent = 'Finalizing list view...';
 
       setTimeout(() => {
-        renderList(bodyEl, result.data!.users, csrfToken, dsUserId, onScanFresh);
+        onLoaded(importedUsers);
       }, 250);
     }, 300);
   };
 
   reader.onerror = () => {
-    setElementHTML(bodyEl, `
-      <div style="text-align: center; margin: auto; padding: 2rem;">
-        <span style="font-size: 3rem;">⚠️</span>
-        <h3 style="margin: 1rem 0; color: #f87171;">Import Failed</h3>
-        <p style="color: #ada79d; margin-bottom: 1.5rem; line-height: 1.5; max-width: 320px; margin-left: auto; margin-right: auto;">Unable to read the selected file.</p>
-        <button id="iu-reload-btn" class="iu-btn-export" style="background: linear-gradient(135deg, #f97316, #ec4899, #7c3aed); color: #fff; border: none;">Reload Page</button>
-      </div>
-    `);
-    document.getElementById('iu-reload-btn')?.addEventListener('click', () => {
-      location.reload();
-    });
+    renderError(bodyEl, 'Import Failed', 'Unable to read the selected file.', { label: 'Back', onClick: onBack });
   };
 
   reader.readAsText(file);
@@ -131,9 +141,9 @@ export function loadCacheWithScanAnimation(
 export function renderList(
   bodyEl: HTMLElement,
   initialUsers: UserNode[],
-  csrfToken: string,
   dsUserId: string,
-  onScanFresh?: () => void
+  actions: ListActions,
+  notice?: string
 ): { cancelBulk: () => void } {
   let activeUsers = [...initialUsers];
   let filterState: UserFilterState = {
@@ -147,6 +157,7 @@ export function renderList(
   let isGridView = false;
 
   // Bulk action states
+  let isBulkRunning = false;
   let isBulkPaused = false;
   let isBulkCancelled = false;
 
@@ -289,6 +300,8 @@ export function renderList(
             <button id="iu-bulk-cancel-btn" class="iu-btn-export" style="padding: 0.35rem 0.75rem; font-size: 0.8rem; background: #ef4444; border: none; border-radius: 6px;">Cancel</button>
           </div>
         </div>
+
+        ${notice ? `<div class="iu-scan-warning"><strong>Warning:</strong> ${escapeHtml(notice)}</div>` : ''}
 
         <!-- Selection controller & counter -->
         <div class="iu-content-header">
@@ -436,14 +449,20 @@ export function renderList(
     setElementHTML(listEl, currentFilteredList.map(user => {
       const newBadge = user.isNew ? wrapIcon(NEW_UNFOLLOWER_SVG, 'New Unfollower') : '';
 
+      const id = escapeHtml(user.id);
+      const username = escapeHtml(user.username);
+      const avatar = user.profilePicUrl
+        ? `<img class="iu-avatar" src="${escapeHtml(user.profilePicUrl)}" alt="${username}" />`
+        : `<img class="iu-avatar iu-avatar-fallback" alt="" />`;
+
       return `
-      <div class="iu-user-card" id="card-${user.id}">
+      <div class="iu-user-card" id="card-${id}">
         <div class="iu-user-info">
-          <input type="checkbox" class="iu-user-checkbox" data-id="${user.id}" ${selectedUserIds.has(user.id) ? 'checked' : ''} />
-          <img class="iu-avatar" src="${user.profilePicUrl}" alt="${user.username}" />
+          <input type="checkbox" class="iu-user-checkbox" data-id="${id}" ${selectedUserIds.has(user.id) ? 'checked' : ''} ${isBulkRunning ? 'disabled' : ''} />
+          ${avatar}
           <div class="iu-names">
             <div class="iu-username-wrapper">
-              <a class="iu-username" href="https://www.instagram.com/${user.username}/" target="_blank">${user.username}</a>
+              <a class="iu-username" href="https://www.instagram.com/${encodeURIComponent(user.username)}/" target="_blank" rel="noopener noreferrer">${username}</a>
               <div class="iu-card-badges">
                 ${user.isVerified ? wrapIcon(VERIFIED_BADGE_SVG, 'Verified') : ''}
                 ${user.isPrivate ? wrapIcon(PRIVATE_LOCK_SVG, 'Private Account') : ''}
@@ -451,10 +470,10 @@ export function renderList(
                 ${newBadge}
               </div>
             </div>
-            <span class="iu-fullname">${user.fullName}</span>
+            <span class="iu-fullname">${escapeHtml(user.fullName)}</span>
           </div>
         </div>
-        <button class="iu-unfollow-btn" data-id="${user.id}">Unfollow</button>
+        <button class="iu-unfollow-btn" data-id="${id}" ${isBulkRunning ? 'disabled' : ''}>Unfollow</button>
       </div>
       `;
     }).join(''));
@@ -467,7 +486,7 @@ export function renderList(
     btn.disabled = true;
     btn.textContent = '...';
     try {
-      const res = await unfollowUser(user.id, csrfToken);
+      const res = await unfollowUser(user.id);
       if (res.ok) {
         btn.textContent = 'Unfollowed';
         btn.style.background = 'rgba(255,255,255,0.05)';
@@ -500,6 +519,17 @@ export function renderList(
     }
   };
 
+  // Replace broken avatars (expired CDN URLs from old caches or imports) with a placeholder.
+  // 'error' does not bubble, so listen in the capture phase.
+  listEl.addEventListener('error', (e) => {
+    const img = e.target;
+    if (img instanceof HTMLImageElement && img.classList.contains('iu-avatar')) {
+      img.removeAttribute('src');
+      img.alt = '';
+      img.classList.add('iu-avatar-fallback');
+    }
+  }, true);
+
   // Event Delegation: Checkbox Change Listener
   listEl.addEventListener('change', (e) => {
     const target = e.target as HTMLElement;
@@ -521,7 +551,7 @@ export function renderList(
   // Event Delegation: Unfollow Button Click Listener
   listEl.addEventListener('click', async (e) => {
     const target = e.target as HTMLElement;
-    if (target.classList.contains('iu-unfollow-btn')) {
+    if (target.classList.contains('iu-unfollow-btn') && !isBulkRunning) {
       const id = target.getAttribute('data-id')!;
       const user = activeUsers.find(u => u.id === id);
       if (user) {
@@ -589,9 +619,10 @@ export function renderList(
     bulkUnfollowBtn.disabled = true;
     setBulkInputsDisabled(true);
 
-    // Disable all checkbox inputs in the cards
-    listEl.querySelectorAll('.iu-user-checkbox').forEach(cb => {
-      (cb as HTMLInputElement).disabled = true;
+    // Disable all checkboxes and single-unfollow buttons in the cards
+    isBulkRunning = true;
+    listEl.querySelectorAll('.iu-user-checkbox, .iu-unfollow-btn').forEach(el => {
+      (el as HTMLInputElement | HTMLButtonElement).disabled = true;
     });
 
     let successCount = 0;
@@ -626,7 +657,7 @@ export function renderList(
         }
 
         try {
-          const res = await unfollowUser(id, csrfToken);
+          const res = await unfollowUser(id);
 
           if (res.ok) {
             successCount++;
@@ -646,7 +677,6 @@ export function renderList(
               pauseBtn.style.color = '#fff';
 
               if (cardBtn) {
-                cardBtn.disabled = false;
                 cardBtn.textContent = 'Unfollow';
               }
 
@@ -659,7 +689,6 @@ export function renderList(
         } catch (err) {
           failCount++;
           if (cardBtn) {
-            cardBtn.disabled = false;
             cardBtn.textContent = 'Failed';
           }
         }
@@ -685,8 +714,12 @@ export function renderList(
         }
       }
     } finally {
+      isBulkRunning = false;
       window.removeEventListener('beforeunload', preventExit);
     }
+
+    // The overlay was closed or replaced mid-run: nothing left to update
+    if (!listEl.isConnected) return;
 
     // Hide progress banner
     progressBanner.style.display = 'none';
@@ -734,9 +767,15 @@ export function renderList(
     sortOptions.classList.toggle('show');
   });
 
-  document.addEventListener('click', () => {
+  // Close the dropdown on outside clicks; unregister once this view is gone
+  const closeSortOptions = () => {
+    if (!sortOptions.isConnected) {
+      document.removeEventListener('click', closeSortOptions);
+      return;
+    }
     sortOptions.classList.remove('show');
-  });
+  };
+  document.addEventListener('click', closeSortOptions);
 
   const optionMapping: Record<string, string> = {
     'unfollowed-recent': `${NEW_UNFOLLOWER_SVG} Recently Unfollowed`,
@@ -787,36 +826,14 @@ export function renderList(
   });
 
   // Import handler (imports LocalStorage cache format with scan animation)
-  importBtn.addEventListener('click', () => {
-    let fileInput = document.getElementById('iu-import-file-input') as HTMLInputElement;
-    if (!fileInput) {
-      fileInput = document.createElement('input');
-      fileInput.type = 'file';
-      fileInput.id = 'iu-import-file-input';
-      fileInput.accept = '.json';
-      fileInput.style.display = 'none';
-      document.body.appendChild(fileInput);
-    }
-
-    fileInput.onchange = (e) => {
-      const file = (e.target as HTMLInputElement).files?.[0];
-      if (!file) return;
-
-      loadCacheWithScanAnimation(file, bodyEl, csrfToken, dsUserId, onScanFresh);
-      fileInput.value = '';
-    };
-
-    fileInput.click();
-  });
+  importBtn.addEventListener('click', actions.onImport);
 
   // Sidebar New Scan handler
   const sidebarScanBtn = document.getElementById('iu-sidebar-scan-btn') as HTMLButtonElement;
   if (sidebarScanBtn) {
     sidebarScanBtn.addEventListener('click', () => {
-      if (onScanFresh) {
-        isBulkCancelled = true;
-        onScanFresh();
-      }
+      isBulkCancelled = true;
+      actions.onScanFresh();
     });
   }
 

@@ -835,3 +835,18 @@
   background: #262626;
   color: #fff;
 }
+.iu-avatar-fallback {
+  background: #3a3430;
+}
+
+.iu-scan-warning {
+  background: rgba(250, 204, 21, 0.1);
+  border: 1px solid rgba(250, 204, 21, 0.3);
+  color: #fde68a;
+  border-radius: 10px;
+  padding: 0.65rem 0.9rem;
+  margin-bottom: 0.75rem;
+  font-size: 0.82rem;
+  line-height: 1.45;
+  flex-shrink: 0;
+}

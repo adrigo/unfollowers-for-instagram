@@ -57,6 +57,14 @@ export type SortOption =
 
 export type ScanProgressCallback = (scanned: number, total: number, phase?: 'following' | 'followers') => void;
 
+export type ScanRetryCallback = (waitMs: number, attempt: number, maxAttempts: number, reason: string) => void;
+
+export interface ScanResult {
+  users: UserNode[];
+  // Set when the fetched lists look incomplete compared to the profile counts
+  warning?: string;
+}
+
 export interface UserFilterState {
   showNonFollowers: boolean;
   showFollowers: boolean;
