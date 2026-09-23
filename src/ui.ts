@@ -1,4 +1,4 @@
-import { UserNode, CacheData, UserFilterState } from './types';
+import type { UserNode, CacheData, UserFilterState } from './types';
 import { unfollowUser } from './api';
 import { setCachedFollowings, getCachedFollowings, validateAndParseCacheData, formatCacheAge } from './storage';
 import VERIFIED_BADGE_SVG from './assets/verified.svg';
@@ -146,7 +146,7 @@ export function renderList(
   notice?: string
 ): { cancelBulk: () => void } {
   let activeUsers = [...initialUsers];
-  let filterState: UserFilterState = {
+  const filterState: UserFilterState = {
     showNonFollowers: true,
     showFollowers: false,
     showVerified: true,
@@ -369,7 +369,9 @@ export function renderList(
   const setBulkInputsDisabled = (disabled: boolean) => {
     [selectAllCheck, searchInput, nonFollowersCheck, followersCheck,
       newUnfollowersCheck, verifiedCheck, privateCheck, layoutBtn, exportBtn
-    ].forEach(el => (el as HTMLButtonElement | HTMLInputElement).disabled = disabled);
+    ].forEach(el => {
+      (el as HTMLButtonElement | HTMLInputElement).disabled = disabled;
+    });
     if (customSortDropdown) {
       customSortDropdown.style.pointerEvents = disabled ? 'none' : 'auto';
       customSortDropdown.style.opacity = disabled ? '0.5' : '1';
@@ -686,7 +688,7 @@ export function renderList(
             }
             throw new Error('API Fail');
           }
-        } catch (err) {
+        } catch {
           failCount++;
           if (cardBtn) {
             cardBtn.textContent = 'Failed';
@@ -816,7 +818,7 @@ export function renderList(
       timestamp: currentCache?.timestamp || Date.now(),
       users: activeUsers
     };
-    const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(cacheToExport, null, 2));
+    const dataStr = `data:text/json;charset=utf-8,${encodeURIComponent(JSON.stringify(cacheToExport, null, 2))}`;
     const downloadAnchor = document.createElement('a');
     downloadAnchor.setAttribute("href", dataStr);
     downloadAnchor.setAttribute("download", `iu_cache_${dsUserId || 'export'}.json`);

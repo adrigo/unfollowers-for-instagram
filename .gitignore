@@ -4,8 +4,10 @@ node_modules/
 # Build outputs and cache
 dist/
 
-# IDE / Editor configuration
-.vscode/
+# IDE / Editor configuration (shared VS Code settings are tracked)
+.vscode/*
+!.vscode/settings.json
+!.vscode/extensions.json
 
 # Agent-specific directories
 .agents/

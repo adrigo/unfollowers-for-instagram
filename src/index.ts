@@ -5,7 +5,7 @@ import { renderList, renderCachePrompt, renderError, loadCacheWithScanAnimation,
 import APP_LOGO_SVG from './assets/icon.svg';
 import LOCK_ICON_SVG from './assets/lock.svg';
 import { version as PKG_VERSION } from '../package.json';
-import { UserNode, CacheData } from './types';
+import type { UserNode, CacheData } from './types';
 
 const appVersion = (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.getManifest)
   ? chrome.runtime.getManifest().version

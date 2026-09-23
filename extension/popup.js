@@ -48,7 +48,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             target: { tabId: tab.id },
             func: () => {
               const match = document.cookie.match(/(?:^|; )ds_user_id=([^;]*)/);
-              return Boolean(match && match[1] && match[1] !== '""');
+              return Boolean(match?.[1] && match[1] !== '""');
             }
           });
           if (res && typeof res.result === 'boolean') {
@@ -102,7 +102,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         a.addEventListener('click', async (e) => {
           e.preventDefault();
-          if (activeTab && activeTab.id) {
+          if (activeTab?.id) {
             await chrome.tabs.update(activeTab.id, { url: 'https://www.instagram.com' });
           } else {
             await chrome.tabs.create({ url: 'https://www.instagram.com' });
@@ -145,7 +145,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   // Launch overlay script into active Instagram tab
   launchBtn.addEventListener('click', async () => {
-    if (!activeTab || !activeTab.id) return;
+    if (!activeTab?.id) return;
     try {
       await chrome.scripting.executeScript({
         target: { tabId: activeTab.id },
@@ -159,7 +159,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   });
 
   // Listen for live tab navigation while popup is open
-  chrome.tabs.onUpdated.addListener((tabId, changeInfo) => {
+  chrome.tabs.onUpdated.addListener((_tabId, changeInfo) => {
     if (changeInfo.url || changeInfo.status === 'complete') {
       checkTabStatus();
     }

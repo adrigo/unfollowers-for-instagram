@@ -1,4 +1,4 @@
-import { UserNode, UnfollowResult, ScanProgressCallback, ScanRetryCallback, ScanResult, V1FriendshipUser, V1FriendshipsResponse } from './types';
+import type { UserNode, UnfollowResult, ScanProgressCallback, ScanRetryCallback, ScanResult, V1FriendshipUser, V1FriendshipsResponse } from './types';
 
 // Instagram web app ID — static client ID used by instagram.com's own frontend.
 const INSTAGRAM_WEB_APP_ID = '936619743392459';
@@ -36,7 +36,7 @@ const sleep = (ms: number, signal?: AbortSignal): Promise<void> =>
 // Helper function to read cookies robustly
 export const getCookie = (name: string): string | null => {
   const match = document.cookie.match(new RegExp(`(?:^|; )${name}=([^;]*)`));
-  return match && match[1] ? decodeURIComponent(match[1]) : null;
+  return match?.[1] ? decodeURIComponent(match[1]) : null;
 };
 
 // Robust CSRF token extraction from cookies or window globals
@@ -44,9 +44,13 @@ export const getCsrfToken = (): string => {
   const cookieToken = getCookie('csrftoken');
   if (cookieToken) return cookieToken;
   try {
-    const win = window as any;
-    if (win._sharedData?.config?.csrf_token) return win._sharedData.config.csrf_token;
-    if (win.__initialData?.pending?.db?.config?.csrf_token) return win.__initialData.pending.db.config.csrf_token;
+    // Legacy globals Instagram has exposed the token on
+    const win = window as unknown as {
+      _sharedData?: { config?: { csrf_token?: string } };
+      __initialData?: { pending?: { db?: { config?: { csrf_token?: string } } } };
+    };
+    const legacyToken = win._sharedData?.config?.csrf_token ?? win.__initialData?.pending?.db?.config?.csrf_token;
+    if (legacyToken) return legacyToken;
   } catch {
     // Ignore window access errors if restricted
   }
@@ -84,7 +88,7 @@ const fetchUserCounts = async (
       credentials: 'include',
     });
     if (!res.ok) return { followingCount: 0, followerCount: 0 };
-    const data = await parseJsonResponse<any>(res, 'user info');
+    const data = await parseJsonResponse<{ user?: { following_count?: number; follower_count?: number } }>(res, 'user info');
     return {
       followingCount: data?.user?.following_count ?? 0,
       followerCount: data?.user?.follower_count ?? 0,

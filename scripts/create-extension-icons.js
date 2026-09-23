@@ -1,5 +1,5 @@
-const fs = require('fs');
-const path = require('path');
+const fs = require('node:fs');
+const path = require('node:path');
 
 const masterSvgPath = path.join(__dirname, '../src/assets/icon.svg');
 const extDir = path.join(__dirname, '../extension');

@@ -1,4 +1,4 @@
-import { UserNode, CacheData } from './types';
+import type { UserNode, CacheData } from './types';
 
 // Get cached followings list from LocalStorage
 export const getCachedFollowings = (userId: string): CacheData | null => {
@@ -6,7 +6,7 @@ export const getCachedFollowings = (userId: string): CacheData | null => {
     const dataStr = localStorage.getItem(`iu_cache_${userId}`);
     if (!dataStr) return null;
     return JSON.parse(dataStr);
-  } catch (e) {
+  } catch {
     return null;
   }
 };
@@ -36,7 +36,7 @@ export const validateAndParseCacheData = (jsonString: string): { data?: CacheDat
     if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
       return { error: 'Invalid format. File must contain a JSON object.' };
     }
-    if (typeof parsed.timestamp !== 'number' || isNaN(parsed.timestamp)) {
+    if (typeof parsed.timestamp !== 'number' || Number.isNaN(parsed.timestamp)) {
       return { error: 'Missing or invalid "timestamp" field. It must be a valid timestamp number.' };
     }
     if (!Array.isArray(parsed.users)) {
@@ -70,7 +70,7 @@ export const validateAndParseCacheData = (jsonString: string): { data?: CacheDat
         users: sanitizedUsers
       }
     };
-  } catch (e) {
+  } catch {
     return { error: 'Failed to parse JSON file. Ensure the file contains valid JSON.' };
   }
 };

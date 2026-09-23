@@ -17,12 +17,12 @@ async function updateActionIcon(tabId, url) {
   if (!tabId) return;
   const active = isInstagramUrl(url);
   const iconPath = active
-    ? { "16": "icon16.png", "48": "icon48.png", "128": "icon128.png" }
-    : { "16": "icon16-dark.png", "48": "icon48-dark.png", "128": "icon128-dark.png" };
+    ? { 16: 'icon16.png', 48: 'icon48.png', 128: 'icon128.png' }
+    : { 16: 'icon16-dark.png', 48: 'icon48-dark.png', 128: 'icon128-dark.png' };
 
   try {
     await chrome.action.setIcon({ tabId, path: iconPath });
-  } catch (err) {
+  } catch {
     // Ignore invalid tab state errors
   }
 }
@@ -35,7 +35,7 @@ async function syncAllTabs() {
         await updateActionIcon(tab.id, tab.url);
       }
     }
-  } catch (err) { }
+  } catch {}
 }
 
 // Initial tab icon synchronization on worker startup
@@ -52,7 +52,7 @@ chrome.tabs.onActivated.addListener(async (activeInfo) => {
   try {
     const tab = await chrome.tabs.get(activeInfo.tabId);
     await updateActionIcon(activeInfo.tabId, tab?.url);
-  } catch (err) { }
+  } catch {}
 });
 
 chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {

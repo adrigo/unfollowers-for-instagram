@@ -1,5 +1,5 @@
-const fs = require('fs');
-const path = require('path');
+const fs = require('node:fs');
+const path = require('node:path');
 
 const indexPath = path.join(__dirname, '../public/index.html');
 const minifiedPath = path.join(__dirname, '../dist/index.min.js');
@@ -29,7 +29,7 @@ try {
     const manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf8'));
     if (manifest.version !== version) {
       manifest.version = version;
-      fs.writeFileSync(manifestPath, JSON.stringify(manifest, null, 2) + '\n', 'utf8');
+      fs.writeFileSync(manifestPath, `${JSON.stringify(manifest, null, 2)}\n`, 'utf8');
     }
   }
 
