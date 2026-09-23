@@ -255,17 +255,26 @@ export const fetchFollowings = async (
   );
 
   const followerIds = new Set(rawFollowers.map((u) => u.pk));
+  const followingIds = new Set(rawFollowing.map((u) => u.pk));
 
   // Map to internal UserNode shape (deduplicated)
-  const followedUsers: UserNode[] = rawFollowing.map((u) => ({
+  const toUserNode = (u: V1FriendshipUser, followsViewer: boolean): UserNode => ({
     id: u.pk,
     username: u.username,
     fullName: u.full_name || '',
     profilePicUrl: u.profile_pic_url,
     isPrivate: Boolean(u.is_private),
     isVerified: Boolean(u.is_verified),
-    followsViewer: followerIds.has(u.pk),
-  }));
+    followsViewer,
+  });
+
+  const followedUsers = rawFollowing.map((u) => toUserNode(u, followerIds.has(u.pk)));
+
+  // Fans: accounts that follow the viewer but aren't followed back
+  const fans = rawFollowers
+    .filter((u) => !followingIds.has(u.pk))
+    .map((u): UserNode => ({ ...toUserNode(u, true), isFan: true }));
+  followedUsers.push(...fans);
 
   followedUsers.sort((a, b) => a.username.localeCompare(b.username));
 

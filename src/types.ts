@@ -7,6 +7,8 @@ export interface UserNode {
   isVerified: boolean;
   followsViewer: boolean;
   isNew?: boolean;
+  // Follows the viewer, but the viewer doesn't follow them back
+  isFan?: boolean;
 }
 
 export interface CacheData {
@@ -63,6 +65,7 @@ export interface ScanResult {
 export interface UserFilterState {
   showNonFollowers: boolean;
   showFollowers: boolean;
+  showFans: boolean;
   showNewUnfollowersOnly: boolean;
   showVerified: boolean;
   showPrivate: boolean;

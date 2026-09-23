@@ -765,6 +765,10 @@
   color: #34d399;
 }
 
+.iu-stat-val.fans {
+  color: #f97316;
+}
+
 .iu-stat-val.verified {
   color: #0095f6;
 }
@@ -855,4 +859,16 @@
   font-size: 0.82rem;
   line-height: 1.45;
   flex-shrink: 0;
+}
+
+.iu-checkbox-spacer {
+  width: 16px;
+  flex-shrink: 0;
+}
+
+.iu-fan-tag {
+  color: #ada79d;
+  font-size: 0.8rem;
+  padding: 0.5rem 0.5rem;
+  white-space: nowrap;
 }

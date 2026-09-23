@@ -64,6 +64,7 @@ export const validateAndParseCacheData = (jsonString: string): { data?: CacheDat
         isVerified: Boolean(u.isVerified),
         followsViewer: Boolean(u.followsViewer),
         isNew: Boolean(u.isNew),
+        isFan: Boolean(u.isFan),
       });
     }
 

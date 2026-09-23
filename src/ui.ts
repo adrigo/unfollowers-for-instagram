@@ -1,5 +1,6 @@
 import { unfollowUser } from './api';
 import CACHE_SYNC_SVG from './assets/cache-sync.svg';
+import FAN_SVG from './assets/fan.svg';
 import FOLLOWS_YOU_SVG from './assets/follows-you.svg';
 import NEW_UNFOLLOWER_SVG from './assets/new-unfollower.svg';
 import NON_FOLLOWERS_SVG from './assets/non-follower.svg';
@@ -158,6 +159,7 @@ export function renderList(
   const filterState: UserFilterState = {
     showNonFollowers: true,
     showFollowers: false,
+    showFans: false,
     showVerified: true,
     showPrivate: true,
     showNewUnfollowersOnly: false,
@@ -241,6 +243,10 @@ export function renderList(
             <div class="iu-sidebar-title">Filters:</div>
             <div class="iu-filter-list">
               <label class="iu-filter-label" style="display: flex; align-items: center; gap: 0.35rem;">
+                <input type="checkbox" id="iu-filter-new-unfollowers" ${filterState.showNewUnfollowersOnly ? 'checked' : ''} />
+                ${NEW_UNFOLLOWER_SVG} New Unfollowers Only
+              </label>
+              <label class="iu-filter-label" style="display: flex; align-items: center; gap: 0.35rem;">
                 <input type="checkbox" id="iu-filter-nonfollowers" ${filterState.showNonFollowers ? 'checked' : ''} />
                 ${NON_FOLLOWERS_SVG} Non-followers
               </label>
@@ -248,9 +254,9 @@ export function renderList(
                 <input type="checkbox" id="iu-filter-followers" ${filterState.showFollowers ? 'checked' : ''} />
                 ${FOLLOWS_YOU_SVG} Followers
               </label>
-              <label class="iu-filter-label" style="display: flex; align-items: center; gap: 0.35rem;">
-                <input type="checkbox" id="iu-filter-new-unfollowers" ${filterState.showNewUnfollowersOnly ? 'checked' : ''} />
-                ${NEW_UNFOLLOWER_SVG} New Unfollowers Only
+              <label class="iu-filter-label" style="display: flex; align-items: center; gap: 0.35rem;" title="Accounts that follow you but you don't follow back">
+                <input type="checkbox" id="iu-filter-fans" ${filterState.showFans ? 'checked' : ''} />
+                ${FAN_SVG} Fans
               </label>
               <label class="iu-filter-label" style="display: flex; align-items: center; gap: 0.35rem;">
                 <input type="checkbox" id="iu-filter-verified" ${filterState.showVerified ? 'checked' : ''} />
@@ -269,21 +275,27 @@ export function renderList(
             <div class="iu-stats-vertical">
               <div class="iu-stat-row">
                 <span style="display: flex; align-items: center; gap: 0.35rem;">
-                  ${NON_FOLLOWERS_SVG} Non-followers
-                </span>
-                <span id="stat-nonfollowers" class="iu-stat-val non-followers">0</span>
-              </div>
-              <div class="iu-stat-row">
-                <span style="display: flex; align-items: center; gap: 0.35rem;">
                   ${NEW_UNFOLLOWER_SVG} New Unfollowers
                 </span>
                 <span id="stat-new-unfollowers" class="iu-stat-val new-unfollowers">0</span>
               </div>
               <div class="iu-stat-row">
                 <span style="display: flex; align-items: center; gap: 0.35rem;">
+                  ${NON_FOLLOWERS_SVG} Non-followers
+                </span>
+                <span id="stat-nonfollowers" class="iu-stat-val non-followers">0</span>
+              </div>
+              <div class="iu-stat-row">
+                <span style="display: flex; align-items: center; gap: 0.35rem;">
                   ${FOLLOWS_YOU_SVG} Followers
                 </span>
                 <span id="stat-followers" class="iu-stat-val followers">0</span>
+              </div>
+              <div class="iu-stat-row" title="Accounts that follow you but you don't follow back">
+                <span style="display: flex; align-items: center; gap: 0.35rem;">
+                  ${FAN_SVG} Fans
+                </span>
+                <span id="stat-fans" class="iu-stat-val fans">0</span>
               </div>
               <div class="iu-stat-row">
                 <span style="display: flex; align-items: center; gap: 0.35rem;">
@@ -342,6 +354,7 @@ export function renderList(
 
   const nonFollowersCheck = document.getElementById('iu-filter-nonfollowers') as HTMLInputElement;
   const followersCheck = document.getElementById('iu-filter-followers') as HTMLInputElement;
+  const fansCheck = document.getElementById('iu-filter-fans') as HTMLInputElement;
   const newUnfollowersCheck = document.getElementById('iu-filter-new-unfollowers') as HTMLInputElement;
   const verifiedCheck = document.getElementById('iu-filter-verified') as HTMLInputElement;
   const privateCheck = document.getElementById('iu-filter-private') as HTMLInputElement;
@@ -360,9 +373,15 @@ export function renderList(
     let nonFollowers = 0,
       newUnfollowers = 0,
       followers = 0,
+      fans = 0,
       verified = 0,
       privateCount = 0;
     for (const u of activeUsers) {
+      // Fans are counted on their own; the other stats describe accounts you follow
+      if (u.isFan) {
+        fans++;
+        continue;
+      }
       if (!u.followsViewer) nonFollowers++;
       if (!u.followsViewer && u.isNew) newUnfollowers++;
       if (u.followsViewer) followers++;
@@ -373,6 +392,7 @@ export function renderList(
     document.getElementById('stat-nonfollowers')!.textContent = String(nonFollowers);
     document.getElementById('stat-new-unfollowers')!.textContent = String(newUnfollowers);
     document.getElementById('stat-followers')!.textContent = String(followers);
+    document.getElementById('stat-fans')!.textContent = String(fans);
     document.getElementById('stat-verified')!.textContent = String(verified);
     document.getElementById('stat-private')!.textContent = String(privateCount);
   };
@@ -388,6 +408,7 @@ export function renderList(
       searchInput,
       nonFollowersCheck,
       followersCheck,
+      fansCheck,
       newUnfollowersCheck,
       verifiedCheck,
       privateCheck,
@@ -402,9 +423,12 @@ export function renderList(
     }
   };
 
+  // Fans can't be unfollowed (you don't follow them), so they're never selectable
+  const getSelectableVisible = () => currentFilteredList.filter((u) => !u.isFan);
+
   const syncSelectAllState = () => {
-    const allVisibleSelected =
-      currentFilteredList.length > 0 && currentFilteredList.every((u) => selectedUserIds.has(u.id));
+    const selectable = getSelectableVisible();
+    const allVisibleSelected = selectable.length > 0 && selectable.every((u) => selectedUserIds.has(u.id));
     selectAllCheck.checked = allVisibleSelected;
   };
   const updateUIList = () => {
@@ -416,8 +440,9 @@ export function renderList(
       if (!matchesSearch) return false;
 
       // Follower filter
-      const matchesStatus =
-        (filterState.showNonFollowers && !u.followsViewer) || (filterState.showFollowers && u.followsViewer);
+      const matchesStatus = u.isFan
+        ? filterState.showFans
+        : (filterState.showNonFollowers && !u.followsViewer) || (filterState.showFollowers && u.followsViewer);
       if (!matchesStatus) return false;
 
       // New Unfollowers filter
@@ -463,7 +488,12 @@ export function renderList(
       });
     }
 
-    countTextEl.textContent = `Showing ${currentFilteredList.length} of ${activeUsers.length}`;
+    // The list mixes accounts you follow with fans, so report both totals separately
+    const fanCount = activeUsers.filter((u) => u.isFan).length;
+    const followingCount = activeUsers.length - fanCount;
+    countTextEl.textContent =
+      `Showing ${currentFilteredList.length} of ${activeUsers.length}` +
+      (fanCount > 0 ? ` (${followingCount} following + ${fanCount} fans)` : '');
 
     if (currentFilteredList.length === 0) {
       setElementHTML(
@@ -492,7 +522,11 @@ export function renderList(
           return `
       <div class="iu-user-card" id="card-${id}">
         <div class="iu-user-info">
-          <input type="checkbox" class="iu-user-checkbox" data-id="${id}" ${selectedUserIds.has(user.id) ? 'checked' : ''} ${isBulkRunning ? 'disabled' : ''} />
+          ${
+            user.isFan
+              ? '<span class="iu-checkbox-spacer"></span>'
+              : `<input type="checkbox" class="iu-user-checkbox" data-id="${id}" ${selectedUserIds.has(user.id) ? 'checked' : ''} ${isBulkRunning ? 'disabled' : ''} />`
+          }
           ${avatar}
           <div class="iu-names">
             <div class="iu-username-wrapper">
@@ -500,14 +534,24 @@ export function renderList(
               <div class="iu-card-badges">
                 ${user.isVerified ? wrapIcon(VERIFIED_BADGE_SVG, 'Verified') : ''}
                 ${user.isPrivate ? wrapIcon(PRIVATE_LOCK_SVG, 'Private Account') : ''}
-                ${user.followsViewer ? wrapIcon(FOLLOWS_YOU_SVG, 'Follows you') : wrapIcon(NON_FOLLOWERS_SVG, 'Non-follower')}
+                ${
+                  user.isFan
+                    ? wrapIcon(FAN_SVG, "Fan: follows you, you don't follow back")
+                    : user.followsViewer
+                      ? wrapIcon(FOLLOWS_YOU_SVG, 'Follows you')
+                      : wrapIcon(NON_FOLLOWERS_SVG, 'Non-follower')
+                }
                 ${newBadge}
               </div>
             </div>
             <span class="iu-fullname">${escapeHtml(user.fullName)}</span>
           </div>
         </div>
-        <button class="iu-unfollow-btn" data-id="${id}" ${isBulkRunning ? 'disabled' : ''}>Unfollow</button>
+        ${
+          user.isFan
+            ? '<span class="iu-fan-tag">Not following</span>'
+            : `<button class="iu-unfollow-btn" data-id="${id}" ${isBulkRunning ? 'disabled' : ''}>Unfollow</button>`
+        }
       </div>
       `;
         })
@@ -515,6 +559,15 @@ export function renderList(
     );
 
     syncSelectAllState();
+  };
+
+  // After unfollowing, drop the account; if it follows you, it becomes a fan instead
+  const applyUnfollow = (id: string) => {
+    activeUsers = activeUsers.flatMap((u) => {
+      if (u.id !== id) return [u];
+      return u.followsViewer ? [{ ...u, isFan: true, isNew: false }] : [];
+    });
+    selectedUserIds.delete(id);
   };
 
   // Unfollow action
@@ -528,9 +581,8 @@ export function renderList(
         btn.style.background = 'rgba(255,255,255,0.05)';
         btn.style.color = '#ada79d';
 
-        // Remove from local lists
-        activeUsers = activeUsers.filter((u) => u.id !== user.id);
-        selectedUserIds.delete(user.id);
+        // Update local lists
+        applyUnfollow(user.id);
 
         // Save to local cache
         setCachedFollowings(dsUserId, activeUsers);
@@ -605,7 +657,7 @@ export function renderList(
   // Select All visible handler
   selectAllCheck.addEventListener('change', () => {
     const isChecked = selectAllCheck.checked;
-    currentFilteredList.forEach((u) => {
+    getSelectableVisible().forEach((u) => {
       if (isChecked) {
         selectedUserIds.add(u.id);
       } else {
@@ -707,8 +759,7 @@ export function renderList(
 
           if (res.ok) {
             successCount++;
-            activeUsers = activeUsers.filter((u) => u.id !== id);
-            selectedUserIds.delete(id);
+            applyUnfollow(id);
 
             if (cardBtn) {
               cardBtn.textContent = 'Unfollowed';
@@ -790,6 +841,10 @@ export function renderList(
   });
   followersCheck.addEventListener('change', () => {
     filterState.showFollowers = followersCheck.checked;
+    updateUIList();
+  });
+  fansCheck.addEventListener('change', () => {
+    filterState.showFans = fansCheck.checked;
     updateUIList();
   });
   newUnfollowersCheck.addEventListener('change', () => {
