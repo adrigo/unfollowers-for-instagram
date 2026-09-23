@@ -1333,8 +1333,8 @@
           </div>
           <h3 class="feature-title">Sequential Bulk Unfollow</h3>
         </div>
-        <p class="feature-desc">Select multiple accounts and unfollow them sequentially with configurable human-like
-          delays to bypass Instagram's spam detection.</p>
+        <p class="feature-desc">Select multiple accounts and unfollow them sequentially with randomized 2–3.5s
+          human-like delays, plus pause and cancel controls, to avoid Instagram's spam detection.</p>
       </div>
       <div class="feature-card">
         <div class="feature-header">
@@ -1416,8 +1416,24 @@
           </div>
           <h3 class="feature-title">Humanized Anti-Block Controls</h3>
         </div>
-        <p class="feature-desc">Applies randomized 500ms–1000ms request delays per batch (~15s for 1,000 followings) and
-          auto-pauses on HTTP 429 to safeguard your account against security checkpoints.</p>
+        <p class="feature-desc">Applies randomized 300ms–600ms delays between pages, waits and retries when Instagram
+          rate limits a scan, and auto-pauses bulk unfollows on HTTP 429 to safeguard your account.</p>
+      </div>
+
+      <div class="feature-card">
+        <div class="feature-header">
+          <div class="feature-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">
+              <g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2">
+                <path d="M12 3l8 3v6c0 4.5-3.4 8.3-8 9c-4.6-.7-8-4.5-8-9V6z" />
+                <path d="m9 12l2 2l4-4" />
+              </g>
+            </svg>
+          </div>
+          <h3 class="feature-title">Accurate & Resilient Scans</h3>
+        </div>
+        <p class="feature-desc">Reads your following list in a stable follow-date order so no accounts get skipped,
+          and warns you if the followers list comes back incomplete before you unfollow anyone.</p>
       </div>
     </div>
 
@@ -1549,8 +1565,8 @@
           <h3>Rate Limit Warning & Safe Use Guidelines</h3>
           <p>
             Executing API requests quickly may result in temporary blocks from Instagram. We recommend executing a scan
-            no more than once every 10-15 minutes. During bulk unfollow operations, the script uses a 2-second
-            rate-limiting delay, which automatically pauses if Instagram flags the requests. Avoid running multiple
+            no more than once every 10-15 minutes. During bulk unfollow operations, the script uses a randomized
+            2–3.5 second delay between unfollows, which automatically pauses if Instagram flags the requests. Avoid running multiple
             active sessions.
           </p>
         </div>
