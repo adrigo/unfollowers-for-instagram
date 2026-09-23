@@ -7,7 +7,7 @@ function isInstagramUrl(url) {
   if (!url) return false;
   try {
     const { hostname } = new URL(url);
-    return hostname === 'www.instagram.com' || hostname === 'instagram.com';
+    return hostname === 'www.instagram.com';
   } catch {
     return false;
   }
@@ -31,7 +31,7 @@ async function syncAllTabs() {
   try {
     const tabs = await chrome.tabs.query({});
     for (const tab of tabs) {
-      if (tab.id && tab.url) {
+      if (tab.id) {
         await updateActionIcon(tab.id, tab.url);
       }
     }
@@ -44,18 +44,19 @@ syncAllTabs();
 chrome.runtime.onInstalled.addListener(syncAllTabs);
 chrome.runtime.onStartup.addListener(syncAllTabs);
 
+// Site access toggled in Firefox's add-on settings or granted from the popup
+chrome.permissions.onAdded.addListener(syncAllTabs);
+chrome.permissions.onRemoved.addListener(syncAllTabs);
+
 chrome.tabs.onActivated.addListener(async (activeInfo) => {
   try {
     const tab = await chrome.tabs.get(activeInfo.tabId);
-    if (tab && tab.url) {
-      await updateActionIcon(activeInfo.tabId, tab.url);
-    }
+    await updateActionIcon(activeInfo.tabId, tab?.url);
   } catch (err) { }
 });
 
 chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
-  const currentUrl = changeInfo.url || tab?.url;
-  if (currentUrl) {
-    updateActionIcon(tabId, currentUrl);
+  if (changeInfo.url || changeInfo.status) {
+    updateActionIcon(tabId, changeInfo.url || tab?.url);
   }
 });

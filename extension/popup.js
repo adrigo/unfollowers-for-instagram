@@ -3,11 +3,13 @@
  * Manages active tab status detection, script injection, and live tab navigation sync.
  */
 
+const INSTAGRAM_ORIGINS = { origins: ['https://www.instagram.com/*'] };
+
 function isInstagramUrl(url) {
   if (!url) return false;
   try {
     const { hostname } = new URL(url);
-    return hostname === 'www.instagram.com' || hostname === 'instagram.com';
+    return hostname === 'www.instagram.com';
   } catch {
     return false;
   }
@@ -111,6 +113,32 @@ document.addEventListener('DOMContentLoaded', async () => {
       console.error('Failed to check tab status:', err);
     }
   }
+
+  // Firefox lets users switch off site access. Without it tab URLs are hidden from the
+  // background worker, so the toolbar icon can't tell when a tab is on Instagram.
+  const accessCard = document.getElementById('access-card');
+  const grantAccessBtn = document.getElementById('grant-access-btn');
+
+  try {
+    accessCard.hidden = await chrome.permissions.contains(INSTAGRAM_ORIGINS);
+  } catch (err) {
+    console.warn('Could not check site access:', err);
+  }
+
+  grantAccessBtn.addEventListener('click', async () => {
+    // permissions.request must be the first call in the click handler (user gesture).
+    // Firefox may close the popup while its prompt is open; the background worker
+    // listens for permissions.onAdded and refreshes the icons either way.
+    try {
+      const granted = await chrome.permissions.request(INSTAGRAM_ORIGINS);
+      if (granted) {
+        accessCard.hidden = true;
+        await checkTabStatus();
+      }
+    } catch (err) {
+      console.error('Failed to request site access:', err);
+    }
+  });
 
   // Initial check
   await checkTabStatus();
