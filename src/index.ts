@@ -3,10 +3,24 @@ import { fetchFollowings, getCookie, ScanBlockedError } from './api';
 import APP_LOGO_SVG from './assets/icon.svg';
 import LOCK_ICON_SVG from './assets/lock.svg';
 import { estimatePhaseShare, expectedTotalsFromCache, overallProgressPercent } from './progress';
-import { getCachedFollowings, mergeCacheWithFreshScan, setCachedFollowings } from './storage';
+import {
+  getCachedFollowings,
+  getLastScanTime,
+  isScanTooSoon,
+  mergeCacheWithFreshScan,
+  setCachedFollowings,
+  setLastScanTime,
+} from './storage';
 import CSS_STYLES from './styles.css';
 import type { CacheData, UserNode } from './types';
-import { loadCacheWithScanAnimation, renderCachePrompt, renderError, renderList, setElementHTML } from './ui';
+import {
+  loadCacheWithScanAnimation,
+  renderCachePrompt,
+  renderError,
+  renderList,
+  renderScanCooldownPrompt,
+  setElementHTML,
+} from './ui';
 
 const appVersion =
   typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.getManifest
@@ -183,11 +197,23 @@ const appVersion =
       users,
       ds_user_id,
       {
-        onScanFresh: startScanning,
+        onScanFresh: requestScan,
         onImport: () => handleImport(() => showList(getCachedFollowings(ds_user_id)?.users ?? users)),
       },
       notice
     );
+  };
+
+  // Every New Scan goes through here: within the cooldown window, ask before scanning again
+  const requestScan = () => {
+    const lastScanTime = getLastScanTime(ds_user_id);
+    if (!isScanTooSoon(lastScanTime)) {
+      startScanning();
+      return;
+    }
+    const cache = getCachedFollowings(ds_user_id);
+    currentListController?.cancelBulk();
+    renderScanCooldownPrompt(bodyEl, lastScanTime!, cache ? () => showList(cache.users) : null, startScanning, cleanup);
   };
 
   const startScanning = async () => {
@@ -221,6 +247,9 @@ const appVersion =
 
       const scanStatusEl = document.getElementById('iu-scan-status')!;
       const progressBarEl = document.getElementById('iu-progress-bar')!;
+
+      // Recorded at the start: a cancelled or failed scan has already sent requests
+      setLastScanTime(ds_user_id);
 
       // Previous scan: used as the expected list sizes for progress, then for the merge below
       const prevCache = getCachedFollowings(ds_user_id);
@@ -304,7 +333,7 @@ const appVersion =
       cachedData,
       () => showList(cachedData.users),
       () => handleImport(() => showCachePrompt(cachedData)),
-      () => startScanning()
+      requestScan
     );
   };
 
@@ -312,6 +341,6 @@ const appVersion =
   if (cachedData) {
     showCachePrompt(cachedData);
   } else {
-    startScanning();
+    requestScan();
   }
 })();

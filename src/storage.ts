@@ -170,3 +170,29 @@ export const formatCacheAge = (timestamp: number): string => {
 
   return `${ageText} ago`;
 };
+
+// Scanning again shortly after a previous scan is what gets web sessions temporarily
+// blocked by Instagram, so New Scan asks for confirmation within this window.
+export const SCAN_COOLDOWN_MS = 15 * 60 * 1000;
+
+// When the last scan started. Kept apart from the cache timestamp, which also
+// changes after every unfollow.
+export const getLastScanTime = (userId: string): number | null => {
+  try {
+    const value = Number(localStorage.getItem(`iu_last_scan_${userId}`));
+    return value > 0 ? value : null;
+  } catch {
+    return null;
+  }
+};
+
+export const setLastScanTime = (userId: string, time: number = Date.now()): void => {
+  try {
+    localStorage.setItem(`iu_last_scan_${userId}`, String(time));
+  } catch {
+    // Non-critical: without it the cooldown prompt just doesn't show
+  }
+};
+
+export const isScanTooSoon = (lastScanTime: number | null, now: number = Date.now()): boolean =>
+  lastScanTime !== null && now >= lastScanTime && now - lastScanTime < SCAN_COOLDOWN_MS;

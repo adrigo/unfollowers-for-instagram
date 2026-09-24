@@ -99,6 +99,7 @@ When you run `npm run package:extension`, the build pipeline automatically:
 * **Sequential Bulk Unfollow:** Select multiple users and unfollow them sequentially with a dedicated pause/cancel progress banner.
 * **Randomized Timing Delays (Anti-Spam):** Applies a randomized timing jitter (`300ms`–`600ms` per page for REST API scans, and `2.0s`–`3.5s` per unfollow) to mimic human pacing and prevent automated security checkpoints.
 * **Scan Retries with Backoff:** Rate limits (HTTP 429), server errors, and network drops during a scan are retried after waiting 30s, 60s, then 120s, with the wait shown in the scanner.
+* **Rescan Cooldown Warning:** Pressing **New Scan** within 15 minutes of the last scan asks for confirmation first, offering the cached results instead, since frequent scans are what get web sessions temporarily blocked.
 * **Blocked Scan Detection:** When Instagram refuses a list request by redirecting it (usually after several scans in a short time), the scan stops without retrying and explains that you should wait a few hours, offering your cached results instead.
 * **Auto-Pause on Rate Limits:** Intercepts HTTP 429 (Too Many Requests) errors from Instagram, automatically pausing the bulk loop and prompting the user to wait instead of letting subsequent requests fail.
 * **Incomplete Scan Warning:** Shows a warning above the list when Instagram stops returning the followers list early, since missing followers would otherwise appear as non-followers.

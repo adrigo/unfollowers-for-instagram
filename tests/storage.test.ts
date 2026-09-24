@@ -2,8 +2,12 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   formatCacheAge,
   getCachedFollowings,
+  getLastScanTime,
+  isScanTooSoon,
   mergeCacheWithFreshScan,
+  SCAN_COOLDOWN_MS,
   setCachedFollowings,
+  setLastScanTime,
   validateAndParseCacheData,
 } from '../src/storage';
 import type { CacheData, UserNode } from '../src/types';
@@ -178,5 +182,42 @@ describe('setCachedFollowings / getCachedFollowings', () => {
     const store = stubStorage();
     store.set('iu_cache_me', '{broken');
     expect(getCachedFollowings('me')).toBeNull();
+  });
+});
+
+describe('scan cooldown', () => {
+  const now = 1_000_000_000;
+
+  it('allows a scan when there is no previous scan', () => {
+    expect(isScanTooSoon(null, now)).toBe(false);
+  });
+
+  it('asks for confirmation within the cooldown window', () => {
+    expect(isScanTooSoon(now - 60_000, now)).toBe(true);
+    expect(isScanTooSoon(now - SCAN_COOLDOWN_MS + 1, now)).toBe(true);
+  });
+
+  it('allows a scan once the cooldown has passed', () => {
+    expect(isScanTooSoon(now - SCAN_COOLDOWN_MS, now)).toBe(false);
+  });
+
+  it('ignores last scan times in the future (clock changes)', () => {
+    expect(isScanTooSoon(now + 60_000, now)).toBe(false);
+  });
+
+  it('stores the last scan time per user', () => {
+    const store = new Map<string, string>();
+    vi.stubGlobal('localStorage', {
+      getItem: (key: string) => store.get(key) ?? null,
+      setItem: (key: string, value: string) => store.set(key, value),
+    });
+    try {
+      expect(getLastScanTime('me')).toBeNull();
+      setLastScanTime('me', 12345);
+      expect(getLastScanTime('me')).toBe(12345);
+      expect(getLastScanTime('someone-else')).toBeNull();
+    } finally {
+      vi.unstubAllGlobals();
+    }
   });
 });

@@ -2,10 +2,12 @@ import { unfollowUser } from './api';
 import CACHE_SYNC_SVG from './assets/cache-sync.svg';
 import FAN_SVG from './assets/fan.svg';
 import FOLLOWS_YOU_SVG from './assets/follows-you.svg';
+import HOURGLASS_SVG from './assets/hourglass.svg';
 import NEW_UNFOLLOWER_SVG from './assets/new-unfollower.svg';
 import NON_FOLLOWERS_SVG from './assets/non-follower.svg';
 import PRIVATE_LOCK_SVG from './assets/private.svg';
 import VERIFIED_BADGE_SVG from './assets/verified.svg';
+import WARNING_SVG from './assets/warning.svg';
 import { filterUsers, sortUsers } from './filters';
 import { formatCacheAge, getCachedFollowings, setCachedFollowings, validateAndParseCacheData } from './storage';
 import type { CacheData, SortOption, UserFilterState, UserNode } from './types';
@@ -36,7 +38,7 @@ export function renderError(
     bodyEl,
     `
     <div style="text-align: center; margin: auto; padding: 2rem;">
-      <span style="font-size: 3rem;">⚠️</span>
+      ${WARNING_SVG}
       <h3 style="margin: 1rem 0; color: #f87171;">${escapeHtml(title)}</h3>
       <p style="color: #ada79d; margin-bottom: 1.5rem; line-height: 1.5; max-width: 320px; margin-left: auto; margin-right: auto;">${escapeHtml(message)}</p>
       <button id="iu-error-action-btn" class="iu-btn-export" style="background: linear-gradient(135deg, #f97316, #ec4899, #7c3aed); color: #fff; border: none;">${escapeHtml(action.label)}</button>
@@ -88,6 +90,47 @@ export function renderCachePrompt(
   document.getElementById('iu-use-cache-btn')!.addEventListener('click', onUseCache);
   document.getElementById('iu-import-cache-btn')!.addEventListener('click', onImportCache);
   document.getElementById('iu-scan-fresh-btn')!.addEventListener('click', onScanFresh);
+}
+
+// Shown when New Scan is pressed shortly after a previous scan
+export function renderScanCooldownPrompt(
+  bodyEl: HTMLElement,
+  lastScanTime: number,
+  onUseCache: (() => void) | null,
+  onScanAnyway: () => void,
+  onClose: () => void
+) {
+  const primaryButton = onUseCache
+    ? `<button id="iu-cooldown-cache-btn" class="iu-btn-export" style="flex: 1; background: linear-gradient(135deg, #f97316, #ec4899, #7c3aed); color: #fff; border: none; font-weight: 700; height: 42px; border-radius: 10px;">Use Cache</button>`
+    : `<button id="iu-cooldown-close-btn" class="iu-btn-export" style="flex: 1; height: 42px; border-radius: 10px;">Close</button>`;
+
+  setElementHTML(
+    bodyEl,
+    `
+    <div style="text-align: center; margin: auto; padding: 2.5rem; display: flex; flex-direction: column; gap: 1.5rem; align-items: center; justify-content: center; height: 100%;">
+      ${HOURGLASS_SVG}
+      <div>
+        <h3 style="margin-bottom: 0.5rem; font-weight: 600; font-size: 1.3rem;">You scanned recently</h3>
+        <p style="color: #ada79d; font-size: 0.9rem; line-height: 1.5; max-width: 380px;">
+          Your last scan started <strong>${escapeHtml(formatCacheAge(lastScanTime))}</strong>.
+          Scanning again this soon can get your account temporarily blocked by Instagram.
+          We recommend waiting at least 15 minutes between scans.
+        </p>
+      </div>
+      <div style="display: flex; gap: 0.5rem; width: 100%; max-width: 380px;">
+        ${primaryButton}
+        <button id="iu-cooldown-scan-btn" class="iu-btn-export" style="flex: 1; height: 42px; border-radius: 10px;">Scan Anyway</button>
+      </div>
+    </div>
+  `
+  );
+
+  if (onUseCache) {
+    document.getElementById('iu-cooldown-cache-btn')!.addEventListener('click', onUseCache);
+  } else {
+    document.getElementById('iu-cooldown-close-btn')!.addEventListener('click', onClose);
+  }
+  document.getElementById('iu-cooldown-scan-btn')!.addEventListener('click', onScanAnyway);
 }
 
 export function loadCacheWithScanAnimation(
