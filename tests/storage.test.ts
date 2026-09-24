@@ -1,13 +1,14 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
+  DAILY_SCAN_LIMIT,
   formatCacheAge,
   getCachedFollowings,
-  getLastScanTime,
-  isScanTooSoon,
+  getScanHistory,
+  getScanWarning,
   mergeCacheWithFreshScan,
+  recordScan,
   SCAN_COOLDOWN_MS,
   setCachedFollowings,
-  setLastScanTime,
   validateAndParseCacheData,
 } from '../src/storage';
 import type { CacheData, UserNode } from '../src/types';
@@ -185,37 +186,59 @@ describe('setCachedFollowings / getCachedFollowings', () => {
   });
 });
 
-describe('scan cooldown', () => {
-  const now = 1_000_000_000;
+describe('scan warnings', () => {
+  const now = 1_000_000_000_000;
+  const HOUR = 3_600_000;
 
-  it('allows a scan when there is no previous scan', () => {
-    expect(isScanTooSoon(null, now)).toBe(false);
+  it('allows a scan when there is no scan history', () => {
+    expect(getScanWarning([], now)).toBeNull();
   });
 
-  it('asks for confirmation within the cooldown window', () => {
-    expect(isScanTooSoon(now - 60_000, now)).toBe(true);
-    expect(isScanTooSoon(now - SCAN_COOLDOWN_MS + 1, now)).toBe(true);
+  it('warns within the cooldown after the last scan', () => {
+    expect(getScanWarning([now - 5 * 60_000], now)).toEqual({ reason: 'recent', lastScanTime: now - 5 * 60_000 });
+    expect(getScanWarning([now - SCAN_COOLDOWN_MS + 1], now)?.reason).toBe('recent');
   });
 
   it('allows a scan once the cooldown has passed', () => {
-    expect(isScanTooSoon(now - SCAN_COOLDOWN_MS, now)).toBe(false);
+    expect(getScanWarning([now - SCAN_COOLDOWN_MS], now)).toBeNull();
   });
 
-  it('ignores last scan times in the future (clock changes)', () => {
-    expect(isScanTooSoon(now + 60_000, now)).toBe(false);
+  it('warns after the daily limit even outside the cooldown', () => {
+    const history = Array.from({ length: DAILY_SCAN_LIMIT }, (_, i) => now - (i + 2) * HOUR);
+    expect(getScanWarning(history, now)).toEqual({ reason: 'daily', scansToday: DAILY_SCAN_LIMIT });
   });
 
-  it('stores the last scan time per user', () => {
+  it('only counts scans from the last 24 hours', () => {
+    const history = [now - 30 * HOUR, now - 26 * HOUR, now - 2 * HOUR];
+    expect(getScanWarning(history, now)).toBeNull();
+  });
+
+  it('ignores scan times in the future (clock changes)', () => {
+    expect(getScanWarning([now + 60_000], now)).toBeNull();
+  });
+
+  it('records scans per user and drops entries older than a day', () => {
     const store = new Map<string, string>();
     vi.stubGlobal('localStorage', {
       getItem: (key: string) => store.get(key) ?? null,
       setItem: (key: string, value: string) => store.set(key, value),
     });
     try {
-      expect(getLastScanTime('me')).toBeNull();
-      setLastScanTime('me', 12345);
-      expect(getLastScanTime('me')).toBe(12345);
-      expect(getLastScanTime('someone-else')).toBeNull();
+      expect(getScanHistory('me')).toEqual([]);
+      recordScan('me', now - 30 * HOUR);
+      recordScan('me', now);
+      expect(getScanHistory('me')).toEqual([now]);
+      expect(getScanHistory('someone-else')).toEqual([]);
+    } finally {
+      vi.unstubAllGlobals();
+    }
+  });
+
+  it('treats corrupted history as empty', () => {
+    const store = new Map([['iu_scan_history_me', '{broken']]);
+    vi.stubGlobal('localStorage', { getItem: (key: string) => store.get(key) ?? null, setItem: () => {} });
+    try {
+      expect(getScanHistory('me')).toEqual([]);
     } finally {
       vi.unstubAllGlobals();
     }

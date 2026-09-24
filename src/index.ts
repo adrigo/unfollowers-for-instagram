@@ -5,11 +5,11 @@ import LOCK_ICON_SVG from './assets/lock.svg';
 import { estimatePhaseShare, expectedTotalsFromCache, overallProgressPercent } from './progress';
 import {
   getCachedFollowings,
-  getLastScanTime,
-  isScanTooSoon,
+  getScanHistory,
+  getScanWarning,
   mergeCacheWithFreshScan,
+  recordScan,
   setCachedFollowings,
-  setLastScanTime,
 } from './storage';
 import CSS_STYLES from './styles.css';
 import type { CacheData, UserNode } from './types';
@@ -206,14 +206,14 @@ const appVersion =
 
   // Every New Scan goes through here: within the cooldown window, ask before scanning again
   const requestScan = () => {
-    const lastScanTime = getLastScanTime(ds_user_id);
-    if (!isScanTooSoon(lastScanTime)) {
+    const warning = getScanWarning(getScanHistory(ds_user_id));
+    if (!warning) {
       startScanning();
       return;
     }
     const cache = getCachedFollowings(ds_user_id);
     currentListController?.cancelBulk();
-    renderScanCooldownPrompt(bodyEl, lastScanTime!, cache ? () => showList(cache.users) : null, startScanning, cleanup);
+    renderScanCooldownPrompt(bodyEl, warning, cache ? () => showList(cache.users) : null, startScanning, cleanup);
   };
 
   const startScanning = async () => {
@@ -239,7 +239,7 @@ const appVersion =
             <div class="iu-progress-bar" id="iu-progress-bar"></div>
           </div>
           <div style="margin-top: 0.75rem; background: rgba(59, 130, 246, 0.08); border: 1px solid rgba(59, 130, 246, 0.2); border-radius: 10px; padding: 0.75rem 1rem; font-size: 0.8rem; color: #93c5fd; max-width: 420px; text-align: left; line-height: 1.45; box-sizing: border-box;">
-            <strong>Note:</strong> Due to recent internal changes on Instagram, scanning now runs in two safe stages (scanning your followings first, then checking followbacks). It takes a few extra seconds, but keeps your scan accurate and account safe.
+            <strong>Heads up:</strong> Instagram may flag accounts that scan or unfollow too often as automated and show a warning or temporarily restrict them. Scan occasionally (no more than a few times a day) and unfollow in moderation. The scan paces itself and takes short breaks, so it can take a minute.
           </div>
         </div>
       `
@@ -249,7 +249,7 @@ const appVersion =
       const progressBarEl = document.getElementById('iu-progress-bar')!;
 
       // Recorded at the start: a cancelled or failed scan has already sent requests
-      setLastScanTime(ds_user_id);
+      recordScan(ds_user_id);
 
       // Previous scan: used as the expected list sizes for progress, then for the merge below
       const prevCache = getCachedFollowings(ds_user_id);

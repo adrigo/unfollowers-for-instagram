@@ -99,7 +99,7 @@ When you run `npm run package:extension`, the build pipeline automatically:
 * **Sequential Bulk Unfollow:** Select multiple users and unfollow them sequentially with a dedicated pause/cancel progress banner.
 * **Randomized Timing Delays (Anti-Spam):** Scans wait `300ms`–`600ms` between pages plus a `5s`–`10s` break every 10 pages. Bulk unfollows wait `4s`–`7s` between unfollows plus a `3`–`5` minute break every 10, with a countdown in the progress banner. All values live in [`src/pacing.ts`](./src/pacing.ts).
 * **Scan Retries with Backoff:** Rate limits (HTTP 429), server errors, and network drops during a scan are retried after waiting 30s, 60s, then 120s, with the wait shown in the scanner.
-* **Rescan Cooldown Warning:** Pressing **New Scan** within 15 minutes of the last scan asks for confirmation first, offering the cached results instead, since frequent scans are what get web sessions temporarily blocked.
+* **Rescan Warning:** Pressing **New Scan** within 1 hour of the last scan, or after 3 scans in 24 hours, asks for confirmation first and offers the cached results instead, since frequent scans are what get accounts flagged.
 * **Blocked Scan Detection:** When Instagram refuses a list request by redirecting it (usually after several scans in a short time), the scan stops without retrying and explains that you should wait a few hours, offering your cached results instead.
 * **Auto-Pause on Rate Limits:** Intercepts HTTP 429 (Too Many Requests) errors from Instagram, automatically pausing the bulk loop and prompting the user to wait instead of letting subsequent requests fail.
 * **Incomplete Scan Warning:** Shows a warning above the list when Instagram stops returning the followers list early, since missing followers would otherwise appear as non-followers.
@@ -118,7 +118,7 @@ When you run `npm run package:extension`, the build pipeline automatically:
 ## ⚠️ Safety & Guidelines
 
 > [!WARNING]
-> **Use Moderately:** Interacting with private APIs too quickly can flag your account. We recommend running scans no more than once every 10-15 minutes, and unfollowing users in moderation.
+> **Use Moderately — your account can be flagged:** This tool uses Instagram's private web API. Instagram may treat frequent scans or unfollows as automated behavior and show a warning ("We suspect automated behavior on your account"), temporarily restrict actions, or in severe cases disable the account. Scan occasionally (no more than a few times a day, at least an hour apart), unfollow in moderation, and stop using the tool for a while if you receive a warning. Use it at your own risk.
 
 > [!TIP]
 > **Humanized Request Pacing:** Requests are spaced with randomized delays and regular longer breaks (see [`src/pacing.ts`](./src/pacing.ts)) to avoid burst request spikes. This lowers, but cannot eliminate, the risk of Instagram's automation detection.

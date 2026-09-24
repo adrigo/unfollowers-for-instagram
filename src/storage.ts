@@ -171,28 +171,42 @@ export const formatCacheAge = (timestamp: number): string => {
   return `${ageText} ago`;
 };
 
-// Scanning again shortly after a previous scan is what gets web sessions temporarily
-// blocked by Instagram, so New Scan asks for confirmation within this window.
-export const SCAN_COOLDOWN_MS = 15 * 60 * 1000;
+// Frequent scans are what get web sessions flagged by Instagram, so New Scan asks for
+// confirmation within an hour of the last scan, or after several scans in one day.
+export const SCAN_COOLDOWN_MS = 60 * 60 * 1000;
+export const DAILY_SCAN_LIMIT = 3;
+const DAY_MS = 24 * 60 * 60 * 1000;
 
-// When the last scan started. Kept apart from the cache timestamp, which also
-// changes after every unfollow.
-export const getLastScanTime = (userId: string): number | null => {
+export type ScanWarning = { reason: 'recent'; lastScanTime: number } | { reason: 'daily'; scansToday: number };
+
+// Start times of this user's scans in the last 24 hours. Kept apart from the cache
+// timestamp, which also changes after every unfollow.
+export const getScanHistory = (userId: string): number[] => {
   try {
-    const value = Number(localStorage.getItem(`iu_last_scan_${userId}`));
-    return value > 0 ? value : null;
+    const parsed = JSON.parse(localStorage.getItem(`iu_scan_history_${userId}`) ?? '[]');
+    return Array.isArray(parsed) ? parsed.filter((t): t is number => typeof t === 'number' && t > 0) : [];
   } catch {
-    return null;
+    return [];
   }
 };
 
-export const setLastScanTime = (userId: string, time: number = Date.now()): void => {
+export const recordScan = (userId: string, time: number = Date.now()): void => {
   try {
-    localStorage.setItem(`iu_last_scan_${userId}`, String(time));
+    const history = getScanHistory(userId).filter((t) => time - t < DAY_MS);
+    localStorage.setItem(`iu_scan_history_${userId}`, JSON.stringify([...history, time]));
   } catch {
-    // Non-critical: without it the cooldown prompt just doesn't show
+    // Non-critical: without it the scan warning just doesn't show
   }
 };
 
-export const isScanTooSoon = (lastScanTime: number | null, now: number = Date.now()): boolean =>
-  lastScanTime !== null && now >= lastScanTime && now - lastScanTime < SCAN_COOLDOWN_MS;
+// Why scanning now looks risky, or null if it's fine
+export const getScanWarning = (history: number[], now: number = Date.now()): ScanWarning | null => {
+  // Ignore times in the future (clock changes) and older than a day
+  const today = history.filter((t) => now >= t && now - t < DAY_MS);
+  if (today.length === 0) return null;
+
+  const lastScanTime = Math.max(...today);
+  if (now - lastScanTime < SCAN_COOLDOWN_MS) return { reason: 'recent', lastScanTime };
+  if (today.length >= DAILY_SCAN_LIMIT) return { reason: 'daily', scansToday: today.length };
+  return null;
+};

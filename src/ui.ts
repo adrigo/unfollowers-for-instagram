@@ -16,7 +16,15 @@ import {
   UNFOLLOW_BREAK_EVERY,
   UNFOLLOW_BREAK_MS,
 } from './pacing';
-import { formatCacheAge, getCachedFollowings, setCachedFollowings, validateAndParseCacheData } from './storage';
+import {
+  DAILY_SCAN_LIMIT,
+  formatCacheAge,
+  getCachedFollowings,
+  SCAN_COOLDOWN_MS,
+  type ScanWarning,
+  setCachedFollowings,
+  validateAndParseCacheData,
+} from './storage';
 import type { CacheData, SortOption, UserFilterState, UserNode } from './types';
 
 // Badge icons shown on list cards. Each is defined once as a <symbol> in BADGE_SPRITE and
@@ -125,7 +133,7 @@ export function renderCachePrompt(
 // Shown when New Scan is pressed shortly after a previous scan
 export function renderScanCooldownPrompt(
   bodyEl: HTMLElement,
-  lastScanTime: number,
+  warning: ScanWarning,
   onUseCache: (() => void) | null,
   onScanAnyway: () => void,
   onClose: () => void
@@ -140,11 +148,19 @@ export function renderScanCooldownPrompt(
     <div style="text-align: center; margin: auto; padding: 2.5rem; display: flex; flex-direction: column; gap: 1.5rem; align-items: center; justify-content: center; height: 100%;">
       ${HOURGLASS_SVG}
       <div>
-        <h3 style="margin-bottom: 0.5rem; font-weight: 600; font-size: 1.3rem;">You scanned recently</h3>
+        <h3 style="margin-bottom: 0.5rem; font-weight: 600; font-size: 1.3rem;">${
+          warning.reason === 'recent' ? 'You scanned recently' : 'Many scans today'
+        }</h3>
         <p style="color: #ada79d; font-size: 0.9rem; line-height: 1.5; max-width: 380px;">
-          Your last scan started <strong>${escapeHtml(formatCacheAge(lastScanTime))}</strong>.
-          Scanning again this soon can get your account temporarily blocked by Instagram.
-          We recommend waiting at least 15 minutes between scans.
+          ${
+            warning.reason === 'recent'
+              ? `Your last scan started <strong>${escapeHtml(formatCacheAge(warning.lastScanTime))}</strong>.
+                 Scanning again this soon can get your account flagged for automated behavior by Instagram.
+                 We recommend waiting at least ${SCAN_COOLDOWN_MS / 3_600_000} hour between scans.`
+              : `You've already scanned <strong>${warning.scansToday} times</strong> in the last 24 hours.
+                 Frequent scans can get your account flagged for automated behavior by Instagram.
+                 We recommend no more than ${DAILY_SCAN_LIMIT} scans a day.`
+          }
         </p>
       </div>
       <div style="display: flex; gap: 0.5rem; width: 100%; max-width: 380px;">
