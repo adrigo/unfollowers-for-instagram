@@ -102,11 +102,12 @@ When you run `npm run package:extension`, the build pipeline automatically:
 * **Auto-Pause on Rate Limits:** Intercepts HTTP 429 (Too Many Requests) errors from Instagram, automatically pausing the bulk loop and prompting the user to wait instead of letting subsequent requests fail.
 * **Incomplete Scan Warning:** Shows a warning above the list when the followers list comes back far below your profile's follower count, since missing followers would otherwise appear as non-followers.
 * **New Unfollower Detection:** Accounts that followed you in the previous scan but no longer do are flagged with a badge and can be filtered.
+* **Fans List:** See the accounts that follow you but you don't follow back, built from the already-scanned followers list with no extra requests. Fans are hidden by default, can't be selected for unfollowing, and accounts you unfollow that still follow you move into this list.
 * **Network Scan Abort Safety:** Closing the modal immediately calls `abort()` on an active `AbortController`, halting background API calls and avoiding rate limits.
 * **Page Exit Protection:** Warns the user if they try to close or refresh the tab during an active bulk unfollow process to prevent accidental progress loss.
 * **Custom Layouts:** Toggle between a detailed List View or a compact Grid View.
 * **Detailed Statistics Bar:** View live counts of Non-followers, Followers, Verified profiles, and Private accounts at a glance.
-* **Sorting & Filtering:** Sort by Recently Unfollowed, Username (A-Z/Z-A), Private First, or Verified First. Filter list by Non-followers, Followers, New Unfollowers, Verified, and Private tags.
+* **Sorting & Filtering:** Sort by Recently Unfollowed, Username (A-Z/Z-A), Private First, or Verified First. Filter list by New Unfollowers, Non-followers, Followers, Fans, Verified, and Private tags.
 * **Safe Rendering:** All Instagram profile data and imported values are HTML-escaped before rendering, and imported backups are strictly validated (numeric IDs, valid usernames, `https://` avatar URLs).
 
 ---
