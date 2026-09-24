@@ -177,7 +177,9 @@ export const SCAN_COOLDOWN_MS = 60 * 60 * 1000;
 export const DAILY_SCAN_LIMIT = 3;
 const DAY_MS = 24 * 60 * 60 * 1000;
 
-export type ScanWarning = { reason: 'recent'; lastScanTime: number } | { reason: 'daily'; scansToday: number };
+export type ScanWarning =
+  | { reason: 'recent'; lastScanTime: number }
+  | { reason: 'daily'; lastScanTime: number; scansToday: number };
 
 // Start times of this user's scans in the last 24 hours. Kept apart from the cache
 // timestamp, which also changes after every unfollow.
@@ -205,8 +207,9 @@ export const getScanWarning = (history: number[], now: number = Date.now()): Sca
   const today = history.filter((t) => now >= t && now - t < DAY_MS);
   if (today.length === 0) return null;
 
+  // The daily limit is the more serious warning, so it wins over the cooldown
   const lastScanTime = Math.max(...today);
+  if (today.length >= DAILY_SCAN_LIMIT) return { reason: 'daily', lastScanTime, scansToday: today.length };
   if (now - lastScanTime < SCAN_COOLDOWN_MS) return { reason: 'recent', lastScanTime };
-  if (today.length >= DAILY_SCAN_LIMIT) return { reason: 'daily', scansToday: today.length };
   return null;
 };

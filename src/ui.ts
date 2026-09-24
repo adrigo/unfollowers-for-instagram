@@ -157,9 +157,10 @@ export function renderScanCooldownPrompt(
               ? `Your last scan started <strong>${escapeHtml(formatCacheAge(warning.lastScanTime))}</strong>.
                  Scanning again this soon can get your account flagged for automated behavior by Instagram.
                  We recommend waiting at least ${SCAN_COOLDOWN_MS / 3_600_000} hour between scans.`
-              : `You've already scanned <strong>${warning.scansToday} times</strong> in the last 24 hours.
+              : `You've already scanned <strong>${warning.scansToday} times</strong> in the last 24 hours
+                 (last one <strong>${escapeHtml(formatCacheAge(warning.lastScanTime))}</strong>).
                  Frequent scans can get your account flagged for automated behavior by Instagram.
-                 We recommend no more than ${DAILY_SCAN_LIMIT} scans a day.`
+                 We recommend no more than ${DAILY_SCAN_LIMIT} scans a day, at least ${SCAN_COOLDOWN_MS / 3_600_000} hour apart.`
           }
         </p>
       </div>

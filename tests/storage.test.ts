@@ -205,7 +205,16 @@ describe('scan warnings', () => {
 
   it('warns after the daily limit even outside the cooldown', () => {
     const history = Array.from({ length: DAILY_SCAN_LIMIT }, (_, i) => now - (i + 2) * HOUR);
-    expect(getScanWarning(history, now)).toEqual({ reason: 'daily', scansToday: DAILY_SCAN_LIMIT });
+    expect(getScanWarning(history, now)).toEqual({
+      reason: 'daily',
+      lastScanTime: now - 2 * HOUR,
+      scansToday: DAILY_SCAN_LIMIT,
+    });
+  });
+
+  it('prefers the daily warning when both apply', () => {
+    const history = Array.from({ length: 10 }, (_, i) => now - (i + 1) * 60_000);
+    expect(getScanWarning(history, now)).toMatchObject({ reason: 'daily', scansToday: 10 });
   });
 
   it('only counts scans from the last 24 hours', () => {
