@@ -48,7 +48,7 @@ npm run package:extension
 
 * **`npm run package:extension`**: Executes `npm run build`, runs `scripts/create-extension-icons.js` to render PNG icons, bundles `source-code.zip` for Firefox source code review, and packages store-ready `extension.zip` in the root folder.
 * **`npm run typecheck`** / **`npm run lint`**: Type-check with `tsc` and check linting, formatting, and import order with [Biome](https://biomejs.dev). Both run automatically before every `npm run build`.
-* **`npm test`**: Run the [Vitest](https://vitest.dev) unit tests in `tests/` (cache merging, import validation, filtering, and sorting). Also runs before every `npm run build`.
+* **`npm test`**: Run the [Vitest](https://vitest.dev) unit tests in `tests/` (cache merging, import validation, ID normalization, filtering, and sorting). Also runs before every `npm run build`.
 * **`npm run format`**: Apply Biome lint fixes, formatting, and import sorting.
 * **`npm run package:source`**: Generates `source-code.zip` containing all original TypeScript source files and build configurations (excluding `node_modules` and compiled assets) required for store source code reviews.
 
@@ -154,7 +154,7 @@ When you run `npm run package:extension`, the build pipeline automatically:
 │   ├── svg.d.ts           # TypeScript module declarations for SVG imports
 │   ├── types.ts           # TypeScript interfaces (UserNode, CacheData, API responses)
 │   └── ui.ts              # Core list drawing, event delegation, search/filters, bulk loops
-├── tests/                 # Vitest unit tests for storage and filters
+├── tests/                 # Vitest unit tests for storage, filters, and API helpers
 ├── tsconfig.json          # TypeScript configuration options
 └── package.json           # Dev scripts & dependencies (esbuild + typescript + resvg)
 ```

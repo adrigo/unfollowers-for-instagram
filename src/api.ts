@@ -1,4 +1,5 @@
 import type {
+  RawV1FriendshipUser,
   ScanProgressCallback,
   ScanResult,
   ScanRetryCallback,
@@ -179,6 +180,13 @@ const fetchFriendshipsPageWithRetry = async (
   }
 };
 
+// IDs are compared as strings everywhere (Set lookups, data-id attributes, import
+// validation), so normalize them as soon as they arrive, whatever type Instagram sends.
+export const normalizeFriendshipUser = (raw: RawV1FriendshipUser): V1FriendshipUser => ({
+  ...raw,
+  pk: String(raw.pk_id ?? raw.pk),
+});
+
 // Walk all pages of following or followers list and return deduplicated users.
 // `truncated` is set only when the MAX_PAGES safety net cut the walk short.
 const fetchAllFriendships = async (
@@ -198,7 +206,8 @@ const fetchAllFriendships = async (
 
     const data = await fetchFriendshipsPageWithRetry(userId, type, maxId, onRetry, signal);
     pages++;
-    for (const user of data.users) {
+    for (const raw of data.users) {
+      const user = normalizeFriendshipUser(raw);
       seen.set(user.pk, user);
     }
     onPageFetched(seen.size);

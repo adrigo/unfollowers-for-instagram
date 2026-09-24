@@ -22,6 +22,19 @@ export interface UnfollowResult {
 }
 
 // Instagram private REST API v1 — /api/v1/friendships/<userId>/following/
+// User as returned by Instagram. The ID type isn't guaranteed: pk may arrive as a
+// string or a number, and some responses also include a string pk_id.
+export interface RawV1FriendshipUser {
+  pk: string | number;
+  pk_id?: string;
+  username: string;
+  full_name: string;
+  profile_pic_url: string;
+  is_private: boolean;
+  is_verified: boolean;
+}
+
+// Same user after normalization, with pk always a string
 export interface V1FriendshipUser {
   pk: string;
   username: string;
@@ -32,7 +45,7 @@ export interface V1FriendshipUser {
 }
 
 export interface V1FriendshipsResponse {
-  users: V1FriendshipUser[];
+  users: RawV1FriendshipUser[];
   next_max_id?: string;
   big_list?: boolean;
   status: string;
