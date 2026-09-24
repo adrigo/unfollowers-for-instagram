@@ -12,8 +12,31 @@ import { filterUsers, sortUsers } from './filters';
 import { formatCacheAge, getCachedFollowings, setCachedFollowings, validateAndParseCacheData } from './storage';
 import type { CacheData, SortOption, UserFilterState, UserNode } from './types';
 
-function wrapIcon(iconSvg: string, title: string): string {
-  return `<span title="${title}" style="display: inline-block; vertical-align: middle; line-height: 1; cursor: help; flex-shrink: 0;">${iconSvg}</span>`;
+// Badge icons shown on list cards. Each is defined once as a <symbol> in BADGE_SPRITE and
+// referenced with <use>, so cards don't each carry full copies of the SVG markup.
+const BADGE_ICONS = {
+  'follows-you': FOLLOWS_YOU_SVG,
+  'non-follower': NON_FOLLOWERS_SVG,
+  fan: FAN_SVG,
+  'new-unfollower': NEW_UNFOLLOWER_SVG,
+  verified: VERIFIED_BADGE_SVG,
+  private: PRIVATE_LOCK_SVG,
+} as const;
+type BadgeIcon = keyof typeof BADGE_ICONS;
+
+// Turn a standalone <svg> asset into a <symbol> with the same viewBox and content
+const toSymbol = (svg: string, id: string): string => {
+  const viewBox = svg.match(/viewBox="([^"]+)"/)?.[1] ?? '0 0 24 24';
+  const content = svg.slice(svg.indexOf('>') + 1, svg.lastIndexOf('</svg>'));
+  return `<symbol id="${id}" viewBox="${viewBox}">${content}</symbol>`;
+};
+
+const BADGE_SPRITE = `<svg class="iu-sprite" aria-hidden="true">${Object.entries(BADGE_ICONS)
+  .map(([name, svg]) => toSymbol(svg, `iu-icon-${name}`))
+  .join('')}</svg>`;
+
+function badge(icon: BadgeIcon, title: string): string {
+  return `<span class="iu-badge" title="${escapeHtml(title)}"><svg width="16" height="16" aria-hidden="true"><use href="#iu-icon-${icon}"/></svg></span>`;
 }
 
 export function setElementHTML(element: HTMLElement, htmlString: string) {
@@ -222,6 +245,7 @@ export function renderList(
     bodyEl,
     `
     <div class="iu-layout-wrapper">
+      ${BADGE_SPRITE}
       <div class="iu-sidebar">
         <!-- Full-Width Search Bar -->
         <div class="iu-sidebar-section iu-search-section">
@@ -480,7 +504,7 @@ export function renderList(
 
   // Static card markup; selection and disabled state are applied by syncCardState
   const renderCardHtml = (user: UserNode): string => {
-    const newBadge = user.isNew ? wrapIcon(NEW_UNFOLLOWER_SVG, 'New Unfollower') : '';
+    const newBadge = user.isNew ? badge('new-unfollower', 'New Unfollower') : '';
 
     const id = escapeHtml(user.id);
     const username = escapeHtml(user.username);
@@ -501,14 +525,14 @@ export function renderList(
         <div class="iu-username-wrapper">
           <a class="iu-username" href="https://www.instagram.com/${encodeURIComponent(user.username)}/" target="_blank" rel="noopener noreferrer">${username}</a>
           <div class="iu-card-badges">
-            ${user.isVerified ? wrapIcon(VERIFIED_BADGE_SVG, 'Verified') : ''}
-            ${user.isPrivate ? wrapIcon(PRIVATE_LOCK_SVG, 'Private Account') : ''}
+            ${user.isVerified ? badge('verified', 'Verified') : ''}
+            ${user.isPrivate ? badge('private', 'Private Account') : ''}
             ${
               user.isFan
-                ? wrapIcon(FAN_SVG, "Fan: follows you, you don't follow back")
+                ? badge('fan', "Fan: follows you, you don't follow back")
                 : user.followsViewer
-                  ? wrapIcon(FOLLOWS_YOU_SVG, 'Follows you')
-                  : wrapIcon(NON_FOLLOWERS_SVG, 'Non-follower')
+                  ? badge('follows-you', 'Follows you')
+                  : badge('non-follower', 'Non-follower')
             }
             ${newBadge}
           </div>
