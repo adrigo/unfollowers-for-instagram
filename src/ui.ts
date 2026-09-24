@@ -9,6 +9,13 @@ import PRIVATE_LOCK_SVG from './assets/private.svg';
 import VERIFIED_BADGE_SVG from './assets/verified.svg';
 import WARNING_SVG from './assets/warning.svg';
 import { filterUsers, sortUsers } from './filters';
+import {
+  estimateBulkUnfollowMs,
+  formatCountdown,
+  nextUnfollowWait,
+  UNFOLLOW_BREAK_EVERY,
+  UNFOLLOW_BREAK_MS,
+} from './pacing';
 import { formatCacheAge, getCachedFollowings, setCachedFollowings, validateAndParseCacheData } from './storage';
 import type { CacheData, SortOption, UserFilterState, UserNode } from './types';
 
@@ -751,9 +758,13 @@ export function renderList(
     const idsArray = Array.from(selectedUserIds);
     if (idsArray.length === 0) return;
 
+    const minutes = Math.max(1, Math.round(estimateBulkUnfollowMs(idsArray.length) / 60_000));
     if (
       !confirm(
-        `Are you sure you want to unfollow ${idsArray.length} selected accounts?\nThis will process them sequentially with a safe 2-second delay.`
+        `Are you sure you want to unfollow ${idsArray.length} selected accounts?\n\n` +
+          `To avoid Instagram flagging your account, they are unfollowed one by one with a few seconds between each ` +
+          `and a ${Math.round(UNFOLLOW_BREAK_MS.min / 60_000)}–${Math.round(UNFOLLOW_BREAK_MS.max / 60_000)} minute break every ${UNFOLLOW_BREAK_EVERY}. ` +
+          `This will take about ${minutes} minute${minutes === 1 ? '' : 's'}. Keep this tab open.`
       )
     ) {
       return;
@@ -857,19 +868,23 @@ export function renderList(
         setCachedFollowings(dsUserId, activeUsers);
         updateStatsCounters();
 
-        // Delay to prevent rate limiting, unless it's the last item or cancelled
+        // Wait before the next unfollow (see pacing.ts), unless it's the last item or cancelled
         if (i < idsArray.length - 1 && !isBulkCancelled) {
-          // Generate a random delay between 2.0s and 3.5s to mimic human behavior
-          const randomDelay = 2000 + Math.random() * 1500;
-          let delayPassed = 0;
-          while (delayPassed < randomDelay) {
+          const { ms, isBreak } = nextUnfollowWait(i + 1);
+          let waited = 0;
+          while (waited < ms) {
             if (isBulkCancelled) break;
             while (isBulkPaused) {
               if (isBulkCancelled) break;
               await new Promise((resolve) => setTimeout(resolve, 250));
             }
+            if (isBreak) {
+              progressText.textContent =
+                `Taking a break to avoid Instagram limits: ${formatCountdown(ms - waited)} ` +
+                `(${i + 1} / ${idsArray.length} done)`;
+            }
             await new Promise((resolve) => setTimeout(resolve, 250));
-            delayPassed += 250;
+            waited += 250;
           }
         }
       }

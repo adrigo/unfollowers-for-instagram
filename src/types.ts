@@ -70,6 +70,9 @@ export type ScanProgressCallback = (scanned: number, phase: 'following' | 'follo
 
 export type ScanRetryCallback = (waitMs: number, attempt: number, maxAttempts: number, reason: string) => void;
 
+// Called before a deliberate longer pause between pages (see pacing.ts)
+export type ScanBreakCallback = (waitMs: number) => void;
+
 export interface ScanResult {
   users: UserNode[];
   // Set when a list stopped paginating before reaching its end

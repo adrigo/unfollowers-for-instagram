@@ -48,7 +48,7 @@ npm run package:extension
 
 * **`npm run package:extension`**: Executes `npm run build`, runs `scripts/create-extension-icons.js` to render PNG icons, bundles `source-code.zip` for Firefox source code review, and packages store-ready `extension.zip` in the root folder.
 * **`npm run typecheck`** / **`npm run lint`**: Type-check with `tsc` and check linting, formatting, and import order with [Biome](https://biomejs.dev). Both run automatically before every `npm run build`.
-* **`npm test`**: Run the [Vitest](https://vitest.dev) unit tests in `tests/` (cache merging, import validation, ID normalization, progress estimates, filtering, and sorting). Also runs before every `npm run build`.
+* **`npm test`**: Run the [Vitest](https://vitest.dev) unit tests in `tests/` (cache merging, import validation, ID normalization, pacing, progress estimates, filtering, and sorting). Also runs before every `npm run build`.
 * **`npm run format`**: Apply Biome lint fixes, formatting, and import sorting.
 * **`npm run package:source`**: Generates `source-code.zip` containing all original TypeScript source files and build configurations (excluding `node_modules` and compiled assets) required for store source code reviews.
 
@@ -97,7 +97,7 @@ When you run `npm run package:extension`, the build pipeline automatically:
 * **Cache Export & Import (Cross-Device Migration):** Export your full cache state as a JSON file (`iu_cache_<user_id>.json`) and import it onto any other browser or computer to move your scan history without re-scanning. Note: Imported files must be a valid JSON file previously exported by this tool (containing `timestamp` and `users`).
 * **Sidebar Quick Controls:** Instant **New Scan**, **Grid View**, **Import**, and **Export** actions accessible right from the sidebar.
 * **Sequential Bulk Unfollow:** Select multiple users and unfollow them sequentially with a dedicated pause/cancel progress banner.
-* **Randomized Timing Delays (Anti-Spam):** Applies a randomized timing jitter (`300ms`–`600ms` per page for REST API scans, and `2.0s`–`3.5s` per unfollow) to mimic human pacing and prevent automated security checkpoints.
+* **Randomized Timing Delays (Anti-Spam):** Scans wait `300ms`–`600ms` between pages plus a `5s`–`10s` break every 10 pages. Bulk unfollows wait `4s`–`7s` between unfollows plus a `3`–`5` minute break every 10, with a countdown in the progress banner. All values live in [`src/pacing.ts`](./src/pacing.ts).
 * **Scan Retries with Backoff:** Rate limits (HTTP 429), server errors, and network drops during a scan are retried after waiting 30s, 60s, then 120s, with the wait shown in the scanner.
 * **Rescan Cooldown Warning:** Pressing **New Scan** within 15 minutes of the last scan asks for confirmation first, offering the cached results instead, since frequent scans are what get web sessions temporarily blocked.
 * **Blocked Scan Detection:** When Instagram refuses a list request by redirecting it (usually after several scans in a short time), the scan stops without retrying and explains that you should wait a few hours, offering your cached results instead.
@@ -121,7 +121,7 @@ When you run `npm run package:extension`, the build pipeline automatically:
 > **Use Moderately:** Interacting with private APIs too quickly can flag your account. We recommend running scans no more than once every 10-15 minutes, and unfollowing users in moderation.
 
 > [!TIP]
-> **Humanized Request Pacing:** REST API pagination queries automatically apply a 300ms–600ms randomized delay per page (Instagram serves up to 25 users per page). This prevents burst request spikes and protects your account against automated security checkpoints.
+> **Humanized Request Pacing:** Requests are spaced with randomized delays and regular longer breaks (see [`src/pacing.ts`](./src/pacing.ts)) to avoid burst request spikes. This lowers, but cannot eliminate, the risk of Instagram's automation detection.
 
 > [!TIP]
 > **Audit Friendly:** The code contains zero external dependencies or remote script calls. You can easily audit [src/api.ts](./src/api.ts) to verify that no data is ever stored, collected, or transmitted to third-party servers.
@@ -152,6 +152,7 @@ When you run `npm run package:extension`, the build pipeline automatically:
 │   ├── css.d.ts           # TypeScript module declarations for CSS imports
 │   ├── filters.ts         # Pure list filtering and sorting helpers
 │   ├── index.ts           # Entry orchestrator, overlay modal builder, scroll locks
+│   ├── pacing.ts          # Request delays and breaks for scans and bulk unfollows
 │   ├── progress.ts        # Scan progress estimates from the previous scan
 │   ├── storage.ts         # LocalStorage cache, import validation, new-unfollower merge
 │   ├── styles.css         # CSS style sheet containing the glassmorphism system

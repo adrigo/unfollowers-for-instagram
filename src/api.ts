@@ -1,5 +1,7 @@
+import { nextPageWait } from './pacing';
 import type {
   RawV1FriendshipUser,
+  ScanBreakCallback,
   ScanProgressCallback,
   ScanResult,
   ScanRetryCallback,
@@ -185,6 +187,7 @@ const fetchAllFriendships = async (
   type: 'following' | 'followers',
   onPageFetched: (fetched: number) => void,
   onRetry: ScanRetryCallback | undefined,
+  onBreak: ScanBreakCallback | undefined,
   signal?: AbortSignal
 ): Promise<{ users: V1FriendshipUser[]; truncated: boolean }> => {
   const seen = new Map<string, V1FriendshipUser>();
@@ -210,8 +213,10 @@ const fetchAllFriendships = async (
     }
     maxId = data.next_max_id;
 
-    // Randomized delay between 300ms and 600ms
-    await sleep(300 + Math.random() * 300, signal);
+    // Short randomized pause between pages, and a longer break every few pages (see pacing.ts)
+    const { ms, isBreak } = nextPageWait(pages);
+    if (isBreak) onBreak?.(ms);
+    await sleep(ms, signal);
   }
 
   console.log(
@@ -225,6 +230,7 @@ export const fetchFollowings = async (
   userId: string,
   onProgress: ScanProgressCallback,
   onRetry?: ScanRetryCallback,
+  onBreak?: ScanBreakCallback,
   signal?: AbortSignal
 ): Promise<ScanResult> => {
   // Phase 1 — fetch the list of accounts this user follows
@@ -233,6 +239,7 @@ export const fetchFollowings = async (
     'following',
     (count) => onProgress(count, 'following', false),
     onRetry,
+    onBreak,
     signal
   );
   onProgress(rawFollowing.length, 'following', true);
@@ -243,6 +250,7 @@ export const fetchFollowings = async (
     'followers',
     (count) => onProgress(count, 'followers', false),
     onRetry,
+    onBreak,
     signal
   );
   onProgress(rawFollowers.length, 'followers', true);

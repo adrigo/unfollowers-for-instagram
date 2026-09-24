@@ -269,6 +269,9 @@ const appVersion =
         (waitMs, attempt, maxAttempts) => {
           scanStatusEl.textContent = `Instagram is limiting requests. Pausing ${Math.round(waitMs / 1000)}s before retrying (attempt ${attempt} of ${maxAttempts})...`;
         },
+        (waitMs) => {
+          scanStatusEl.textContent = `Taking a short ${Math.round(waitMs / 1000)}s break so the scan looks less automated...`;
+        },
         signal
       );
 
