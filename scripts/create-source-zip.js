@@ -20,6 +20,7 @@ const outputFile = path.join(rootDir, 'source-code.zip');
 
 const includePaths = [
   'src',
+  'tests',
   'scripts',
   'public',
   'extension',

@@ -32,11 +32,11 @@ Created by [adrigo](https://adrigo.dev).
 
 ### 1. Build Environment & Requirements
 - **Supported OS:** Linux, macOS, Windows
-- **Node.js Version:** >= 18.0.0
+- **Node.js Version:** >= 22.12.0 (24 LTS recommended, see `.nvmrc`)
 - **Package Manager:** npm >= 9.0.0
 
 ```bash
-# 1. Install lightweight devDependencies (esbuild, typescript, biome & @resvg/resvg-js)
+# 1. Install lightweight devDependencies (esbuild, typescript, biome, vitest & @resvg/resvg-js)
 npm install
 
 # 2. Build TypeScript bundle & sync index.html / extension/index.min.js
@@ -48,6 +48,7 @@ npm run package:extension
 
 * **`npm run package:extension`**: Executes `npm run build`, runs `scripts/create-extension-icons.js` to render PNG icons, bundles `source-code.zip` for Firefox source code review, and packages store-ready `extension.zip` in the root folder.
 * **`npm run typecheck`** / **`npm run lint`**: Type-check with `tsc` and check linting, formatting, and import order with [Biome](https://biomejs.dev). Both run automatically before every `npm run build`.
+* **`npm test`**: Run the [Vitest](https://vitest.dev) unit tests in `tests/` (cache merging, import validation, filtering, and sorting). Also runs before every `npm run build`.
 * **`npm run format`**: Apply Biome lint fixes, formatting, and import sorting.
 * **`npm run package:source`**: Generates `source-code.zip` containing all original TypeScript source files and build configurations (excluding `node_modules` and compiled assets) required for store source code reviews.
 
@@ -145,12 +146,14 @@ When you run `npm run package:extension`, the build pipeline automatically:
 │   ├── assets/            # Master SVG vector assets (icon, badges, filters)
 │   ├── api.ts             # REST API scan with retries, cookie readers, unfollow POST actions
 │   ├── css.d.ts           # TypeScript module declarations for CSS imports
+│   ├── filters.ts         # Pure list filtering and sorting helpers
 │   ├── index.ts           # Entry orchestrator, overlay modal builder, scroll locks
 │   ├── storage.ts         # LocalStorage cache, import validation, new-unfollower merge
 │   ├── styles.css         # CSS style sheet containing the glassmorphism system
 │   ├── svg.d.ts           # TypeScript module declarations for SVG imports
 │   ├── types.ts           # TypeScript interfaces (UserNode, CacheData, API responses)
 │   └── ui.ts              # Core list drawing, event delegation, search/filters, bulk loops
+├── tests/                 # Vitest unit tests for storage and filters
 ├── tsconfig.json          # TypeScript configuration options
 └── package.json           # Dev scripts & dependencies (esbuild + typescript + resvg)
 ```

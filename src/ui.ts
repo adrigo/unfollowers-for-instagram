@@ -6,8 +6,9 @@ import NEW_UNFOLLOWER_SVG from './assets/new-unfollower.svg';
 import NON_FOLLOWERS_SVG from './assets/non-follower.svg';
 import PRIVATE_LOCK_SVG from './assets/private.svg';
 import VERIFIED_BADGE_SVG from './assets/verified.svg';
+import { filterUsers, sortUsers } from './filters';
 import { formatCacheAge, getCachedFollowings, setCachedFollowings, validateAndParseCacheData } from './storage';
-import type { CacheData, UserFilterState, UserNode } from './types';
+import type { CacheData, SortOption, UserFilterState, UserNode } from './types';
 
 function wrapIcon(iconSvg: string, title: string): string {
   return `<span title="${title}" style="display: inline-block; vertical-align: middle; line-height: 1; cursor: help; flex-shrink: 0;">${iconSvg}</span>`;
@@ -164,7 +165,7 @@ export function renderList(
     showPrivate: true,
     showNewUnfollowersOnly: false,
   };
-  let currentSortBy = 'unfollowed-recent';
+  let currentSortBy: SortOption = 'unfollowed-recent';
   let isGridView = false;
 
   // Bulk action states
@@ -432,61 +433,7 @@ export function renderList(
     selectAllCheck.checked = allVisibleSelected;
   };
   const updateUIList = () => {
-    const term = searchInput.value.toLowerCase().trim();
-
-    currentFilteredList = activeUsers.filter((u) => {
-      // Search filter
-      const matchesSearch = u.username.toLowerCase().includes(term) || u.fullName.toLowerCase().includes(term);
-      if (!matchesSearch) return false;
-
-      // Follower filter
-      const matchesStatus = u.isFan
-        ? filterState.showFans
-        : (filterState.showNonFollowers && !u.followsViewer) || (filterState.showFollowers && u.followsViewer);
-      if (!matchesStatus) return false;
-
-      // New Unfollowers filter
-      if (filterState.showNewUnfollowersOnly && !u.isNew) return false;
-
-      // Verified filter
-      const matchesVerified = !u.isVerified || filterState.showVerified;
-      if (!matchesVerified) return false;
-
-      // Private filter
-      const matchesPrivate = !u.isPrivate || filterState.showPrivate;
-      if (!matchesPrivate) return false;
-
-      return true;
-    });
-
-    // Apply Sorting
-    const sortBy = currentSortBy;
-    if (sortBy === 'unfollowed-recent') {
-      currentFilteredList.sort((a, b) => {
-        const isNewA = a.isNew ? 1 : 0;
-        const isNewB = b.isNew ? 1 : 0;
-        if (isNewA !== isNewB) {
-          return isNewB - isNewA;
-        }
-        return a.username.localeCompare(b.username);
-      });
-    } else if (sortBy === 'name-asc') {
-      currentFilteredList.sort((a, b) => a.username.localeCompare(b.username));
-    } else if (sortBy === 'name-desc') {
-      currentFilteredList.sort((a, b) => b.username.localeCompare(a.username));
-    } else if (sortBy === 'private-first') {
-      currentFilteredList.sort((a, b) => {
-        if (a.isPrivate && !b.isPrivate) return -1;
-        if (!a.isPrivate && b.isPrivate) return 1;
-        return a.username.localeCompare(b.username);
-      });
-    } else if (sortBy === 'verified-first') {
-      currentFilteredList.sort((a, b) => {
-        if (a.isVerified && !b.isVerified) return -1;
-        if (!a.isVerified && b.isVerified) return 1;
-        return a.username.localeCompare(b.username);
-      });
-    }
+    currentFilteredList = sortUsers(filterUsers(activeUsers, filterState, searchInput.value), currentSortBy);
 
     // The list mixes accounts you follow with fans, so report both totals separately
     const fanCount = activeUsers.filter((u) => u.isFan).length;
@@ -895,7 +842,7 @@ export function renderList(
   sortOptions.querySelectorAll('.iu-dropdown-option').forEach((opt) => {
     opt.addEventListener('click', () => {
       const val = (opt as HTMLElement).dataset.value!;
-      currentSortBy = val;
+      currentSortBy = val as SortOption;
       setElementHTML(sortTriggerContent, optionMapping[val]);
       sortOptions.classList.remove('show');
       updateUIList();
