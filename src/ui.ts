@@ -260,7 +260,7 @@ export function renderList(
             <div class="iu-custom-dropdown" id="iu-sort-dropdown">
               <div class="iu-dropdown-trigger" id="iu-sort-trigger">
                 <span id="iu-sort-trigger-content" style="display: flex; align-items: center; gap: 0.4rem;"></span>
-                <span style="font-size: 0.65rem; color: #888;">▼</span>
+                <span id="iu-sort-arrow" style="font-size: 0.65rem; color: #888;">▼</span>
               </div>
               <div class="iu-dropdown-options" id="iu-sort-options">
                 <div class="iu-dropdown-option" data-value="unfollowed-recent">
@@ -854,10 +854,17 @@ export function renderList(
   const sortTrigger = document.getElementById('iu-sort-trigger')!;
   const sortOptions = document.getElementById('iu-sort-options')!;
   const sortTriggerContent = document.getElementById('iu-sort-trigger-content')!;
+  const sortArrow = document.getElementById('iu-sort-arrow')!;
+
+  // Single place to open/close the dropdown so the arrow always matches its state
+  const setSortOpen = (open: boolean) => {
+    sortOptions.classList.toggle('show', open);
+    sortArrow.textContent = open ? '▲' : '▼';
+  };
 
   sortTrigger.addEventListener('click', (e) => {
     e.stopPropagation();
-    sortOptions.classList.toggle('show');
+    setSortOpen(!sortOptions.classList.contains('show'));
   });
 
   // Close the dropdown on outside clicks; unregister once this view is gone
@@ -866,7 +873,7 @@ export function renderList(
       document.removeEventListener('click', closeSortOptions);
       return;
     }
-    sortOptions.classList.remove('show');
+    setSortOpen(false);
   };
   document.addEventListener('click', closeSortOptions);
 
@@ -887,7 +894,7 @@ export function renderList(
       const val = (opt as HTMLElement).dataset.value!;
       currentSortBy = val as SortOption;
       setElementHTML(sortTriggerContent, optionMapping[val]);
-      sortOptions.classList.remove('show');
+      setSortOpen(false);
       updateUIList();
     });
   });
