@@ -1,5 +1,5 @@
 import { version as PKG_VERSION } from '../package.json';
-import { fetchFollowings, getCookie } from './api';
+import { fetchFollowings, getCookie, ScanBlockedError } from './api';
 import APP_LOGO_SVG from './assets/icon.svg';
 import LOCK_ICON_SVG from './assets/lock.svg';
 import { estimatePhaseShare, expectedTotalsFromCache, overallProgressPercent } from './progress';
@@ -257,6 +257,17 @@ const appVersion =
         return;
       }
       console.error('Scan Error:', err);
+
+      if (err instanceof ScanBlockedError) {
+        const cache = getCachedFollowings(ds_user_id);
+        renderError(
+          bodyEl,
+          'Instagram is temporarily blocking scans',
+          `Instagram refused the ${err.list} list request. This usually happens after several scans in a short time. Wait a few hours before scanning again${cache ? '. Your saved results are still available.' : '.'}`,
+          cache ? { label: 'Use Cache', onClick: () => showList(cache.users) } : { label: 'Close', onClick: cleanup }
+        );
+        return;
+      }
 
       const errMsg = err instanceof Error ? err.message : 'An error occurred while loading followings from Instagram.';
       renderError(bodyEl, 'Scan Failed', errMsg, { label: 'Try Again', onClick: startScanning });

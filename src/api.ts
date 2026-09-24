@@ -25,6 +25,15 @@ const MAX_PAGES = 5000;
 // Errors worth retrying after a pause (rate limits, server errors, network drops).
 class RetryableError extends Error {}
 
+// Instagram refused the request by redirecting it (to the home page, a login page, or a
+// security check). This happens after too many scans in a short time; retrying makes it worse.
+export class ScanBlockedError extends Error {
+  constructor(readonly list: 'following' | 'followers') {
+    super(`Instagram redirected the ${list} list request instead of returning data.`);
+    this.name = 'ScanBlockedError';
+  }
+}
+
 const abortError = () => new DOMException('Scan aborted by user', 'AbortError');
 
 // setTimeout that rejects immediately when the scan is aborted
@@ -118,6 +127,11 @@ const fetchFriendshipsPage = async (
   } catch (err) {
     if (err instanceof DOMException && err.name === 'AbortError') throw err;
     throw new RetryableError('Network error while contacting Instagram. Check your connection and try again.');
+  }
+
+  // fetch follows redirects, so a refused request shows up as a redirected response
+  if (res.redirected) {
+    throw new ScanBlockedError(type);
   }
 
   if (!res.ok) {
