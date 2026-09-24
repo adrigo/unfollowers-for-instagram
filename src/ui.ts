@@ -556,6 +556,14 @@ export function renderList(
   const updateUIList = () => {
     currentFilteredList = sortUsers(filterUsers(activeUsers, filterState, searchInput.value), currentSortBy);
 
+    // Unselect accounts hidden by a sidebar filter, so bulk unfollow only acts on what the
+    // filters show. Search is ignored here: it only hides cards while typing.
+    const matchingFilters = new Set(filterUsers(activeUsers, filterState, '').map((u) => u.id));
+    for (const id of selectedUserIds) {
+      if (!matchingFilters.has(id)) selectedUserIds.delete(id);
+    }
+    updateBulkButton();
+
     // The list mixes accounts you follow with fans, so report both totals separately
     const fanCount = activeUsers.filter((u) => u.isFan).length;
     const followingCount = activeUsers.length - fanCount;
