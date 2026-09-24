@@ -475,6 +475,84 @@ export function renderList(
     const allVisibleSelected = selectable.length > 0 && selectable.every((u) => selectedUserIds.has(u.id));
     selectAllCheck.checked = allVisibleSelected;
   };
+  // Card elements by user ID, rebuilt only when the user object changes (e.g. becomes a fan)
+  const cardCache = new Map<string, { user: UserNode; el: HTMLElement }>();
+
+  // Static card markup; selection and disabled state are applied by syncCardState
+  const renderCardHtml = (user: UserNode): string => {
+    const newBadge = user.isNew ? wrapIcon(NEW_UNFOLLOWER_SVG, 'New Unfollower') : '';
+
+    const id = escapeHtml(user.id);
+    const username = escapeHtml(user.username);
+    const avatar = user.profilePicUrl
+      ? `<img class="iu-avatar" src="${escapeHtml(user.profilePicUrl)}" alt="${username}" loading="lazy" decoding="async" />`
+      : `<img class="iu-avatar iu-avatar-fallback" alt="" />`;
+
+    return `
+  <div class="iu-user-card" id="card-${id}">
+    <div class="iu-user-info">
+      ${
+        user.isFan
+          ? '<span class="iu-checkbox-spacer"></span>'
+          : `<input type="checkbox" class="iu-user-checkbox" data-id="${id}" />`
+      }
+      ${avatar}
+      <div class="iu-names">
+        <div class="iu-username-wrapper">
+          <a class="iu-username" href="https://www.instagram.com/${encodeURIComponent(user.username)}/" target="_blank" rel="noopener noreferrer">${username}</a>
+          <div class="iu-card-badges">
+            ${user.isVerified ? wrapIcon(VERIFIED_BADGE_SVG, 'Verified') : ''}
+            ${user.isPrivate ? wrapIcon(PRIVATE_LOCK_SVG, 'Private Account') : ''}
+            ${
+              user.isFan
+                ? wrapIcon(FAN_SVG, "Fan: follows you, you don't follow back")
+                : user.followsViewer
+                  ? wrapIcon(FOLLOWS_YOU_SVG, 'Follows you')
+                  : wrapIcon(NON_FOLLOWERS_SVG, 'Non-follower')
+            }
+            ${newBadge}
+          </div>
+        </div>
+        <span class="iu-fullname">${escapeHtml(user.fullName)}</span>
+      </div>
+    </div>
+    ${
+      user.isFan
+        ? '<span class="iu-fan-tag">Not following</span>'
+        : `<button class="iu-unfollow-btn" data-id="${id}">Unfollow</button>`
+    }
+  </div>
+  `;
+  };
+
+  const needsCard = (user: UserNode) => cardCache.get(user.id)?.user !== user;
+
+  // Build and cache cards for these users, parsing them in one batch
+  const buildCards = (users: UserNode[]) => {
+    if (users.length === 0) return;
+    const parsed = new DOMParser().parseFromString(users.map(renderCardHtml).join(''), 'text/html');
+    const cards = parsed.body.querySelectorAll<HTMLElement>(':scope > .iu-user-card');
+    users.forEach((u, i) => {
+      // Adopt into the page document now, so showing the card later doesn't pay for it
+      cardCache.set(u.id, { user: u, el: document.adoptNode(cards[i]) });
+    });
+  };
+
+  // Apply state that changes without the user changing
+  const syncCardState = (user: UserNode, card: HTMLElement) => {
+    const checkbox = card.querySelector<HTMLInputElement>('.iu-user-checkbox');
+    if (checkbox) {
+      checkbox.checked = selectedUserIds.has(user.id);
+      checkbox.disabled = isBulkRunning;
+    }
+    const button = card.querySelector<HTMLButtonElement>('.iu-unfollow-btn');
+    if (button) {
+      button.disabled = isBulkRunning;
+      // A failed unfollow can be retried after the list refreshes
+      if (button.textContent === 'Failed') button.textContent = 'Unfollow';
+    }
+  };
+
   const updateUIList = () => {
     currentFilteredList = sortUsers(filterUsers(activeUsers, filterState, searchInput.value), currentSortBy);
 
@@ -497,56 +575,16 @@ export function renderList(
       return;
     }
 
-    setElementHTML(
-      listEl,
-      currentFilteredList
-        .map((user) => {
-          const newBadge = user.isNew ? wrapIcon(NEW_UNFOLLOWER_SVG, 'New Unfollower') : '';
+    // Reuse card elements across renders; only new or changed users are built
+    buildCards(currentFilteredList.filter(needsCard));
 
-          const id = escapeHtml(user.id);
-          const username = escapeHtml(user.username);
-          const avatar = user.profilePicUrl
-            ? `<img class="iu-avatar" src="${escapeHtml(user.profilePicUrl)}" alt="${username}" />`
-            : `<img class="iu-avatar iu-avatar-fallback" alt="" />`;
-
-          return `
-      <div class="iu-user-card" id="card-${id}">
-        <div class="iu-user-info">
-          ${
-            user.isFan
-              ? '<span class="iu-checkbox-spacer"></span>'
-              : `<input type="checkbox" class="iu-user-checkbox" data-id="${id}" ${selectedUserIds.has(user.id) ? 'checked' : ''} ${isBulkRunning ? 'disabled' : ''} />`
-          }
-          ${avatar}
-          <div class="iu-names">
-            <div class="iu-username-wrapper">
-              <a class="iu-username" href="https://www.instagram.com/${encodeURIComponent(user.username)}/" target="_blank" rel="noopener noreferrer">${username}</a>
-              <div class="iu-card-badges">
-                ${user.isVerified ? wrapIcon(VERIFIED_BADGE_SVG, 'Verified') : ''}
-                ${user.isPrivate ? wrapIcon(PRIVATE_LOCK_SVG, 'Private Account') : ''}
-                ${
-                  user.isFan
-                    ? wrapIcon(FAN_SVG, "Fan: follows you, you don't follow back")
-                    : user.followsViewer
-                      ? wrapIcon(FOLLOWS_YOU_SVG, 'Follows you')
-                      : wrapIcon(NON_FOLLOWERS_SVG, 'Non-follower')
-                }
-                ${newBadge}
-              </div>
-            </div>
-            <span class="iu-fullname">${escapeHtml(user.fullName)}</span>
-          </div>
-        </div>
-        ${
-          user.isFan
-            ? '<span class="iu-fan-tag">Not following</span>'
-            : `<button class="iu-unfollow-btn" data-id="${id}" ${isBulkRunning ? 'disabled' : ''}>Unfollow</button>`
-        }
-      </div>
-      `;
-        })
-        .join('')
-    );
+    const fragment = document.createDocumentFragment();
+    for (const user of currentFilteredList) {
+      const card = cardCache.get(user.id)!.el;
+      syncCardState(user, card);
+      fragment.append(card);
+    }
+    listEl.replaceChildren(fragment);
 
     syncSelectAllState();
   };
@@ -558,6 +596,7 @@ export function renderList(
       return u.followsViewer ? [{ ...u, isFan: true, isNew: false }] : [];
     });
     selectedUserIds.delete(id);
+    cardCache.delete(id);
   };
 
   // Unfollow action
@@ -907,7 +946,12 @@ export function renderList(
   });
 
   // Live search handler
-  searchInput.addEventListener('input', updateUIList);
+  // Debounced so typing doesn't re-render the list on every keystroke
+  let searchTimer: ReturnType<typeof setTimeout> | undefined;
+  searchInput.addEventListener('input', () => {
+    clearTimeout(searchTimer);
+    searchTimer = setTimeout(updateUIList, 150);
+  });
 
   // Export handler (exports LocalStorage cache format)
   exportBtn.addEventListener('click', () => {
