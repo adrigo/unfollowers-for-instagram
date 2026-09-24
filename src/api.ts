@@ -15,9 +15,9 @@ const INSTAGRAM_WEB_APP_ID = '936619743392459';
 // Backoff schedule used when Instagram rate limits us or the network drops mid-scan.
 const RETRY_DELAYS_MS = [30_000, 60_000, 120_000];
 
-// Accounts per page. Instagram caps list pages at 25 whatever count is requested, and
-// may return a few less (deactivated or restricted accounts are dropped from the page).
-const PAGE_SIZE = 25;
+// Accounts per followers page. Instagram caps these pages at ~25 whatever count is
+// requested, and may return a few less (deactivated or restricted accounts are dropped).
+const FOLLOWERS_PAGE_SIZE = 25;
 
 // Safety net against a pagination cursor that never ends (125k accounts).
 const MAX_PAGES = 5000;
@@ -84,34 +84,6 @@ const parseJsonResponse = async <T>(res: Response, endpointName: string): Promis
   }
 };
 
-// Fetch counts (following_count and follower_count) from the user info endpoint for accurate progress
-const fetchUserCounts = async (
-  userId: string,
-  signal?: AbortSignal
-): Promise<{ followingCount: number; followerCount: number }> => {
-  try {
-    const res = await fetch(`https://www.instagram.com/api/v1/users/${userId}/info/`, {
-      signal,
-      headers: {
-        'x-ig-app-id': INSTAGRAM_WEB_APP_ID,
-        'x-requested-with': 'XMLHttpRequest',
-      },
-      credentials: 'include',
-    });
-    if (!res.ok) return { followingCount: 0, followerCount: 0 };
-    const data = await parseJsonResponse<{ user?: { following_count?: number; follower_count?: number } }>(
-      res,
-      'user info'
-    );
-    return {
-      followingCount: data?.user?.following_count ?? 0,
-      followerCount: data?.user?.follower_count ?? 0,
-    };
-  } catch {
-    return { followingCount: 0, followerCount: 0 };
-  }
-};
-
 // Fetch a single page from Instagram private friendships REST API v1 (following or followers)
 const fetchFriendshipsPage = async (
   userId: string,
@@ -119,11 +91,16 @@ const fetchFriendshipsPage = async (
   maxId: string,
   signal?: AbortSignal
 ): Promise<V1FriendshipsResponse> => {
-  const params = new URLSearchParams({ count: String(PAGE_SIZE) });
-  // The following list is ranked by default, and that ranking can change between page
-  // requests, making the offset cursor skip accounts. Follow date is a stable order.
-  // The followers endpoint does not support this parameter.
-  if (type === 'following') params.set('order', 'date_followed_latest');
+  const params = new URLSearchParams();
+  if (type === 'following') {
+    // The following list is ranked by default, and that ranking can change between page
+    // requests, making the offset cursor skip accounts. Follow date is a stable order.
+    // With it, Instagram returns the whole list in one response, so no count is sent.
+    params.set('order', 'date_followed_latest');
+  } else {
+    // The followers endpoint has no ordering option and is always paginated
+    params.set('count', String(FOLLOWERS_PAGE_SIZE));
+  }
   if (maxId) params.set('max_id', maxId);
 
   const url = `https://www.instagram.com/api/v1/friendships/${userId}/${type}/?${params}`;
@@ -223,17 +200,11 @@ const fetchAllFriendships = async (
     await sleep(300 + Math.random() * 300, signal);
   }
 
-  console.info(
+  console.log(
     `[Unfollowers] ${type}: ${seen.size} unique accounts in ${pages} pages${truncated ? ' (stopped early)' : ''}`
   );
   return { users: Array.from(seen.values()), truncated };
 };
-
-// Profile counts include deactivated, suspended and restricted accounts that the list
-// endpoints never return, so gaps of ~5% are normal. Only a large gap suggests the
-// API silently stopped paginating early.
-const isFarBelowCount = (fetched: number, expected: number): boolean =>
-  expected > 0 && expected - fetched > Math.max(20, expected * 0.1);
 
 // Fetch all followed users via Instagram private REST API v1.
 export const fetchFollowings = async (
@@ -242,26 +213,25 @@ export const fetchFollowings = async (
   onRetry?: ScanRetryCallback,
   signal?: AbortSignal
 ): Promise<ScanResult> => {
-  // Step 0 — get following and follower counts upfront for accurate progress percentage calculation
-  const { followingCount, followerCount } = await fetchUserCounts(userId, signal);
-
   // Phase 1 — fetch the list of accounts this user follows
   const { users: rawFollowing, truncated: followingTruncated } = await fetchAllFriendships(
     userId,
     'following',
-    (count) => onProgress(count, followingCount, 'following'),
+    (count) => onProgress(count, 'following', false),
     onRetry,
     signal
   );
+  onProgress(rawFollowing.length, 'following', true);
 
   // Phase 2 — fetch the list of accounts that follow this user
   const { users: rawFollowers, truncated: followersTruncated } = await fetchAllFriendships(
     userId,
     'followers',
-    (count) => onProgress(count, followerCount, 'followers'),
+    (count) => onProgress(count, 'followers', false),
     onRetry,
     signal
   );
+  onProgress(rawFollowers.length, 'followers', true);
 
   const followerIds = new Set(rawFollowers.map((u) => u.pk));
   const followingIds = new Set(rawFollowing.map((u) => u.pk));
@@ -288,13 +258,11 @@ export const fetchFollowings = async (
   followedUsers.sort((a, b) => a.username.localeCompare(b.username));
 
   // A partial followers list would wrongly flag real followers as non-followers.
-  // A partial following list is harmless (accounts are just missing), so only warn
-  // about it when pagination actually broke off.
   let warning: string | undefined;
-  if (followersTruncated || isFarBelowCount(rawFollowers.length, followerCount)) {
-    warning = `Only ${rawFollowers.length} of ~${followerCount} followers could be loaded. Some accounts marked as non-followers may actually follow you, so double-check before unfollowing.`;
+  if (followersTruncated) {
+    warning = `The followers list stopped early after ${rawFollowers.length} accounts. Some accounts marked as non-followers may actually follow you, so double-check before unfollowing.`;
   } else if (followingTruncated) {
-    warning = `Only ${rawFollowing.length} of ~${followingCount} followed accounts could be loaded. The list may be missing some accounts.`;
+    warning = `The following list stopped early after ${rawFollowing.length} accounts. The list may be missing some accounts.`;
   }
 
   return { users: followedUsers, warning };

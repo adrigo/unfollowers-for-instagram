@@ -2,6 +2,7 @@ import { version as PKG_VERSION } from '../package.json';
 import { fetchFollowings, getCookie } from './api';
 import APP_LOGO_SVG from './assets/icon.svg';
 import LOCK_ICON_SVG from './assets/lock.svg';
+import { estimatePhaseShare, expectedTotalsFromCache, overallProgressPercent } from './progress';
 import { getCachedFollowings, mergeCacheWithFreshScan, setCachedFollowings } from './storage';
 import CSS_STYLES from './styles.css';
 import type { CacheData, UserNode } from './types';
@@ -206,7 +207,7 @@ const appVersion =
           <div class="iu-spinner"></div>
           <div>
             <h3 style="margin-bottom: 0.5rem; font-weight: 600;">Analyzing your account...</h3>
-            <p style="color: #ada79d; font-size: 0.9rem;" id="iu-scan-status">Preparing scanner...</p>
+            <p style="color: #ada79d; font-size: 0.9rem;" id="iu-scan-status">Scanning following list...</p>
           </div>
           <div class="iu-progress-bar-container">
             <div class="iu-progress-bar" id="iu-progress-bar"></div>
@@ -221,33 +222,26 @@ const appVersion =
       const scanStatusEl = document.getElementById('iu-scan-status')!;
       const progressBarEl = document.getElementById('iu-progress-bar')!;
 
+      // Previous scan: used as the expected list sizes for progress, then for the merge below
+      const prevCache = getCachedFollowings(ds_user_id);
+      const expected = expectedTotalsFromCache(prevCache);
+
       const { users: followedUsers, warning } = await fetchFollowings(
         ds_user_id,
-        (scanned, total, phase) => {
+        (scanned, phase, done) => {
           const isFollowers = phase === 'followers';
           const label = isFollowers ? 'Scanning followers list' : 'Scanning following list';
 
-          if (total > 0) {
-            // Show real per-phase percentage; split bar into two halves:
-            // following → 0–50 %, followers → 50–100 %
-            const phasePercent = Math.min(100, Math.round((scanned / total) * 100));
-            const barWidth = isFollowers ? 50 + Math.round(phasePercent / 2) : Math.round(phasePercent / 2);
-            progressBarEl.style.width = `${barWidth}%`;
-            scanStatusEl.textContent = `${label}: ${scanned} of ~${total} (${phasePercent}%)...`;
-          } else {
-            // Fallback when profile info is unavailable
-            progressBarEl.style.width = isFollowers ? '75%' : '25%';
-            scanStatusEl.textContent = `${label}: ${scanned} accounts...`;
-          }
+          // Following takes one request, followers ~25 accounts per request (see progress.ts)
+          const phaseShare = estimatePhaseShare(scanned, expected[phase], done);
+          progressBarEl.style.width = `${Math.round(overallProgressPercent(phase, phaseShare))}%`;
+          scanStatusEl.textContent = `${label}: ${scanned.toLocaleString()} accounts...`;
         },
         (waitMs, attempt, maxAttempts) => {
           scanStatusEl.textContent = `Instagram is limiting requests. Pausing ${Math.round(waitMs / 1000)}s before retrying (attempt ${attempt} of ${maxAttempts})...`;
         },
         signal
       );
-
-      // Get previous cache before overwriting it
-      const prevCache = getCachedFollowings(ds_user_id);
 
       // Merge fresh scan results with previous cached entries to preserve unfollower metadata
       const mergedUsers = mergeCacheWithFreshScan(followedUsers, prevCache);
@@ -263,6 +257,7 @@ const appVersion =
         return;
       }
       console.error('Scan Error:', err);
+
       const errMsg = err instanceof Error ? err.message : 'An error occurred while loading followings from Instagram.';
       renderError(bodyEl, 'Scan Failed', errMsg, { label: 'Try Again', onClick: startScanning });
     }

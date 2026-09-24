@@ -16,7 +16,7 @@ Created by [adrigo](https://adrigo.dev).
 1. **Self-Contained Bundle:** The project bundles and minifies the source files into a single self-executing JavaScript snippet using `esbuild` in **~5ms**.
 2. **Non-Destructive Overlay:** Unlike destructive scripts that clear the browser viewport, this utility injects a beautiful **glassmorphic card modal** directly on top of your active Instagram tab. Closing the modal immediately restores the background page state.
 3. **2-Phase REST API Scanning:** Instagram has deprecated its internal GraphQL endpoints for friendship queries. The utility now queries Instagram's private REST API v1 (`/api/v1/friendships/`) in two sequential phases (Phase 1: Following list, Phase 2: Followers list) using your active session cookies (`ds_user_id` and `csrftoken`).
-4. **Stable Pagination:** The following list is requested ordered by follow date (`order=date_followed_latest`). Instagram's default ranking can reshuffle mid-scan, which made its offset-based pagination silently skip accounts.
+4. **Stable Pagination:** The following list is requested ordered by follow date (`order=date_followed_latest`). Instagram's default ranking can reshuffle mid-scan, which made its offset-based pagination silently skip accounts. With this order, Instagram currently returns the **entire following list in a single response** (e.g. 1,474 accounts in 1 request), so no page size is sent for it. The followers list has no ordering option and is served in small pages of ~20–25 accounts regardless of the requested size (e.g. 794 followers in 35 requests), so it accounts for nearly all of the scan time.
 5. **Local Storage Caching:** Saves the followings list in your browser's local cache. Re-running the script allows you to instantly reuse the cached list ("Use Cache") instead of triggering a full fresh network scan. Comparing a fresh scan against the cache flags **new unfollowers**.
 
 > [!IMPORTANT]
@@ -48,7 +48,7 @@ npm run package:extension
 
 * **`npm run package:extension`**: Executes `npm run build`, runs `scripts/create-extension-icons.js` to render PNG icons, bundles `source-code.zip` for Firefox source code review, and packages store-ready `extension.zip` in the root folder.
 * **`npm run typecheck`** / **`npm run lint`**: Type-check with `tsc` and check linting, formatting, and import order with [Biome](https://biomejs.dev). Both run automatically before every `npm run build`.
-* **`npm test`**: Run the [Vitest](https://vitest.dev) unit tests in `tests/` (cache merging, import validation, ID normalization, filtering, and sorting). Also runs before every `npm run build`.
+* **`npm test`**: Run the [Vitest](https://vitest.dev) unit tests in `tests/` (cache merging, import validation, ID normalization, progress estimates, filtering, and sorting). Also runs before every `npm run build`.
 * **`npm run format`**: Apply Biome lint fixes, formatting, and import sorting.
 * **`npm run package:source`**: Generates `source-code.zip` containing all original TypeScript source files and build configurations (excluding `node_modules` and compiled assets) required for store source code reviews.
 
@@ -100,7 +100,8 @@ When you run `npm run package:extension`, the build pipeline automatically:
 * **Randomized Timing Delays (Anti-Spam):** Applies a randomized timing jitter (`300ms`–`600ms` per page for REST API scans, and `2.0s`–`3.5s` per unfollow) to mimic human pacing and prevent automated security checkpoints.
 * **Scan Retries with Backoff:** Rate limits (HTTP 429), server errors, and network drops during a scan are retried after waiting 30s, 60s, then 120s, with the wait shown in the scanner.
 * **Auto-Pause on Rate Limits:** Intercepts HTTP 429 (Too Many Requests) errors from Instagram, automatically pausing the bulk loop and prompting the user to wait instead of letting subsequent requests fail.
-* **Incomplete Scan Warning:** Shows a warning above the list when the followers list comes back far below your profile's follower count, since missing followers would otherwise appear as non-followers.
+* **Incomplete Scan Warning:** Shows a warning above the list when Instagram stops returning the followers list early, since missing followers would otherwise appear as non-followers.
+* **Estimated Scan Progress:** Instagram doesn't expose your follower/following counts to web scripts, so the progress bar estimates them from your previous scan (or an estimate curve on the first scan) and completes each phase when its list actually ends, with a live count of scanned accounts. Because the following list arrives in a single request, it takes the first 5% of the bar and the followers list the remaining 95%.
 * **New Unfollower Detection:** Accounts that followed you in the previous scan but no longer do are flagged with a badge and can be filtered.
 * **Fans List:** See the accounts that follow you but you don't follow back, built from the already-scanned followers list with no extra requests. Fans are hidden by default, can't be selected for unfollowing, and accounts you unfollow that still follow you move into this list.
 * **Network Scan Abort Safety:** Closing the modal immediately calls `abort()` on an active `AbortController`, halting background API calls and avoiding rate limits.
@@ -149,6 +150,7 @@ When you run `npm run package:extension`, the build pipeline automatically:
 │   ├── css.d.ts           # TypeScript module declarations for CSS imports
 │   ├── filters.ts         # Pure list filtering and sorting helpers
 │   ├── index.ts           # Entry orchestrator, overlay modal builder, scroll locks
+│   ├── progress.ts        # Scan progress estimates from the previous scan
 │   ├── storage.ts         # LocalStorage cache, import validation, new-unfollower merge
 │   ├── styles.css         # CSS style sheet containing the glassmorphism system
 │   ├── svg.d.ts           # TypeScript module declarations for SVG imports

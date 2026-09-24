@@ -65,13 +65,14 @@ export interface ShowManyResponse {
 
 export type SortOption = 'unfollowed-recent' | 'name-asc' | 'name-desc' | 'private-first' | 'verified-first';
 
-export type ScanProgressCallback = (scanned: number, total: number, phase?: 'following' | 'followers') => void;
+// `done` is true once the phase's list has been fully fetched
+export type ScanProgressCallback = (scanned: number, phase: 'following' | 'followers', done: boolean) => void;
 
 export type ScanRetryCallback = (waitMs: number, attempt: number, maxAttempts: number, reason: string) => void;
 
 export interface ScanResult {
   users: UserNode[];
-  // Set when the fetched lists look incomplete compared to the profile counts
+  // Set when a list stopped paginating before reaching its end
   warning?: string;
 }
 
