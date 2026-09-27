@@ -1,7 +1,5 @@
 import { version as PKG_VERSION } from '../package.json';
 import { fetchFollowings, getCookie, ScanBlockedError } from './api';
-import APP_LOGO_SVG from './assets/icon.svg';
-import LOCK_ICON_SVG from './assets/lock.svg';
 import { estimatePhaseShare, expectedTotalsFromCache, overallProgressPercent } from './progress';
 import {
   getCachedFollowings,
@@ -14,6 +12,7 @@ import {
 import CSS_STYLES from './styles.css';
 import type { CacheData, UserNode } from './types';
 import {
+  html,
   loadCacheWithScanAnimation,
   renderCachePrompt,
   renderError,
@@ -21,6 +20,7 @@ import {
   renderScanCooldownPrompt,
   setElementHTML,
 } from './ui';
+import { ICONS } from './ui/icons';
 
 const appVersion =
   typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.getManifest
@@ -50,18 +50,18 @@ const appVersion =
     overlayEl.id = 'iu-overlay';
     setElementHTML(
       overlayEl,
-      `
+      html`
       <div class="iu-card" style="max-width: 560px; width: 92%; height: auto; margin: auto;">
         <div class="iu-header">
           <div class="iu-title-group">
-            <div class="iu-logo">${APP_LOGO_SVG}</div>
+            <div class="iu-logo">${ICONS.appLogo}</div>
             <span class="iu-title">Unfollowers for Instagram</span>
             <span class="iu-version-tag">v${appVersion}</span>
           </div>
           <button class="iu-close-btn" id="iu-close-btn">&times;</button>
         </div>
         <div style="padding: 3rem 2rem; text-align: center; display: flex; flex-direction: column; align-items: center; gap: 1.5rem;">
-          ${LOCK_ICON_SVG}
+          ${ICONS.lock}
           <div>
             <h3 style="font-size: 1.5rem; font-weight: 700; color: #f87171; margin-bottom: 0.75rem;">Login Required</h3>
             <p style="color: #ada79d; font-size: 1rem; line-height: 1.6; max-width: 440px; margin: 0 auto;">
@@ -109,12 +109,12 @@ const appVersion =
   overlayEl.id = 'iu-overlay';
   setElementHTML(
     overlayEl,
-    `
+    html`
     <div class="iu-card">
       <div class="iu-header">
         <div class="iu-title-group">
           <div class="iu-logo">
-            ${APP_LOGO_SVG}
+            ${ICONS.appLogo}
           </div>
           <span class="iu-title">Unfollowers for Instagram</span>
           <span class="iu-version-tag">v${appVersion}</span>
@@ -228,7 +228,7 @@ const appVersion =
     try {
       setElementHTML(
         bodyEl,
-        `
+        html`
         <div class="iu-scanner-view">
           <div class="iu-spinner"></div>
           <div>

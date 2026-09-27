@@ -36,7 +36,7 @@ export function html(strings: TemplateStringsArray, ...values: HtmlValue[]): Saf
   return new SafeHtml(out);
 }
 
-export function setElementHTML(element: HTMLElement, content: SafeHtml | string) {
-  const parsed = new DOMParser().parseFromString(String(content), 'text/html');
+export function setElementHTML(element: HTMLElement, content: SafeHtml) {
+  const parsed = new DOMParser().parseFromString(content.value, 'text/html');
   element.replaceChildren(...Array.from(parsed.body.childNodes));
 }

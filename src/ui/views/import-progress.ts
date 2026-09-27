@@ -1,6 +1,6 @@
 import { setCachedFollowings, validateAndParseCacheData } from '../../storage';
 import type { UserNode } from '../../types';
-import { setElementHTML } from '../html';
+import { html, setElementHTML } from '../html';
 import { renderError } from './error';
 
 export function loadCacheWithScanAnimation(
@@ -12,7 +12,7 @@ export function loadCacheWithScanAnimation(
 ) {
   setElementHTML(
     bodyEl,
-    `
+    html`
     <div class="iu-scanner-view">
       <div class="iu-spinner"></div>
       <div>

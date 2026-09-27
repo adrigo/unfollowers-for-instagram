@@ -1,10 +1,4 @@
 import { unfollowUser } from '../../../api';
-import FAN_SVG from '../../../assets/fan.svg';
-import FOLLOWS_YOU_SVG from '../../../assets/follows-you.svg';
-import NEW_UNFOLLOWER_SVG from '../../../assets/new-unfollower.svg';
-import NON_FOLLOWERS_SVG from '../../../assets/non-follower.svg';
-import PRIVATE_LOCK_SVG from '../../../assets/private.svg';
-import VERIFIED_BADGE_SVG from '../../../assets/verified.svg';
 import { filterUsers, sortUsers } from '../../../filters';
 import {
   estimateBulkUnfollowMs,
@@ -15,8 +9,8 @@ import {
 } from '../../../pacing';
 import { getCachedFollowings, setCachedFollowings } from '../../../storage';
 import type { CacheData, SortOption, UserFilterState, UserNode } from '../../../types';
-import { escapeHtml, setElementHTML } from '../../html';
-import { BADGE_SPRITE, badge } from '../../icons';
+import { html, type SafeHtml, setElementHTML } from '../../html';
+import { BADGE_SPRITE, badge, ICONS } from '../../icons';
 
 export interface ListActions {
   onScanFresh: () => void;
@@ -51,7 +45,7 @@ export function renderList(
 
   setElementHTML(
     bodyEl,
-    `
+    html`
     <div class="iu-layout-wrapper">
       ${BADGE_SPRITE}
       <div class="iu-sidebar">
@@ -96,7 +90,7 @@ export function renderList(
               </div>
               <div class="iu-dropdown-options" id="iu-sort-options">
                 <div class="iu-dropdown-option" data-value="unfollowed-recent">
-                  ${NEW_UNFOLLOWER_SVG} Recently Unfollowed
+                  ${ICONS.newUnfollower} Recently Unfollowed
                 </div>
                 <div class="iu-dropdown-option" data-value="name-asc">
                   <span style="display: inline-block; width: 16px; text-align: center; font-size: 0.75rem; font-weight: bold; color: #aaa; vertical-align: middle;">AZ</span> A-Z (Username)
@@ -105,10 +99,10 @@ export function renderList(
                   <span style="display: inline-block; width: 16px; text-align: center; font-size: 0.75rem; font-weight: bold; color: #aaa; vertical-align: middle;">ZA</span> Z-A (Username)
                 </div>
                 <div class="iu-dropdown-option" data-value="private-first">
-                  ${PRIVATE_LOCK_SVG} Private First
+                  ${ICONS.private} Private First
                 </div>
                 <div class="iu-dropdown-option" data-value="verified-first">
-                  ${VERIFIED_BADGE_SVG} Verified First
+                  ${ICONS.verified} Verified First
                 </div>
               </div>
             </div>
@@ -120,27 +114,27 @@ export function renderList(
             <div class="iu-filter-list">
               <label class="iu-filter-label" style="display: flex; align-items: center; gap: 0.35rem;">
                 <input type="checkbox" id="iu-filter-new-unfollowers" ${filterState.showNewUnfollowersOnly ? 'checked' : ''} />
-                ${NEW_UNFOLLOWER_SVG} New Unfollowers Only
+                ${ICONS.newUnfollower} New Unfollowers Only
               </label>
               <label class="iu-filter-label" style="display: flex; align-items: center; gap: 0.35rem;">
                 <input type="checkbox" id="iu-filter-nonfollowers" ${filterState.showNonFollowers ? 'checked' : ''} />
-                ${NON_FOLLOWERS_SVG} Non-followers
+                ${ICONS.nonFollower} Non-followers
               </label>
               <label class="iu-filter-label" style="display: flex; align-items: center; gap: 0.35rem;">
                 <input type="checkbox" id="iu-filter-followers" ${filterState.showFollowers ? 'checked' : ''} />
-                ${FOLLOWS_YOU_SVG} Followers
+                ${ICONS.followsYou} Followers
               </label>
               <label class="iu-filter-label" style="display: flex; align-items: center; gap: 0.35rem;" title="Accounts that follow you but you don't follow back">
                 <input type="checkbox" id="iu-filter-fans" ${filterState.showFans ? 'checked' : ''} />
-                ${FAN_SVG} Fans
+                ${ICONS.fan} Fans
               </label>
               <label class="iu-filter-label" style="display: flex; align-items: center; gap: 0.35rem;">
                 <input type="checkbox" id="iu-filter-verified" ${filterState.showVerified ? 'checked' : ''} />
-                ${VERIFIED_BADGE_SVG} Show Verified
+                ${ICONS.verified} Show Verified
               </label>
               <label class="iu-filter-label" style="display: flex; align-items: center; gap: 0.35rem;">
                 <input type="checkbox" id="iu-filter-private" ${filterState.showPrivate ? 'checked' : ''} />
-                ${PRIVATE_LOCK_SVG} Show Private
+                ${ICONS.private} Show Private
               </label>
             </div>
           </div>
@@ -151,37 +145,37 @@ export function renderList(
             <div class="iu-stats-vertical">
               <div class="iu-stat-row">
                 <span style="display: flex; align-items: center; gap: 0.35rem;">
-                  ${NEW_UNFOLLOWER_SVG} New Unfollowers
+                  ${ICONS.newUnfollower} New Unfollowers
                 </span>
                 <span id="stat-new-unfollowers" class="iu-stat-val new-unfollowers">0</span>
               </div>
               <div class="iu-stat-row">
                 <span style="display: flex; align-items: center; gap: 0.35rem;">
-                  ${NON_FOLLOWERS_SVG} Non-followers
+                  ${ICONS.nonFollower} Non-followers
                 </span>
                 <span id="stat-nonfollowers" class="iu-stat-val non-followers">0</span>
               </div>
               <div class="iu-stat-row">
                 <span style="display: flex; align-items: center; gap: 0.35rem;">
-                  ${FOLLOWS_YOU_SVG} Followers
+                  ${ICONS.followsYou} Followers
                 </span>
                 <span id="stat-followers" class="iu-stat-val followers">0</span>
               </div>
               <div class="iu-stat-row" title="Accounts that follow you but you don't follow back">
                 <span style="display: flex; align-items: center; gap: 0.35rem;">
-                  ${FAN_SVG} Fans
+                  ${ICONS.fan} Fans
                 </span>
                 <span id="stat-fans" class="iu-stat-val fans">0</span>
               </div>
               <div class="iu-stat-row">
                 <span style="display: flex; align-items: center; gap: 0.35rem;">
-                  ${VERIFIED_BADGE_SVG} Verified
+                  ${ICONS.verified} Verified
                 </span>
                 <span id="stat-verified" class="iu-stat-val verified">0</span>
               </div>
               <div class="iu-stat-row">
                 <span style="display: flex; align-items: center; gap: 0.35rem;">
-                  ${PRIVATE_LOCK_SVG} Private
+                  ${ICONS.private} Private
                 </span>
                 <span id="stat-private" class="iu-stat-val private">0</span>
               </div>
@@ -200,7 +194,7 @@ export function renderList(
           </div>
         </div>
 
-        ${notice ? `<div class="iu-scan-warning"><strong>Warning:</strong> ${escapeHtml(notice)}</div>` : ''}
+        ${notice && html`<div class="iu-scan-warning"><strong>Warning:</strong> ${notice}</div>`}
 
         <!-- Selection controller & counter -->
         <div class="iu-content-header">
@@ -311,30 +305,29 @@ export function renderList(
   const cardCache = new Map<string, { user: UserNode; el: HTMLElement }>();
 
   // Static card markup; selection and disabled state are applied by syncCardState
-  const renderCardHtml = (user: UserNode): string => {
-    const newBadge = user.isNew ? badge('new-unfollower', 'New Unfollower') : '';
+  const renderCardHtml = (user: UserNode): SafeHtml => {
+    const newBadge = user.isNew && badge('new-unfollower', 'New Unfollower');
 
-    const id = escapeHtml(user.id);
-    const username = escapeHtml(user.username);
+    const { id, username } = user;
     const avatar = user.profilePicUrl
-      ? `<img class="iu-avatar" src="${escapeHtml(user.profilePicUrl)}" alt="${username}" loading="lazy" decoding="async" />`
-      : `<img class="iu-avatar iu-avatar-fallback" alt="" />`;
+      ? html`<img class="iu-avatar" src="${user.profilePicUrl}" alt="${username}" loading="lazy" decoding="async" />`
+      : html`<img class="iu-avatar iu-avatar-fallback" alt="" />`;
 
-    return `
+    return html`
   <div class="iu-user-card" id="card-${id}">
     <div class="iu-user-info">
       ${
         user.isFan
-          ? '<span class="iu-checkbox-spacer"></span>'
-          : `<input type="checkbox" class="iu-user-checkbox" data-id="${id}" />`
+          ? html`<span class="iu-checkbox-spacer"></span>`
+          : html`<input type="checkbox" class="iu-user-checkbox" data-id="${id}" />`
       }
       ${avatar}
       <div class="iu-names">
         <div class="iu-username-wrapper">
           <a class="iu-username" href="https://www.instagram.com/${encodeURIComponent(user.username)}/" target="_blank" rel="noopener noreferrer">${username}</a>
           <div class="iu-card-badges">
-            ${user.isVerified ? badge('verified', 'Verified') : ''}
-            ${user.isPrivate ? badge('private', 'Private Account') : ''}
+            ${user.isVerified && badge('verified', 'Verified')}
+            ${user.isPrivate && badge('private', 'Private Account')}
             ${
               user.isFan
                 ? badge('fan', "Fan: follows you, you don't follow back")
@@ -345,13 +338,13 @@ export function renderList(
             ${newBadge}
           </div>
         </div>
-        <span class="iu-fullname">${escapeHtml(user.fullName)}</span>
+        <span class="iu-fullname">${user.fullName}</span>
       </div>
     </div>
     ${
       user.isFan
-        ? '<span class="iu-fan-tag">Not following</span>'
-        : `<button class="iu-unfollow-btn" data-id="${id}">Unfollow</button>`
+        ? html`<span class="iu-fan-tag">Not following</span>`
+        : html`<button class="iu-unfollow-btn" data-id="${id}">Unfollow</button>`
     }
   </div>
   `;
@@ -362,7 +355,7 @@ export function renderList(
   // Build and cache cards for these users, parsing them in one batch
   const buildCards = (users: UserNode[]) => {
     if (users.length === 0) return;
-    const parsed = new DOMParser().parseFromString(users.map(renderCardHtml).join(''), 'text/html');
+    const parsed = new DOMParser().parseFromString(html`${users.map(renderCardHtml)}`.value, 'text/html');
     const cards = parsed.body.querySelectorAll<HTMLElement>(':scope > .iu-user-card');
     users.forEach((u, i) => {
       // Adopt into the page document now, so showing the card later doesn't pay for it
@@ -406,7 +399,7 @@ export function renderList(
     if (currentFilteredList.length === 0) {
       setElementHTML(
         listEl,
-        `
+        html`
         <div style="text-align: center; color: #ada79d; padding: 3rem 0;">
           No users match your criteria.
         </div>
@@ -764,12 +757,12 @@ export function renderList(
   };
   document.addEventListener('click', closeSortOptions);
 
-  const optionMapping: Record<string, string> = {
-    'unfollowed-recent': `${NEW_UNFOLLOWER_SVG} Recently Unfollowed`,
-    'name-asc': `<span style="display: inline-block; width: 16px; text-align: center; font-size: 0.75rem; font-weight: bold; color: #aaa; vertical-align: middle;">AZ</span> A-Z (Username)`,
-    'name-desc': `<span style="display: inline-block; width: 16px; text-align: center; font-size: 0.75rem; font-weight: bold; color: #aaa; vertical-align: middle;">ZA</span> Z-A (Username)`,
-    'private-first': `${PRIVATE_LOCK_SVG} Private First`,
-    'verified-first': `${VERIFIED_BADGE_SVG} Verified First`,
+  const optionMapping: Record<string, SafeHtml> = {
+    'unfollowed-recent': html`${ICONS.newUnfollower} Recently Unfollowed`,
+    'name-asc': html`<span style="display: inline-block; width: 16px; text-align: center; font-size: 0.75rem; font-weight: bold; color: #aaa; vertical-align: middle;">AZ</span> A-Z (Username)`,
+    'name-desc': html`<span style="display: inline-block; width: 16px; text-align: center; font-size: 0.75rem; font-weight: bold; color: #aaa; vertical-align: middle;">ZA</span> Z-A (Username)`,
+    'private-first': html`${ICONS.private} Private First`,
+    'verified-first': html`${ICONS.verified} Verified First`,
   };
 
   // Set initial trigger content

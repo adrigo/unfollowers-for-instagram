@@ -1,4 +1,4 @@
-export { escapeHtml, html, raw, setElementHTML } from './html';
+export { html, raw, setElementHTML } from './html';
 export { renderCachePrompt } from './views/cache-prompt';
 export { renderScanCooldownPrompt } from './views/cooldown-prompt';
 export { renderError } from './views/error';

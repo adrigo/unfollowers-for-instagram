@@ -1,10 +1,30 @@
+import CACHE_SYNC_SVG from '../assets/cache-sync.svg';
 import FAN_SVG from '../assets/fan.svg';
 import FOLLOWS_YOU_SVG from '../assets/follows-you.svg';
+import HOURGLASS_SVG from '../assets/hourglass.svg';
+import APP_LOGO_SVG from '../assets/icon.svg';
+import LOCK_SVG from '../assets/lock.svg';
 import NEW_UNFOLLOWER_SVG from '../assets/new-unfollower.svg';
 import NON_FOLLOWERS_SVG from '../assets/non-follower.svg';
 import PRIVATE_LOCK_SVG from '../assets/private.svg';
 import VERIFIED_BADGE_SVG from '../assets/verified.svg';
-import { escapeHtml } from './html';
+import WARNING_SVG from '../assets/warning.svg';
+import { html, raw, type SafeHtml } from './html';
+
+// Bundled SVG assets, trusted markup for html`` templates
+export const ICONS = {
+  appLogo: raw(APP_LOGO_SVG),
+  cacheSync: raw(CACHE_SYNC_SVG),
+  fan: raw(FAN_SVG),
+  followsYou: raw(FOLLOWS_YOU_SVG),
+  hourglass: raw(HOURGLASS_SVG),
+  lock: raw(LOCK_SVG),
+  newUnfollower: raw(NEW_UNFOLLOWER_SVG),
+  nonFollower: raw(NON_FOLLOWERS_SVG),
+  private: raw(PRIVATE_LOCK_SVG),
+  verified: raw(VERIFIED_BADGE_SVG),
+  warning: raw(WARNING_SVG),
+} as const;
 
 // Badge icons shown on list cards. Each is defined once as a <symbol> in BADGE_SPRITE and
 // referenced with <use>, so cards don't each carry full copies of the SVG markup.
@@ -25,10 +45,12 @@ const toSymbol = (svg: string, id: string): string => {
   return `<symbol id="${id}" viewBox="${viewBox}">${content}</symbol>`;
 };
 
-export const BADGE_SPRITE = `<svg class="iu-sprite" aria-hidden="true">${Object.entries(BADGE_ICONS)
-  .map(([name, svg]) => toSymbol(svg, `iu-icon-${name}`))
-  .join('')}</svg>`;
+export const BADGE_SPRITE = raw(
+  `<svg class="iu-sprite" aria-hidden="true">${Object.entries(BADGE_ICONS)
+    .map(([name, svg]) => toSymbol(svg, `iu-icon-${name}`))
+    .join('')}</svg>`
+);
 
-export function badge(icon: BadgeIcon, title: string): string {
-  return `<span class="iu-badge" title="${escapeHtml(title)}"><svg width="16" height="16" aria-hidden="true"><use href="#iu-icon-${icon}"/></svg></span>`;
+export function badge(icon: BadgeIcon, title: string): SafeHtml {
+  return html`<span class="iu-badge" title="${title}"><svg width="16" height="16" aria-hidden="true"><use href="#iu-icon-${icon}"/></svg></span>`;
 }

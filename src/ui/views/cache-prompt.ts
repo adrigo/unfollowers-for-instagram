@@ -1,7 +1,7 @@
-import CACHE_SYNC_SVG from '../../assets/cache-sync.svg';
 import { formatCacheAge } from '../../storage';
 import type { CacheData } from '../../types';
-import { setElementHTML } from '../html';
+import { html, setElementHTML } from '../html';
+import { ICONS } from '../icons';
 
 export function renderCachePrompt(
   bodyEl: HTMLElement,
@@ -14,9 +14,9 @@ export function renderCachePrompt(
 
   setElementHTML(
     bodyEl,
-    `
+    html`
     <div style="text-align: center; margin: auto; padding: 2.5rem; display: flex; flex-direction: column; gap: 1.5rem; align-items: center; justify-content: center; height: 100%;">
-      ${CACHE_SYNC_SVG}
+      ${ICONS.cacheSync}
       <div>
         <h3 style="margin-bottom: 0.5rem; font-weight: 600; font-size: 1.3rem;">Found Cached Data</h3>
         <p style="color: #ada79d; font-size: 0.9rem; line-height: 1.5; max-width: 380px;">
