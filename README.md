@@ -1,6 +1,6 @@
 # Unfollowers for Instagram (UIG)
 
-A beautiful, lightweight (~58KB, ~15KB gzipped), and secure browser-based utility that helps you identify accounts you are following but who do not follow you back.
+A beautiful, lightweight (~63KB, ~19KB gzipped), and secure browser-based utility that helps you identify accounts you are following but who do not follow you back.
 
 > [!NOTE]
 > This tool runs **completely client-side** in your active browser session. It does not require downloading any apps, sharing your credentials (username/password) with third-party sites, or registering for external services.
@@ -13,18 +13,11 @@ Created by [adrigo](https://adrigo.dev).
 
 ## ⚡ How It Works
 
-1. **Self-Contained Bundle:** The project bundles and minifies the source files into a single self-executing JavaScript snippet using `esbuild` in **~5ms**.
+1. **Self-Contained Bundle:** The project bundles and minifies the source files into a single self-executing JavaScript snippet using `esbuild`.
 2. **Non-Destructive Overlay:** Unlike destructive scripts that clear the browser viewport, this utility injects a beautiful **glassmorphic card modal** directly on top of your active Instagram tab. Closing the modal immediately restores the background page state.
-3. **2-Phase REST API Scanning:** Instagram has deprecated its internal GraphQL endpoints for friendship queries. The utility now queries Instagram's private REST API v1 (`/api/v1/friendships/`) in two sequential phases (Phase 1: Following list, Phase 2: Followers list) using your active session cookies (`ds_user_id` and `csrftoken`).
+3. **2-Phase REST API Scanning:** Instagram has deprecated its internal GraphQL endpoints for friendship queries. The utility now queries Instagram's private REST API v1 (`/api/v1/friendships/`) in two sequential phases (Phase 1: Following list, Phase 2: Followers list) using your active session cookies (`ds_user_id` and `csrftoken`). The followers list is compared against the following list to determine who follows you back. Fetching both lists with pacing between requests takes a little while, which is why results are cached.
 4. **Stable Pagination:** The following list is requested ordered by follow date (`order=date_followed_latest`). Instagram's default ranking can reshuffle mid-scan, which made its offset-based pagination silently skip accounts. With this order, Instagram currently returns the **entire following list in a single response** (e.g. 1,474 accounts in 1 request), so no page size is sent for it. The followers list has no ordering option and is served in small pages of ~20–25 accounts regardless of the requested size (e.g. 794 followers in 35 requests), so it accounts for nearly all of the scan time.
 5. **Local Storage Caching:** Saves the followings list in your browser's local cache. Re-running the script allows you to instantly reuse the cached list ("Use Cache") instead of triggering a full fresh network scan. Comparing a fresh scan against the cache flags **new unfollowers**.
-
-> [!IMPORTANT]
-> **GraphQL Endpoint Deprecation & 2-Phase Scanning:** Instagram deprecated its internal GraphQL endpoints for friendship lists. The scanner now operates via Instagram REST API v1 in **2 sequential phases**:
-> 1. **Phase 1 (Following List):** Fetches the full list of accounts you follow.
-> 2. **Phase 2 (Followers List):** Fetches your followers list to compare and determine followback status (`followsViewer`).
->
-> **Note on Speed:** Because both lists must be fetched sequentially with anti-spam rate limiting, full network scans take slightly longer to complete safely than before. However, local storage caching allows instant re-runs without repeating full network scans.
 
 ---
 
@@ -48,7 +41,7 @@ npm run package:extension
 
 * **`npm run package:extension`**: Executes `npm run build`, runs `scripts/create-extension-icons.js` to render PNG icons, bundles `source-code.zip` for Firefox source code review, and packages store-ready `extension.zip` in the root folder.
 * **`npm run typecheck`** / **`npm run lint`**: Type-check with `tsc` and check linting, formatting, and import order with [Biome](https://biomejs.dev). Both run automatically before every `npm run build`.
-* **`npm test`**: Run the [Vitest](https://vitest.dev) unit tests in `tests/` (cache merging, import validation, ID normalization, pacing, progress estimates, filtering, and sorting). Also runs before every `npm run build`.
+* **`npm test`**: Run the [Vitest](https://vitest.dev) unit tests in `tests/` (cache merging, import validation, scan warnings, ID normalization, pacing, progress estimates, filtering, sorting, statistics, HTML escaping, and the bulk unfollow loop's pausing, cancelling, and rate-limit handling). Also runs before every `npm run build`.
 * **`npm run format`**: Apply Biome lint fixes, formatting, and import sorting.
 * **`npm run package:source`**: Generates `source-code.zip` containing all original TypeScript source files and build configurations (excluding `node_modules` and compiled assets) required for store source code reviews.
 
@@ -61,7 +54,7 @@ Open the generated landing page directly in your browser:
 This page features a modern glassmorphic look, including a CSS-only visual mockup of the modal overlay and direct links to Chrome Web Store and Firefox Add-ons.
 
 ### 3. Run on Instagram
-Once you open `public/index.html` in your browser:
+Use either option below; neither needs the landing page.
 
 #### Option A: Official Extension (Chrome, Edge, Brave, Firefox)
 - **Chrome / Edge / Brave / Kiwi Browser (Android):** Install from the [Chrome Web Store](https://chromewebstore.google.com/detail/unfollowers-for-instagram/lejidbigpihdfpeomhfjlgnhjjeicdkk) or load unpacked extension from [`extension/`](./extension).
@@ -96,12 +89,12 @@ When you run `npm run package:extension`, the build pipeline automatically:
 * **Local Storage Caching & Humanized Age:** Stores scanned results locally in `localStorage` and formats cache age dynamically (e.g. `1 day, 2 hours and 10 mins ago`).
 * **Cache Export & Import (Cross-Device Migration):** Export your full cache state as a JSON file (`iu_cache_<user_id>.json`) and import it onto any other browser or computer to move your scan history without re-scanning. Note: Imported files must be a valid JSON file previously exported by this tool (containing `timestamp` and `users`).
 * **Sidebar Quick Controls:** Instant **New Scan**, **Grid View**, **Import**, and **Export** actions accessible right from the sidebar.
-* **Sequential Bulk Unfollow:** Select multiple users and unfollow them sequentially with a dedicated pause/cancel progress banner.
+* **Sequential Bulk Unfollow:** Select multiple users and unfollow them sequentially with a dedicated pause/cancel progress banner. Confirmations and results appear inside the overlay rather than as browser popups, so they never block the page mid-run.
 * **Randomized Timing Delays (Anti-Spam):** Scans wait `300ms`–`600ms` between pages plus a `5s`–`10s` break every 10 pages. Bulk unfollows wait `4s`–`7s` between unfollows plus a `3`–`5` minute break every 10, with a countdown in the progress banner. All values live in [`src/pacing.ts`](./src/pacing.ts).
 * **Scan Retries with Backoff:** Rate limits (HTTP 429), server errors, and network drops during a scan are retried after waiting 30s, 60s, then 120s, with the wait shown in the scanner.
 * **Rescan Warning:** Pressing **New Scan** within 1 hour of the last scan, or after 3 scans in 24 hours, asks for confirmation first and offers the cached results instead, since frequent scans are what get accounts flagged.
 * **Blocked Scan Detection:** When Instagram refuses a list request by redirecting it (usually after several scans in a short time), the scan stops without retrying and explains that you should wait a few hours, offering your cached results instead.
-* **Auto-Pause on Rate Limits:** Intercepts HTTP 429 (Too Many Requests) errors from Instagram, automatically pausing the bulk loop and prompting the user to wait instead of letting subsequent requests fail.
+* **Auto-Pause on Rate Limits:** Intercepts HTTP 429 (Too Many Requests) errors from Instagram, automatically pausing the bulk loop and asking the user to wait before resuming, instead of letting subsequent requests fail.
 * **Incomplete Scan Warning:** Shows a warning above the list when Instagram stops returning the followers list early, since missing followers would otherwise appear as non-followers.
 * **Estimated Scan Progress:** Instagram doesn't expose your follower/following counts to web scripts, so the progress bar estimates them from your previous scan (or an estimate curve on the first scan) and completes each phase when its list actually ends, with a live count of scanned accounts. Because the following list arrives in a single request, it takes the first 5% of the bar and the followers list the remaining 95%.
 * **New Unfollower Detection:** Accounts that followed you in the previous scan but no longer do are flagged with a badge and can be filtered.
@@ -109,9 +102,9 @@ When you run `npm run package:extension`, the build pipeline automatically:
 * **Network Scan Abort Safety:** Closing the modal immediately calls `abort()` on an active `AbortController`, halting background API calls and avoiding rate limits.
 * **Page Exit Protection:** Warns the user if they try to close or refresh the tab during an active bulk unfollow process to prevent accidental progress loss.
 * **Custom Layouts:** Toggle between a detailed List View or a compact Grid View.
-* **Detailed Statistics Bar:** View live counts of Non-followers, Followers, Verified profiles, and Private accounts at a glance.
+* **Detailed Statistics Bar:** View live counts of New Unfollowers, Non-followers, Followers, Fans, Verified profiles, and Private accounts at a glance.
 * **Sorting & Filtering:** Sort by Recently Unfollowed, Username (A-Z/Z-A), Private First, or Verified First. Filter list by New Unfollowers, Non-followers, Followers, Fans, Verified, and Private tags.
-* **Safe Rendering:** All Instagram profile data and imported values are HTML-escaped before rendering, and imported backups are strictly validated (numeric IDs, valid usernames, `https://` avatar URLs).
+* **Safe Rendering:** All markup is built with an auto-escaping `html` template ([`src/ui/html.ts`](./src/ui/html.ts)), so Instagram profile data and imported values are always HTML-escaped unless explicitly marked as trusted, and imported backups are strictly validated (numeric IDs, valid usernames, `https://` avatar URLs).
 
 ---
 
@@ -124,7 +117,7 @@ When you run `npm run package:extension`, the build pipeline automatically:
 > **Humanized Request Pacing:** Requests are spaced with randomized delays and regular longer breaks (see [`src/pacing.ts`](./src/pacing.ts)) to avoid burst request spikes. This lowers, but cannot eliminate, the risk of Instagram's automation detection.
 
 > [!TIP]
-> **Audit Friendly:** The code contains zero external dependencies or remote script calls. You can easily audit [src/api.ts](./src/api.ts) to verify that no data is ever stored, collected, or transmitted to third-party servers.
+> **Audit Friendly:** The code contains zero external dependencies or remote script calls. You can easily audit [src/api.ts](./src/api.ts) to verify that no data is ever collected or sent to third-party servers. Scan results stay in your own browser's `localStorage`.
 
 > [!NOTE]
 > **Console Warnings (Safely Ignore):** When executing this tool on `instagram.com`, you might notice pre-existing warning logs in your browser's developer console (e.g., `ignoring invalid endpoint URL '/security/coop_report/'` or rejected `th_eu_pref` cookies). **These are native Instagram/Meta server messages** (they appear even before this script is executed) caused by their tracking systems or header misconfigurations. They are completely normal and safe to ignore.
@@ -150,16 +143,24 @@ When you run `npm run package:extension`, the build pipeline automatically:
 │   ├── assets/            # Master SVG vector assets (icon, badges, filters)
 │   ├── api.ts             # REST API scan with retries, cookie readers, unfollow POST actions
 │   ├── css.d.ts           # TypeScript module declarations for CSS imports
-│   ├── filters.ts         # Pure list filtering and sorting helpers
-│   ├── index.ts           # Entry orchestrator, overlay modal builder, scroll locks
+│   ├── filters.ts         # Pure list filtering, sorting and statistics helpers
+│   ├── index.ts           # Entry point: mounts the overlay, scroll lock, scan/import flow
 │   ├── pacing.ts          # Request delays and breaks for scans and bulk unfollows
 │   ├── progress.ts        # Scan progress estimates from the previous scan
 │   ├── storage.ts         # LocalStorage cache, import validation, new-unfollower merge
 │   ├── styles.css         # CSS style sheet containing the glassmorphism system
 │   ├── svg.d.ts           # TypeScript module declarations for SVG imports
 │   ├── types.ts           # TypeScript interfaces (UserNode, CacheData, API responses)
-│   └── ui.ts              # Core list drawing, event delegation, search/filters, bulk loops
-├── tests/                 # Vitest unit tests for storage, filters, and API helpers
+│   └── ui/
+│       ├── index.ts       # Public UI API used by src/index.ts
+│       ├── html.ts        # Auto-escaping html`` template, raw() for trusted markup, DOM helpers
+│       ├── icons.ts       # SVG icons and the badge sprite
+│       ├── components/    # Reusable pieces: user card, sort dropdown, filter and stats panels,
+│       │                  # bulk progress banner, prompt, dialog, progress view
+│       └── views/         # Screens: overlay and login card, cache and cooldown prompts,
+│           │              # scanning, import, error
+│           └── list/      # List view, bulk unfollow loop (DOM-free), JSON export
+├── tests/                 # Vitest unit tests (storage, API, filters, pacing, progress, html, bulk unfollow)
 ├── tsconfig.json          # TypeScript configuration options
 └── package.json           # Dev scripts & dependencies (esbuild + typescript + resvg)
 ```
