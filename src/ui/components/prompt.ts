@@ -1,8 +1,9 @@
 import { html, type SafeHtml } from '../html';
 
-// Centered icon, title, text and a row of buttons; `footer` goes below the buttons
+// Centered icon, title, text and a row of buttons; `footer` goes below the buttons.
+// Also the content of in-overlay dialogs (see dialog.ts).
 export const promptHtml = (options: {
-  icon: SafeHtml;
+  icon?: SafeHtml;
   title: string;
   text: SafeHtml;
   actions: SafeHtml;

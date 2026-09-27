@@ -4,12 +4,13 @@ import { estimateBulkUnfollowMs, formatCountdown, UNFOLLOW_BREAK_EVERY, UNFOLLOW
 import { setCachedFollowings } from '../../../storage';
 import type { SortOption, UserFilterState, UserNode } from '../../../types';
 import { bulkBannerHtml, setupBulkBanner } from '../../components/bulk-banner';
+import { showDialog } from '../../components/dialog';
 import { filterPanelHtml, setupFilterPanel } from '../../components/filter-panel';
 import { setupSortDropdown, sortDropdownHtml } from '../../components/sort-dropdown';
 import { statsPanelHtml, updateStatsPanel } from '../../components/stats-panel';
 import { createCardCache, setUnfollowButtonState, syncCardState } from '../../components/user-card';
 import { html, query, setElementHTML } from '../../html';
-import { BADGE_SPRITE } from '../../icons';
+import { BADGE_SPRITE, ICONS } from '../../icons';
 import { type BulkUnfollowResult, createBulkUnfollow } from './bulk-unfollow';
 import { downloadCacheExport } from './export';
 
@@ -230,7 +231,11 @@ export function renderList(
         setTimeout(refresh, 800);
       } else {
         if (res.status === 429) {
-          alert('Instagram rate limit detected (HTTP 429). Please wait a few minutes before trying to unfollow again.');
+          showDialog(bodyEl, {
+            icon: ICONS.warning,
+            title: 'Instagram rate limit reached',
+            message: 'Instagram is limiting requests (HTTP 429). Wait a few minutes before trying to unfollow again.',
+          });
         }
         throw new Error('API Error');
       }
@@ -238,7 +243,11 @@ export function renderList(
       btn.disabled = false;
       setUnfollowButtonState(btn, 'ready');
       if (!(err instanceof Error) || err.message !== 'API Error') {
-        alert(`Failed to unfollow @${user.username}. Try again later.`);
+        showDialog(bodyEl, {
+          icon: ICONS.warning,
+          title: 'Unfollow failed',
+          message: `Failed to unfollow @${user.username}. Try again later.`,
+        });
       }
     }
   };
@@ -278,7 +287,16 @@ export function renderList(
     const target = e.target as HTMLElement;
     if (target.classList.contains('iu-unfollow-btn') && !bulk.isRunning) {
       const user = activeUsers.find((u) => u.id === target.getAttribute('data-id'));
-      if (user && confirm(`Are you sure you want to unfollow @${user.username}?`)) {
+      if (!user) return;
+      const confirmed = await showDialog(bodyEl, {
+        title: `Unfollow @${user.username}?`,
+        message: 'They will be removed from the accounts you follow.',
+        confirmLabel: 'Unfollow',
+        cancelLabel: 'Cancel',
+        danger: true,
+      });
+      // A bulk run may have started, or the list re-rendered, while the dialog was open
+      if (confirmed && !bulk.isRunning && target.isConnected) {
         await triggerUnfollow(user, target as HTMLButtonElement);
       }
     }
@@ -306,16 +324,18 @@ export function renderList(
     if (users.length === 0) return;
 
     const minutes = Math.max(1, Math.round(estimateBulkUnfollowMs(users.length) / 60_000));
-    if (
-      !confirm(
-        `Are you sure you want to unfollow ${users.length} selected accounts?\n\n` +
-          `To avoid Instagram flagging your account, they are unfollowed one by one with a few seconds between each ` +
-          `and a ${Math.round(UNFOLLOW_BREAK_MS.min / 60_000)}–${Math.round(UNFOLLOW_BREAK_MS.max / 60_000)} minute break every ${UNFOLLOW_BREAK_EVERY}. ` +
-          `This will take about ${minutes} minute${minutes === 1 ? '' : 's'}. Keep this tab open.`
-      )
-    ) {
-      return;
-    }
+    const confirmed = await showDialog(bodyEl, {
+      title: `Unfollow ${users.length} selected account${users.length === 1 ? '' : 's'}?`,
+      message: html`
+        To avoid Instagram flagging your account, they are unfollowed one by one with a few seconds between each
+        and a ${Math.round(UNFOLLOW_BREAK_MS.min / 60_000)}–${Math.round(UNFOLLOW_BREAK_MS.max / 60_000)} minute break every ${UNFOLLOW_BREAK_EVERY}.
+        This will take about <strong>${minutes} minute${minutes === 1 ? '' : 's'}</strong>. Keep this tab open.
+      `,
+      confirmLabel: 'Unfollow',
+      cancelLabel: 'Cancel',
+      danger: true,
+    });
+    if (!confirmed || bulk.isRunning) return;
 
     const preventExit = (e: BeforeUnloadEvent) => {
       e.preventDefault();
@@ -356,9 +376,12 @@ export function renderList(
           banner.setPaused(true);
           const cardBtn = findCardButton(user.id);
           if (cardBtn) setUnfollowButtonState(cardBtn, 'ready');
-          alert(
-            'Instagram rate limit detected (HTTP 429). The bulk unfollow process has been automatically paused. Please wait a few minutes before resuming to avoid account restrictions.'
-          );
+          showDialog(bodyEl, {
+            icon: ICONS.warning,
+            title: 'Paused: Instagram rate limit',
+            message:
+              'Instagram is limiting requests (HTTP 429), so the bulk unfollow has been paused. Wait a few minutes, then press Resume to avoid account restrictions.',
+          });
         },
         onBreak: (remainingMs, done) => {
           banner.setText(
@@ -376,10 +399,11 @@ export function renderList(
     banner.setVisible(false);
     setBulkInputsDisabled(false);
 
-    const actionText = result.cancelled ? 'Bulk unfollow cancelled.' : 'Bulk unfollow complete.';
-    alert(`${actionText}\nSuccessfully unfollowed: ${result.successCount}\nFailed: ${result.failCount}`);
-
     refresh();
+    showDialog(bodyEl, {
+      title: result.cancelled ? 'Bulk unfollow cancelled' : 'Bulk unfollow complete',
+      message: html`Successfully unfollowed: <strong>${result.successCount}</strong><br>Failed: <strong>${result.failCount}</strong>`,
+    });
   });
 
   layoutBtn.addEventListener('click', () => {
