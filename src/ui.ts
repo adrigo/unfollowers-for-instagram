@@ -26,6 +26,9 @@ import {
   validateAndParseCacheData,
 } from './storage';
 import type { CacheData, SortOption, UserFilterState, UserNode } from './types';
+import { escapeHtml, setElementHTML } from './ui/html';
+
+export { escapeHtml, setElementHTML };
 
 // Badge icons shown on list cards. Each is defined once as a <symbol> in BADGE_SPRITE and
 // referenced with <use>, so cards don't each carry full copies of the SVG markup.
@@ -52,18 +55,6 @@ const BADGE_SPRITE = `<svg class="iu-sprite" aria-hidden="true">${Object.entries
 
 function badge(icon: BadgeIcon, title: string): string {
   return `<span class="iu-badge" title="${escapeHtml(title)}"><svg width="16" height="16" aria-hidden="true"><use href="#iu-icon-${icon}"/></svg></span>`;
-}
-
-export function setElementHTML(element: HTMLElement, htmlString: string) {
-  const parsed = new DOMParser().parseFromString(htmlString, 'text/html');
-  element.replaceChildren(...Array.from(parsed.body.childNodes));
-}
-
-// Escape untrusted text (Instagram profile data, imported files, error messages) before
-// interpolating it into HTML strings. DOMParser does not neutralize inline event handlers.
-const HTML_ESCAPES: Record<string, string> = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' };
-export function escapeHtml(value: string): string {
-  return value.replace(/[&<>"']/g, (ch) => HTML_ESCAPES[ch]);
 }
 
 export function renderError(
