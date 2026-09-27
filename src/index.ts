@@ -27,6 +27,29 @@ const appVersion =
     ? chrome.runtime.getManifest().version
     : PKG_VERSION;
 
+// Replace any overlay left by a previous launch with a fresh one and its stylesheet
+const mountOverlay = () => {
+  document.getElementById('iu-overlay')?.remove();
+  document.getElementById('iu-styles')?.remove();
+
+  const styleEl = document.createElement('style');
+  styleEl.id = 'iu-styles';
+  styleEl.textContent = CSS_STYLES;
+  document.head.appendChild(styleEl);
+
+  const overlayEl = document.createElement('div');
+  overlayEl.id = 'iu-overlay';
+  document.body.appendChild(overlayEl);
+
+  return {
+    overlayEl,
+    unmount: () => {
+      overlayEl.remove();
+      styleEl.remove();
+    },
+  };
+};
+
 (async () => {
   if (location.hostname !== 'www.instagram.com') {
     alert('This script must be executed on www.instagram.com!');
@@ -36,51 +59,16 @@ const appVersion =
   const ds_user_id = getCookie('ds_user_id');
 
   if (!ds_user_id) {
-    const existingModal = document.getElementById('iu-overlay');
-    const existingStyles = document.getElementById('iu-styles');
-    if (existingModal) existingModal.remove();
-    if (existingStyles) existingStyles.remove();
-
-    const styleEl = document.createElement('style');
-    styleEl.id = 'iu-styles';
-    styleEl.textContent = CSS_STYLES;
-    document.head.appendChild(styleEl);
-
-    const overlayEl = document.createElement('div');
-    overlayEl.id = 'iu-overlay';
-    document.body.appendChild(overlayEl);
-
-    renderLoginRequired(overlayEl, appVersion, () => {
-      overlayEl.remove();
-      styleEl.remove();
-    });
+    const { overlayEl, unmount } = mountOverlay();
+    renderLoginRequired(overlayEl, appVersion, unmount);
     return;
   }
 
   let scanAbortController: AbortController | null = null;
   let currentListController: { cancelBulk: () => void } | null = null;
 
-  // Prevent multiple overlay injections
-  const existingModal = document.getElementById('iu-overlay');
-  const existingStyles = document.getElementById('iu-styles');
-  if (existingModal) {
-    existingModal.remove();
-  }
-  if (existingStyles) {
-    existingStyles.remove();
-  }
-
-  // Inject CSS Styles
-  const styleEl = document.createElement('style');
-  styleEl.id = 'iu-styles';
-  styleEl.textContent = CSS_STYLES;
-  document.head.appendChild(styleEl);
-
-  // Inject Overlay Card
-  const overlayEl = document.createElement('div');
-  overlayEl.id = 'iu-overlay';
+  const { overlayEl, unmount } = mountOverlay();
   const bodyEl = renderOverlayCard(overlayEl, appVersion, () => cleanup());
-  document.body.appendChild(overlayEl);
 
   // Prevent scroll chaining when interacting with overlay backdrop
   overlayEl.addEventListener(
@@ -126,8 +114,7 @@ const appVersion =
       currentListController.cancelBulk();
       currentListController = null;
     }
-    overlayEl.remove();
-    styleEl.remove();
+    unmount();
 
     // Restore original background scrolling behavior
     if (document.body.dataset.iuOriginalOverflow !== undefined) {
