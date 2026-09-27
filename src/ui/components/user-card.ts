@@ -81,14 +81,10 @@ const BUTTON_LABELS: Record<UnfollowButtonState, string> = {
   failed: 'Failed',
 };
 
-// Label and look of a card's Unfollow button; callers manage `disabled`
+// Label of a card's Unfollow button; data-state also styles it. Callers manage `disabled`.
 export function setUnfollowButtonState(button: HTMLButtonElement, state: UnfollowButtonState) {
   button.textContent = BUTTON_LABELS[state];
   button.dataset.state = state;
-  if (state === 'done') {
-    button.style.background = 'rgba(255,255,255,0.05)';
-    button.style.color = '#ada79d';
-  }
 }
 
 // Apply state that changes without the user changing

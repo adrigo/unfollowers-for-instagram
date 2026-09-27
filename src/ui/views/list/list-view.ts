@@ -49,18 +49,18 @@ export function renderList(
         <!-- Full-Width Search Bar -->
         <div class="iu-sidebar-section iu-search-section">
           <div class="iu-sidebar-title">Search:</div>
-          <input type="text" class="iu-search-input" id="iu-search" placeholder="Username or name..." style="width: 100%; box-sizing: border-box;" />
+          <input type="text" class="iu-search-input" id="iu-search" placeholder="Username or name..." />
         </div>
 
         <!-- Full-Width Unfollow Action Button -->
         <div class="iu-sidebar-section iu-unfollow-section">
-          <button class="iu-btn-export" id="iu-bulk-unfollow-btn" style="width: 100%; background: #ef4444; border-color: rgba(239, 68, 68, 0.4); text-align: center;" disabled>Unfollow (0)</button>
+          <button class="iu-btn-export" id="iu-bulk-unfollow-btn" disabled>Unfollow (0)</button>
         </div>
 
         <!-- Mobile Drawer Toggle Button (Visible on mobile screens) -->
         <button class="iu-btn-export iu-drawer-toggle-btn" id="iu-drawer-toggle">
           <span>Filters & Options</span>
-          <span id="iu-drawer-arrow" style="font-size: 0.65rem; color: #888;">▼</span>
+          <span class="iu-arrow" id="iu-drawer-arrow">▼</span>
         </button>
 
         <!-- Collapsible Drawer Container (Always visible on desktop, collapsed by default on mobile) -->
@@ -68,12 +68,12 @@ export function renderList(
           <!-- Quick Controls (Grid View, New Scan, Import, Export) -->
           <div class="iu-sidebar-section iu-sidebar-actions">
             <div class="iu-btn-group">
-              <button class="iu-btn-export" id="iu-layout-btn" style="flex: 1; text-align: center;">Grid View</button>
-              <button class="iu-btn-export" id="iu-sidebar-scan-btn" style="flex: 1; text-align: center;">New Scan</button>
+              <button class="iu-btn-export" id="iu-layout-btn">Grid View</button>
+              <button class="iu-btn-export" id="iu-sidebar-scan-btn">New Scan</button>
             </div>
             <div class="iu-btn-group">
-              <button class="iu-btn-export" id="iu-import-btn" style="flex: 1; text-align: center;">Import</button>
-              <button class="iu-btn-export" id="iu-export-btn" style="flex: 1; text-align: center;">Export</button>
+              <button class="iu-btn-export" id="iu-import-btn">Import</button>
+              <button class="iu-btn-export" id="iu-export-btn">Export</button>
             </div>
           </div>
 
@@ -87,7 +87,7 @@ export function renderList(
             ${filterPanelHtml(filterState)}
           </div>
 
-          <div class="iu-sidebar-section" style="border-bottom: none; padding-bottom: 0;">
+          <div class="iu-sidebar-section iu-stats-section">
             <div class="iu-sidebar-title">Statistics:</div>
             ${statsPanelHtml()}
           </div>
@@ -103,9 +103,9 @@ export function renderList(
         <div class="iu-content-header">
           <label class="iu-filter-label">
             <input type="checkbox" id="iu-select-all" />
-            <span style="font-weight: bold; color: #fff; font-size: 0.88rem;">Select All Visible</span>
+            <span class="iu-select-all-text">Select All Visible</span>
           </label>
-          <span id="iu-count-text" style="font-size: 0.85rem; color: #ada79d;">Loading list...</span>
+          <span class="iu-count-text" id="iu-count-text">Loading list...</span>
         </div>
 
         <!-- The scrollable list view, rendered by updateUIList -->
@@ -179,7 +179,7 @@ export function renderList(
       setElementHTML(
         listEl,
         html`
-        <div style="text-align: center; color: #ada79d; padding: 3rem 0;">
+        <div class="iu-empty-list">
           No users match your criteria.
         </div>
       `

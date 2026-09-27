@@ -3,10 +3,10 @@ import { html, query, type SafeHtml } from '../html';
 // Progress banner shown while a bulk unfollow runs
 export const bulkBannerHtml = (): SafeHtml => html`
   <div id="iu-bulk-progress-banner">
-    <span id="iu-bulk-progress-text" style="font-weight: 600;">Unfollowing: 0/0</span>
-    <div class="iu-btn-group" style="width: auto;">
-      <button id="iu-bulk-pause-btn" class="iu-btn-export" style="padding: 0.35rem 0.75rem; font-size: 0.8rem; background: rgba(255, 255, 255, 0.08); border-radius: 6px;">Pause</button>
-      <button id="iu-bulk-cancel-btn" class="iu-btn-export" style="padding: 0.35rem 0.75rem; font-size: 0.8rem; background: #ef4444; border: none; border-radius: 6px;">Cancel</button>
+    <span id="iu-bulk-progress-text">Unfollowing: 0/0</span>
+    <div class="iu-btn-group">
+      <button id="iu-bulk-pause-btn" class="iu-btn-export">Pause</button>
+      <button id="iu-bulk-cancel-btn" class="iu-btn-export">Cancel</button>
     </div>
   </div>
 `;
@@ -21,17 +21,14 @@ export function setupBulkBanner(root: ParentNode, handlers: { onPauseToggle: () 
 
   return {
     setVisible(visible: boolean) {
-      banner.style.display = visible ? 'flex' : 'none';
+      banner.classList.toggle('is-visible', visible);
     },
     setText(value: string) {
       text.textContent = value;
     },
     setPaused(paused: boolean) {
       pauseBtn.textContent = paused ? 'Resume' : 'Pause';
-      pauseBtn.style.background = paused
-        ? 'linear-gradient(135deg, #f97316, #ec4899, #7c3aed)'
-        : 'rgba(255, 255, 255, 0.08)';
-      pauseBtn.style.color = '#fff';
+      pauseBtn.classList.toggle('is-paused', paused);
     },
   };
 }

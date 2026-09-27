@@ -2,8 +2,7 @@ import type { SortOption } from '../../types';
 import { html, query, type SafeHtml, setElementHTML } from '../html';
 import { ICONS } from '../icons';
 
-const letters = (text: string) =>
-  html`<span style="display: inline-block; width: 16px; text-align: center; font-size: 0.75rem; font-weight: bold; color: #aaa; vertical-align: middle;">${text}</span>`;
+const letters = (text: string) => html`<span class="iu-sort-glyph">${text}</span>`;
 
 const SORT_OPTIONS: { value: SortOption; label: SafeHtml }[] = [
   { value: 'unfollowed-recent', label: html`${ICONS.newUnfollower} Recently Unfollowed` },
@@ -18,8 +17,8 @@ const labelFor = (value: SortOption) => SORT_OPTIONS.find((o) => o.value === val
 export const sortDropdownHtml = (selected: SortOption): SafeHtml => html`
   <div class="iu-custom-dropdown" id="iu-sort-dropdown">
     <div class="iu-dropdown-trigger" id="iu-sort-trigger">
-      <span id="iu-sort-trigger-content" style="display: flex; align-items: center; gap: 0.4rem;">${labelFor(selected)}</span>
-      <span id="iu-sort-arrow" style="font-size: 0.65rem; color: #888;">▼</span>
+      <span class="iu-sort-label" id="iu-sort-trigger-content">${labelFor(selected)}</span>
+      <span class="iu-arrow" id="iu-sort-arrow">▼</span>
     </div>
     <div class="iu-dropdown-options" id="iu-sort-options">
       ${SORT_OPTIONS.map((o) => html`<div class="iu-dropdown-option" data-value="${o.value}">${o.label}</div>`)}
@@ -66,8 +65,7 @@ export function setupSortDropdown(root: ParentNode, onChange: (sortBy: SortOptio
 
   return {
     setDisabled(disabled: boolean) {
-      dropdown.style.pointerEvents = disabled ? 'none' : 'auto';
-      dropdown.style.opacity = disabled ? '0.5' : '1';
+      dropdown.classList.toggle('is-disabled', disabled);
     },
   };
 }

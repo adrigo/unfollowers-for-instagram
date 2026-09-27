@@ -1,6 +1,7 @@
 import { setCachedFollowings, validateAndParseCacheData } from '../../storage';
 import type { UserNode } from '../../types';
-import { html, setElementHTML } from '../html';
+import { progressViewHtml, setupProgressView } from '../components/progress-view';
+import { setElementHTML } from '../html';
 import { renderError } from './error';
 
 export function loadCacheWithScanAnimation(
@@ -12,22 +13,9 @@ export function loadCacheWithScanAnimation(
 ) {
   setElementHTML(
     bodyEl,
-    html`
-    <div class="iu-scanner-view">
-      <div class="iu-spinner"></div>
-      <div>
-        <h3 style="margin-bottom: 0.5rem; font-weight: 600;">Importing cached data...</h3>
-        <p style="color: #ada79d; font-size: 0.9rem;" id="iu-scan-status">Reading backup file...</p>
-      </div>
-      <div class="iu-progress-bar-container">
-        <div class="iu-progress-bar" id="iu-progress-bar" style="width: 25%; transition: width 0.3s ease;"></div>
-      </div>
-    </div>
-  `
+    progressViewHtml({ title: 'Importing cached data...', status: 'Reading backup file...', initialPercent: 25 })
   );
-
-  const scanStatusEl = document.getElementById('iu-scan-status')!;
-  const progressBarEl = document.getElementById('iu-progress-bar')!;
+  const progress = setupProgressView(bodyEl);
 
   const reader = new FileReader();
   reader.onload = (event) => {
@@ -40,14 +28,14 @@ export function loadCacheWithScanAnimation(
     }
     const importedUsers = result.data.users;
 
-    progressBarEl.style.width = '70%';
-    scanStatusEl.textContent = `Loading ${importedUsers.length} users from cache...`;
+    progress.setPercent(70);
+    progress.setStatus(`Loading ${importedUsers.length} users from cache...`);
 
     setCachedFollowings(dsUserId, importedUsers, result.data.timestamp);
 
     setTimeout(() => {
-      progressBarEl.style.width = '100%';
-      scanStatusEl.textContent = 'Finalizing list view...';
+      progress.setPercent(100);
+      progress.setStatus('Finalizing list view...');
 
       setTimeout(() => {
         onLoaded(importedUsers);

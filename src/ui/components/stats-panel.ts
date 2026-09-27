@@ -19,7 +19,7 @@ export const statsPanelHtml = (): SafeHtml => html`
     ${STATS.map(
       (s) => html`
         <div class="iu-stat-row" ${s.title && html`title="${s.title}"`}>
-          <span style="display: flex; align-items: center; gap: 0.35rem;">${s.icon} ${s.label}</span>
+          <span class="iu-stat-label">${s.icon} ${s.label}</span>
           <span id="iu-stat-${s.id}" class="iu-stat-val ${s.id}">0</span>
         </div>
       `

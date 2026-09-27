@@ -12,15 +12,15 @@ import {
 import CSS_STYLES from './styles.css';
 import type { CacheData, UserNode } from './types';
 import {
-  html,
   loadCacheWithScanAnimation,
   renderCachePrompt,
   renderError,
   renderList,
+  renderLoginRequired,
+  renderOverlayCard,
   renderScanCooldownPrompt,
-  setElementHTML,
+  renderScanning,
 } from './ui';
-import { ICONS } from './ui/icons';
 
 const appVersion =
   typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.getManifest
@@ -48,40 +48,12 @@ const appVersion =
 
     const overlayEl = document.createElement('div');
     overlayEl.id = 'iu-overlay';
-    setElementHTML(
-      overlayEl,
-      html`
-      <div class="iu-card" style="max-width: 560px; width: 92%; height: auto; margin: auto;">
-        <div class="iu-header">
-          <div class="iu-title-group">
-            <div class="iu-logo">${ICONS.appLogo}</div>
-            <span class="iu-title">Unfollowers for Instagram</span>
-            <span class="iu-version-tag">v${appVersion}</span>
-          </div>
-          <button class="iu-close-btn" id="iu-close-btn">&times;</button>
-        </div>
-        <div style="padding: 3rem 2rem; text-align: center; display: flex; flex-direction: column; align-items: center; gap: 1.5rem;">
-          ${ICONS.lock}
-          <div>
-            <h3 style="font-size: 1.5rem; font-weight: 700; color: #f87171; margin-bottom: 0.75rem;">Login Required</h3>
-            <p style="color: #ada79d; font-size: 1rem; line-height: 1.6; max-width: 440px; margin: 0 auto;">
-              You are currently not logged into Instagram. Please log into your account on this tab first, then launch the scanner again.
-            </p>
-          </div>
-          <button id="iu-login-close-btn" class="iu-btn-export" style="background: linear-gradient(135deg, #f97316, #ec4899, #7c3aed); color: #fff; border: none; font-weight: 700; height: 46px; padding: 0 2rem; font-size: 0.95rem; border-radius: 12px; cursor: pointer;">Got It</button>
-        </div>
-      </div>
-    `
-    );
     document.body.appendChild(overlayEl);
 
-    const closeHandler = () => {
+    renderLoginRequired(overlayEl, appVersion, () => {
       overlayEl.remove();
       styleEl.remove();
-    };
-
-    document.getElementById('iu-close-btn')?.addEventListener('click', closeHandler);
-    document.getElementById('iu-login-close-btn')?.addEventListener('click', closeHandler);
+    });
     return;
   }
 
@@ -107,24 +79,7 @@ const appVersion =
   // Inject Overlay Card
   const overlayEl = document.createElement('div');
   overlayEl.id = 'iu-overlay';
-  setElementHTML(
-    overlayEl,
-    html`
-    <div class="iu-card">
-      <div class="iu-header">
-        <div class="iu-title-group">
-          <div class="iu-logo">
-            ${ICONS.appLogo}
-          </div>
-          <span class="iu-title">Unfollowers for Instagram</span>
-          <span class="iu-version-tag">v${appVersion}</span>
-        </div>
-        <button class="iu-close-btn" id="iu-close-btn">&times;</button>
-      </div>
-      <div class="iu-body" id="iu-body"></div>
-    </div>
-  `
-  );
+  const bodyEl = renderOverlayCard(overlayEl, appVersion, () => cleanup());
   document.body.appendChild(overlayEl);
 
   // Prevent scroll chaining when interacting with overlay backdrop
@@ -184,10 +139,6 @@ const appVersion =
       delete document.documentElement.dataset.iuOriginalOverflow;
     }
   };
-  document.getElementById('iu-close-btn')!.addEventListener('click', cleanup);
-
-  // Fetch Followings Logic
-  const bodyEl = document.getElementById('iu-body')!;
 
   // Render the list view, cancelling any bulk run owned by a previous list
   const showList = (users: UserNode[], notice?: string) => {
@@ -226,27 +177,7 @@ const appVersion =
     const signal = scanAbortController.signal;
 
     try {
-      setElementHTML(
-        bodyEl,
-        html`
-        <div class="iu-scanner-view">
-          <div class="iu-spinner"></div>
-          <div>
-            <h3 style="margin-bottom: 0.5rem; font-weight: 600;">Analyzing your account...</h3>
-            <p style="color: #ada79d; font-size: 0.9rem;" id="iu-scan-status">Scanning following list...</p>
-          </div>
-          <div class="iu-progress-bar-container">
-            <div class="iu-progress-bar" id="iu-progress-bar"></div>
-          </div>
-          <div style="margin-top: 0.75rem; background: rgba(59, 130, 246, 0.08); border: 1px solid rgba(59, 130, 246, 0.2); border-radius: 10px; padding: 0.75rem 1rem; font-size: 0.8rem; color: #93c5fd; max-width: 420px; text-align: left; line-height: 1.45; box-sizing: border-box;">
-            <strong>Heads up:</strong> Instagram may flag accounts that scan or unfollow too often as automated and show a warning or temporarily restrict them. Scan occasionally (no more than a few times a day) and unfollow in moderation. The scan paces itself and takes short breaks, so it can take a minute.
-          </div>
-        </div>
-      `
-      );
-
-      const scanStatusEl = document.getElementById('iu-scan-status')!;
-      const progressBarEl = document.getElementById('iu-progress-bar')!;
+      const progress = renderScanning(bodyEl);
 
       // Recorded at the start: a cancelled or failed scan has already sent requests
       recordScan(ds_user_id);
@@ -263,14 +194,16 @@ const appVersion =
 
           // Following takes one request, followers ~25 accounts per request (see progress.ts)
           const phaseShare = estimatePhaseShare(scanned, expected[phase], done);
-          progressBarEl.style.width = `${Math.round(overallProgressPercent(phase, phaseShare))}%`;
-          scanStatusEl.textContent = `${label}: ${scanned.toLocaleString()} accounts...`;
+          progress.setPercent(overallProgressPercent(phase, phaseShare));
+          progress.setStatus(`${label}: ${scanned.toLocaleString()} accounts...`);
         },
         (waitMs, attempt, maxAttempts) => {
-          scanStatusEl.textContent = `Instagram is limiting requests. Pausing ${Math.round(waitMs / 1000)}s before retrying (attempt ${attempt} of ${maxAttempts})...`;
+          progress.setStatus(
+            `Instagram is limiting requests. Pausing ${Math.round(waitMs / 1000)}s before retrying (attempt ${attempt} of ${maxAttempts})...`
+          );
         },
         (waitMs) => {
-          scanStatusEl.textContent = `Taking a short ${Math.round(waitMs / 1000)}s break so the scan looks less automated...`;
+          progress.setStatus(`Taking a short ${Math.round(waitMs / 1000)}s break so the scan looks less automated...`);
         },
         signal
       );
@@ -314,7 +247,7 @@ const appVersion =
       fileInput.type = 'file';
       fileInput.id = 'iu-import-input';
       fileInput.accept = '.json';
-      fileInput.style.display = 'none';
+      fileInput.hidden = true;
       overlayEl.appendChild(fileInput);
     }
 

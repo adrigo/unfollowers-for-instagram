@@ -17,7 +17,7 @@ export const filterPanelHtml = (state: UserFilterState): SafeHtml => html`
   <div class="iu-filter-list">
     ${FILTERS.map(
       (f) => html`
-        <label class="iu-filter-label" style="display: flex; align-items: center; gap: 0.35rem;" ${f.title && html`title="${f.title}"`}>
+        <label class="iu-filter-label" ${f.title && html`title="${f.title}"`}>
           <input type="checkbox" id="iu-filter-${f.id}" ${state[f.key] && 'checked'} />
           ${f.icon} ${f.label}
         </label>
