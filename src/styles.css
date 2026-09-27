@@ -30,6 +30,13 @@
   animation: iu-fade-in 0.3s ease-out;
 }
 
+.iu-card.iu-card-compact {
+  max-width: 560px;
+  width: 92%;
+  height: auto;
+  margin: auto;
+}
+
 @keyframes iu-fade-in {
   from {
     opacity: 0;
@@ -112,6 +119,31 @@
   overscroll-behavior: contain;
 }
 
+/* Login required view */
+.iu-login {
+  padding: 3rem 2rem;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.5rem;
+}
+
+.iu-login-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #f87171;
+  margin-bottom: 0.75rem;
+}
+
+.iu-login-text {
+  color: #ada79d;
+  font-size: 1rem;
+  line-height: 1.6;
+  max-width: 440px;
+  margin: 0 auto;
+}
+
 /* Two-column layout elements */
 .iu-layout-wrapper {
   display: flex;
@@ -149,6 +181,18 @@
   padding-bottom: 0.85rem;
 }
 
+.iu-sidebar-section.iu-stats-section {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+#iu-bulk-unfollow-btn {
+  width: 100%;
+  background: #ef4444;
+  border-color: rgba(239, 68, 68, 0.4);
+  text-align: center;
+}
+
 .iu-stats-vertical {
   display: flex;
   flex-direction: column;
@@ -161,6 +205,12 @@
   font-size: 0.85rem;
   color: #ada79d;
   padding: 0.15rem 0;
+}
+
+.iu-stat-label {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
 }
 
 .iu-content-area {
@@ -188,6 +238,11 @@
   display: flex;
   flex-direction: column;
   gap: 1rem;
+}
+
+.iu-arrow {
+  font-size: 0.65rem;
+  color: #888;
 }
 
 @media (max-width: 650px) {
@@ -415,6 +470,16 @@
   text-align: center;
 }
 
+.iu-scanner-title {
+  margin-bottom: 0.5rem;
+  font-weight: 600;
+}
+
+.iu-scanner-status {
+  color: #ada79d;
+  font-size: 0.9rem;
+}
+
 .iu-spinner {
   width: 60px;
   height: 60px;
@@ -457,8 +522,11 @@
   transition: width 0.2s ease;
 }
 
-/* List State styles */
+.iu-progress-bar.iu-progress-bar-stepped {
+  transition: width 0.3s ease;
+}
 
+/* List view: search */
 .iu-search-input {
   flex: 1;
   min-width: 0;
@@ -475,6 +543,11 @@
 .iu-search-input:focus {
   border-color: #ec4899;
   box-shadow: 0 0 10px rgba(236, 72, 153, 0.15);
+}
+
+.iu-search-section .iu-search-input {
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .iu-btn-export {
@@ -502,6 +575,153 @@
   cursor: not-allowed;
 }
 
+/* Buttons. Variants also cover :hover so .iu-btn-export's hover background doesn't replace them. */
+.iu-btn-primary,
+.iu-btn-primary:hover:not(:disabled) {
+  background: linear-gradient(135deg, #f97316, #ec4899, #7c3aed);
+  color: #fff;
+  border: none;
+  font-weight: 700;
+}
+
+.iu-btn-danger,
+.iu-btn-danger:hover:not(:disabled) {
+  background: #ef4444;
+  color: #fff;
+  border: none;
+  font-weight: 700;
+}
+
+.iu-btn-login {
+  height: 46px;
+  padding: 0 2rem;
+  font-size: 0.95rem;
+  border-radius: 12px;
+}
+
+/* Centered prompts (cached data, scan cooldown) */
+.iu-prompt {
+  text-align: center;
+  margin: auto;
+  padding: 2.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+}
+
+.iu-prompt-title {
+  margin-bottom: 0.5rem;
+  font-weight: 600;
+  font-size: 1.3rem;
+}
+
+.iu-prompt-text {
+  color: #ada79d;
+  font-size: 0.9rem;
+  line-height: 1.5;
+  max-width: 380px;
+}
+
+.iu-prompt-actions {
+  display: flex;
+  gap: 0.5rem;
+  width: 100%;
+  max-width: 380px;
+}
+
+.iu-prompt-actions .iu-btn-export {
+  flex: 1;
+  height: 42px;
+  border-radius: 10px;
+}
+
+/* In-overlay dialogs: a prompt on a panel over the current view (see dialog.ts) */
+.iu-dialog {
+  position: absolute;
+  inset: 0;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  background: rgba(10, 9, 8, 0.6);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+}
+
+.iu-dialog-panel {
+  width: 100%;
+  max-width: 440px;
+  background: #1c1a17;
+  border: 1px solid rgba(247, 241, 232, 0.1);
+  border-radius: 16px;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
+}
+
+.iu-dialog .iu-prompt {
+  height: auto;
+  padding: 1.75rem 1.5rem;
+  gap: 1.25rem;
+}
+
+.iu-dialog .iu-prompt-title {
+  font-size: 1.15rem;
+}
+
+/* Callouts under prompts and the scanning view */
+.iu-callout {
+  border: 1px solid;
+  padding: 0.75rem 1rem;
+  text-align: left;
+  box-sizing: border-box;
+}
+
+.iu-callout-note {
+  background: rgba(192, 132, 252, 0.1);
+  border-color: rgba(192, 132, 252, 0.2);
+  border-radius: 8px;
+  font-size: 0.82rem;
+  color: #c084fc;
+  max-width: 380px;
+  line-height: 1.4;
+}
+
+.iu-callout-info {
+  margin-top: 0.75rem;
+  background: rgba(59, 130, 246, 0.08);
+  border-color: rgba(59, 130, 246, 0.2);
+  border-radius: 10px;
+  font-size: 0.8rem;
+  color: #93c5fd;
+  max-width: 420px;
+  line-height: 1.45;
+}
+
+/* Error view */
+.iu-error {
+  text-align: center;
+  margin: auto;
+  padding: 2rem;
+}
+
+.iu-error-title {
+  margin: 1rem 0;
+  color: #f87171;
+}
+
+.iu-error-text {
+  color: #ada79d;
+  margin-bottom: 1.5rem;
+  margin-left: auto;
+  margin-right: auto;
+  line-height: 1.5;
+  max-width: 320px;
+}
+
+/* List view: filters and cards */
 .iu-filter-label {
   display: flex;
   align-items: center;
@@ -544,6 +764,12 @@
 .iu-list-container::-webkit-scrollbar-thumb {
   background: rgba(255, 255, 255, 0.1);
   border-radius: 4px;
+}
+
+.iu-empty-list {
+  text-align: center;
+  color: #ada79d;
+  padding: 3rem 0;
 }
 
 .iu-user-card {
@@ -653,6 +879,11 @@
   cursor: not-allowed;
 }
 
+.iu-unfollow-btn[data-state="done"] {
+  background: rgba(255, 255, 255, 0.05);
+  color: #ada79d;
+}
+
 /* Grid Layout for Cards */
 .iu-list-container.grid-view {
   display: grid;
@@ -732,6 +963,10 @@
   gap: 0.6rem;
 }
 
+.iu-filter-list .iu-filter-label {
+  gap: 0.35rem;
+}
+
 .iu-content-header {
   display: flex;
   justify-content: space-between;
@@ -739,6 +974,17 @@
   margin-bottom: 0.75rem;
   padding: 0 0.25rem;
   flex-shrink: 0;
+}
+
+.iu-select-all-text {
+  font-weight: bold;
+  color: #fff;
+  font-size: 0.88rem;
+}
+
+.iu-count-text {
+  font-size: 0.85rem;
+  color: #ada79d;
 }
 
 #iu-bulk-progress-banner {
@@ -751,6 +997,37 @@
   justify-content: space-between;
   font-size: 0.9rem;
   margin-bottom: 0.75rem;
+}
+
+#iu-bulk-progress-banner.is-visible {
+  display: flex;
+}
+
+#iu-bulk-progress-text {
+  font-weight: 600;
+}
+
+#iu-bulk-progress-banner .iu-btn-group {
+  width: auto;
+}
+
+#iu-bulk-progress-banner .iu-btn-export {
+  padding: 0.35rem 0.75rem;
+  font-size: 0.8rem;
+  border-radius: 6px;
+}
+
+#iu-bulk-pause-btn {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+#iu-bulk-pause-btn.is-paused {
+  background: linear-gradient(135deg, #f97316, #ec4899, #7c3aed);
+}
+
+#iu-bulk-cancel-btn {
+  background: #ef4444;
+  border: none;
 }
 
 .iu-stat-val {
@@ -845,6 +1122,28 @@
   background: #262626;
   color: #fff;
 }
+
+.iu-sort-label {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.iu-sort-glyph {
+  display: inline-block;
+  width: 16px;
+  text-align: center;
+  font-size: 0.75rem;
+  font-weight: bold;
+  color: #aaa;
+  vertical-align: middle;
+}
+
+.iu-custom-dropdown.is-disabled {
+  pointer-events: none;
+  opacity: 0.5;
+}
+
 .iu-avatar-fallback {
   background: #3a3430;
 }
@@ -887,303 +1186,4 @@
   line-height: 1;
   cursor: help;
   flex-shrink: 0;
-}
-
-/* Buttons. Variants also cover :hover so .iu-btn-export's hover background doesn't replace them. */
-.iu-btn-primary,
-.iu-btn-primary:hover:not(:disabled) {
-  background: linear-gradient(135deg, #f97316, #ec4899, #7c3aed);
-  color: #fff;
-  border: none;
-  font-weight: 700;
-}
-
-.iu-btn-danger,
-.iu-btn-danger:hover:not(:disabled) {
-  background: #ef4444;
-  color: #fff;
-  border: none;
-  font-weight: 700;
-}
-
-.iu-btn-login {
-  height: 46px;
-  padding: 0 2rem;
-  font-size: 0.95rem;
-  border-radius: 12px;
-}
-
-.iu-arrow {
-  font-size: 0.65rem;
-  color: #888;
-}
-
-/* Centered prompts (cached data, scan cooldown) */
-.iu-prompt {
-  text-align: center;
-  margin: auto;
-  padding: 2.5rem;
-  display: flex;
-  flex-direction: column;
-  gap: 1.5rem;
-  align-items: center;
-  justify-content: center;
-  height: 100%;
-}
-
-.iu-prompt-title {
-  margin-bottom: 0.5rem;
-  font-weight: 600;
-  font-size: 1.3rem;
-}
-
-.iu-prompt-text {
-  color: #ada79d;
-  font-size: 0.9rem;
-  line-height: 1.5;
-  max-width: 380px;
-}
-
-.iu-prompt-actions {
-  display: flex;
-  gap: 0.5rem;
-  width: 100%;
-  max-width: 380px;
-}
-
-.iu-prompt-actions .iu-btn-export {
-  flex: 1;
-  height: 42px;
-  border-radius: 10px;
-}
-
-/* In-overlay dialogs: a prompt on a panel over the current view (see dialog.ts) */
-.iu-dialog {
-  position: absolute;
-  inset: 0;
-  z-index: 10;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 1rem;
-  background: rgba(10, 9, 8, 0.6);
-  backdrop-filter: blur(4px);
-  -webkit-backdrop-filter: blur(4px);
-}
-
-.iu-dialog-panel {
-  width: 100%;
-  max-width: 440px;
-  background: #1c1a17;
-  border: 1px solid rgba(247, 241, 232, 0.1);
-  border-radius: 16px;
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
-}
-
-.iu-dialog .iu-prompt {
-  height: auto;
-  padding: 1.75rem 1.5rem;
-  gap: 1.25rem;
-}
-
-.iu-dialog .iu-prompt-title {
-  font-size: 1.15rem;
-}
-
-.iu-callout {
-  border: 1px solid;
-  padding: 0.75rem 1rem;
-  text-align: left;
-  box-sizing: border-box;
-}
-
-.iu-callout-note {
-  background: rgba(192, 132, 252, 0.1);
-  border-color: rgba(192, 132, 252, 0.2);
-  border-radius: 8px;
-  font-size: 0.82rem;
-  color: #c084fc;
-  max-width: 380px;
-  line-height: 1.4;
-}
-
-.iu-callout-info {
-  margin-top: 0.75rem;
-  background: rgba(59, 130, 246, 0.08);
-  border-color: rgba(59, 130, 246, 0.2);
-  border-radius: 10px;
-  font-size: 0.8rem;
-  color: #93c5fd;
-  max-width: 420px;
-  line-height: 1.45;
-}
-
-/* Error view */
-.iu-error {
-  text-align: center;
-  margin: auto;
-  padding: 2rem;
-}
-
-.iu-error-title {
-  margin: 1rem 0;
-  color: #f87171;
-}
-
-.iu-error-text {
-  color: #ada79d;
-  margin-bottom: 1.5rem;
-  margin-left: auto;
-  margin-right: auto;
-  line-height: 1.5;
-  max-width: 320px;
-}
-
-/* Login required view */
-.iu-card.iu-card-compact {
-  max-width: 560px;
-  width: 92%;
-  height: auto;
-  margin: auto;
-}
-
-.iu-login {
-  padding: 3rem 2rem;
-  text-align: center;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 1.5rem;
-}
-
-.iu-login-title {
-  font-size: 1.5rem;
-  font-weight: 700;
-  color: #f87171;
-  margin-bottom: 0.75rem;
-}
-
-.iu-login-text {
-  color: #ada79d;
-  font-size: 1rem;
-  line-height: 1.6;
-  max-width: 440px;
-  margin: 0 auto;
-}
-
-/* Scanning and import progress */
-.iu-scanner-title {
-  margin-bottom: 0.5rem;
-  font-weight: 600;
-}
-
-.iu-scanner-status {
-  color: #ada79d;
-  font-size: 0.9rem;
-}
-
-.iu-progress-bar.iu-progress-bar-stepped {
-  transition: width 0.3s ease;
-}
-
-/* List view */
-.iu-search-section .iu-search-input {
-  width: 100%;
-  box-sizing: border-box;
-}
-
-#iu-bulk-unfollow-btn {
-  width: 100%;
-  background: #ef4444;
-  border-color: rgba(239, 68, 68, 0.4);
-  text-align: center;
-}
-
-.iu-sort-label {
-  display: flex;
-  align-items: center;
-  gap: 0.4rem;
-}
-
-.iu-sort-glyph {
-  display: inline-block;
-  width: 16px;
-  text-align: center;
-  font-size: 0.75rem;
-  font-weight: bold;
-  color: #aaa;
-  vertical-align: middle;
-}
-
-.iu-custom-dropdown.is-disabled {
-  pointer-events: none;
-  opacity: 0.5;
-}
-
-.iu-filter-list .iu-filter-label {
-  gap: 0.35rem;
-}
-
-.iu-sidebar-section.iu-stats-section {
-  border-bottom: none;
-  padding-bottom: 0;
-}
-
-.iu-stat-label {
-  display: flex;
-  align-items: center;
-  gap: 0.35rem;
-}
-
-#iu-bulk-progress-banner.is-visible {
-  display: flex;
-}
-
-#iu-bulk-progress-text {
-  font-weight: 600;
-}
-
-#iu-bulk-progress-banner .iu-btn-group {
-  width: auto;
-}
-
-#iu-bulk-progress-banner .iu-btn-export {
-  padding: 0.35rem 0.75rem;
-  font-size: 0.8rem;
-  border-radius: 6px;
-}
-
-#iu-bulk-pause-btn {
-  background: rgba(255, 255, 255, 0.08);
-}
-
-#iu-bulk-pause-btn.is-paused {
-  background: linear-gradient(135deg, #f97316, #ec4899, #7c3aed);
-}
-
-#iu-bulk-cancel-btn {
-  background: #ef4444;
-  border: none;
-}
-
-.iu-select-all-text {
-  font-weight: bold;
-  color: #fff;
-  font-size: 0.88rem;
-}
-
-.iu-count-text {
-  font-size: 0.85rem;
-  color: #ada79d;
-}
-
-.iu-empty-list {
-  text-align: center;
-  color: #ada79d;
-  padding: 3rem 0;
-}
-
-.iu-unfollow-btn[data-state="done"] {
-  background: rgba(255, 255, 255, 0.05);
-  color: #ada79d;
 }
