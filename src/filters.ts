@@ -44,3 +44,32 @@ const COMPARATORS: Record<SortOption, (a: UserNode, b: UserNode) => number> = {
 
 // Return a sorted copy; the input array is left untouched.
 export const sortUsers = (users: UserNode[], sortBy: SortOption): UserNode[] => [...users].sort(COMPARATORS[sortBy]);
+
+export interface UserStats {
+  newUnfollowers: number;
+  nonFollowers: number;
+  followers: number;
+  fans: number;
+  verified: number;
+  private: number;
+}
+
+// Sidebar statistics. Fans are counted on their own; the rest describe accounts you follow.
+export const countStats = (users: UserNode[]): UserStats => {
+  const stats: UserStats = { newUnfollowers: 0, nonFollowers: 0, followers: 0, fans: 0, verified: 0, private: 0 };
+  for (const u of users) {
+    if (u.isFan) {
+      stats.fans++;
+      continue;
+    }
+    if (u.followsViewer) {
+      stats.followers++;
+    } else {
+      stats.nonFollowers++;
+      if (u.isNew) stats.newUnfollowers++;
+    }
+    if (u.isVerified) stats.verified++;
+    if (u.isPrivate) stats.private++;
+  }
+  return stats;
+};

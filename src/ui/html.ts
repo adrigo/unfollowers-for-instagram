@@ -40,3 +40,7 @@ export function setElementHTML(element: HTMLElement, content: SafeHtml) {
   const parsed = new DOMParser().parseFromString(content.value, 'text/html');
   element.replaceChildren(...Array.from(parsed.body.childNodes));
 }
+
+// Look up an element that the view's own markup is known to contain
+export const query = <T extends Element = HTMLElement>(root: ParentNode, selector: string): T =>
+  root.querySelector<T>(selector)!;

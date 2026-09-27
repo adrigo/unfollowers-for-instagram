@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { filterUsers, sortUsers } from '../src/filters';
+import { countStats, filterUsers, sortUsers } from '../src/filters';
 import type { UserFilterState, UserNode } from '../src/types';
 
 const user = (username: string, overrides: Partial<UserNode> = {}): UserNode => ({
@@ -87,5 +87,21 @@ describe('sortUsers', () => {
     const before = names(users);
     sortUsers(users, 'name-desc');
     expect(names(users)).toEqual(before);
+  });
+});
+
+describe('countStats', () => {
+  it('counts accounts you follow by status and flags', () => {
+    const stats = countStats([
+      user('a', { followsViewer: true, isVerified: true }),
+      user('b', { isNew: true, isPrivate: true }),
+      user('c'),
+    ]);
+    expect(stats).toEqual({ newUnfollowers: 1, nonFollowers: 2, followers: 1, fans: 0, verified: 1, private: 1 });
+  });
+
+  it('counts fans only as fans', () => {
+    const stats = countStats([user('fan', { isFan: true, followsViewer: true, isVerified: true, isPrivate: true })]);
+    expect(stats).toEqual({ newUnfollowers: 0, nonFollowers: 0, followers: 0, fans: 1, verified: 0, private: 0 });
   });
 });
