@@ -1,233 +1,26 @@
-import { unfollowUser } from './api';
-import CACHE_SYNC_SVG from './assets/cache-sync.svg';
-import FAN_SVG from './assets/fan.svg';
-import FOLLOWS_YOU_SVG from './assets/follows-you.svg';
-import HOURGLASS_SVG from './assets/hourglass.svg';
-import NEW_UNFOLLOWER_SVG from './assets/new-unfollower.svg';
-import NON_FOLLOWERS_SVG from './assets/non-follower.svg';
-import PRIVATE_LOCK_SVG from './assets/private.svg';
-import VERIFIED_BADGE_SVG from './assets/verified.svg';
-import WARNING_SVG from './assets/warning.svg';
-import { filterUsers, sortUsers } from './filters';
+import { unfollowUser } from '../../../api';
+import FAN_SVG from '../../../assets/fan.svg';
+import FOLLOWS_YOU_SVG from '../../../assets/follows-you.svg';
+import NEW_UNFOLLOWER_SVG from '../../../assets/new-unfollower.svg';
+import NON_FOLLOWERS_SVG from '../../../assets/non-follower.svg';
+import PRIVATE_LOCK_SVG from '../../../assets/private.svg';
+import VERIFIED_BADGE_SVG from '../../../assets/verified.svg';
+import { filterUsers, sortUsers } from '../../../filters';
 import {
   estimateBulkUnfollowMs,
   formatCountdown,
   nextUnfollowWait,
   UNFOLLOW_BREAK_EVERY,
   UNFOLLOW_BREAK_MS,
-} from './pacing';
-import {
-  DAILY_SCAN_LIMIT,
-  formatCacheAge,
-  getCachedFollowings,
-  SCAN_COOLDOWN_MS,
-  type ScanWarning,
-  setCachedFollowings,
-  validateAndParseCacheData,
-} from './storage';
-import type { CacheData, SortOption, UserFilterState, UserNode } from './types';
-import { escapeHtml, setElementHTML } from './ui/html';
-
-export { escapeHtml, setElementHTML };
-
-// Badge icons shown on list cards. Each is defined once as a <symbol> in BADGE_SPRITE and
-// referenced with <use>, so cards don't each carry full copies of the SVG markup.
-const BADGE_ICONS = {
-  'follows-you': FOLLOWS_YOU_SVG,
-  'non-follower': NON_FOLLOWERS_SVG,
-  fan: FAN_SVG,
-  'new-unfollower': NEW_UNFOLLOWER_SVG,
-  verified: VERIFIED_BADGE_SVG,
-  private: PRIVATE_LOCK_SVG,
-} as const;
-type BadgeIcon = keyof typeof BADGE_ICONS;
-
-// Turn a standalone <svg> asset into a <symbol> with the same viewBox and content
-const toSymbol = (svg: string, id: string): string => {
-  const viewBox = svg.match(/viewBox="([^"]+)"/)?.[1] ?? '0 0 24 24';
-  const content = svg.slice(svg.indexOf('>') + 1, svg.lastIndexOf('</svg>'));
-  return `<symbol id="${id}" viewBox="${viewBox}">${content}</symbol>`;
-};
-
-const BADGE_SPRITE = `<svg class="iu-sprite" aria-hidden="true">${Object.entries(BADGE_ICONS)
-  .map(([name, svg]) => toSymbol(svg, `iu-icon-${name}`))
-  .join('')}</svg>`;
-
-function badge(icon: BadgeIcon, title: string): string {
-  return `<span class="iu-badge" title="${escapeHtml(title)}"><svg width="16" height="16" aria-hidden="true"><use href="#iu-icon-${icon}"/></svg></span>`;
-}
-
-export function renderError(
-  bodyEl: HTMLElement,
-  title: string,
-  message: string,
-  action: { label: string; onClick: () => void }
-) {
-  setElementHTML(
-    bodyEl,
-    `
-    <div style="text-align: center; margin: auto; padding: 2rem;">
-      ${WARNING_SVG}
-      <h3 style="margin: 1rem 0; color: #f87171;">${escapeHtml(title)}</h3>
-      <p style="color: #ada79d; margin-bottom: 1.5rem; line-height: 1.5; max-width: 320px; margin-left: auto; margin-right: auto;">${escapeHtml(message)}</p>
-      <button id="iu-error-action-btn" class="iu-btn-export" style="background: linear-gradient(135deg, #f97316, #ec4899, #7c3aed); color: #fff; border: none;">${escapeHtml(action.label)}</button>
-    </div>
-  `
-  );
-  document.getElementById('iu-error-action-btn')?.addEventListener('click', action.onClick);
-}
+} from '../../../pacing';
+import { getCachedFollowings, setCachedFollowings } from '../../../storage';
+import type { CacheData, SortOption, UserFilterState, UserNode } from '../../../types';
+import { escapeHtml, setElementHTML } from '../../html';
+import { BADGE_SPRITE, badge } from '../../icons';
 
 export interface ListActions {
   onScanFresh: () => void;
   onImport: () => void;
-}
-
-export function renderCachePrompt(
-  bodyEl: HTMLElement,
-  cachedData: CacheData,
-  onUseCache: () => void,
-  onImportCache: () => void,
-  onScanFresh: () => void
-) {
-  const ageString = formatCacheAge(cachedData.timestamp);
-
-  setElementHTML(
-    bodyEl,
-    `
-    <div style="text-align: center; margin: auto; padding: 2.5rem; display: flex; flex-direction: column; gap: 1.5rem; align-items: center; justify-content: center; height: 100%;">
-      ${CACHE_SYNC_SVG}
-      <div>
-        <h3 style="margin-bottom: 0.5rem; font-weight: 600; font-size: 1.3rem;">Found Cached Data</h3>
-        <p style="color: #ada79d; font-size: 0.9rem; line-height: 1.5; max-width: 380px;">
-          A cached list of <strong>${cachedData.users.length} users</strong> was found (loaded ${ageString}).
-          <br>
-          Select <strong>New Scan</strong> to check for recent changes, <strong>Use Cache</strong> to view the saved list, or <strong>Import</strong> a JSON backup.
-        </p>
-      </div>
-      <div style="display: flex; gap: 0.5rem; width: 100%; max-width: 380px;">
-        <button id="iu-use-cache-btn" class="iu-btn-export" style="flex: 1; background: linear-gradient(135deg, #f97316, #ec4899, #7c3aed); color: #fff; border: none; font-weight: 700; height: 42px; border-radius: 10px;">Use Cache</button>
-        <button id="iu-import-cache-btn" class="iu-btn-export" style="flex: 1; height: 42px; border-radius: 10px;">Import</button>
-        <button id="iu-scan-fresh-btn" class="iu-btn-export" style="flex: 1; height: 42px; border-radius: 10px;">New Scan</button>
-      </div>
-      <div style="background: rgba(192, 132, 252, 0.1); border: 1px solid rgba(192, 132, 252, 0.2); border-radius: 8px; padding: 0.75rem 1rem; font-size: 0.82rem; color: #c084fc; max-width: 380px; text-align: left; line-height: 1.4; box-sizing: border-box;">
-        <strong>Note:</strong> To detect new unfollowers, we will use the cache but we need to do a fresh scan.
-      </div>
-    </div>
-  `
-  );
-
-  document.getElementById('iu-use-cache-btn')!.addEventListener('click', onUseCache);
-  document.getElementById('iu-import-cache-btn')!.addEventListener('click', onImportCache);
-  document.getElementById('iu-scan-fresh-btn')!.addEventListener('click', onScanFresh);
-}
-
-// Shown when New Scan is pressed shortly after a previous scan
-export function renderScanCooldownPrompt(
-  bodyEl: HTMLElement,
-  warning: ScanWarning,
-  onUseCache: (() => void) | null,
-  onScanAnyway: () => void,
-  onClose: () => void
-) {
-  const primaryButton = onUseCache
-    ? `<button id="iu-cooldown-cache-btn" class="iu-btn-export" style="flex: 1; background: linear-gradient(135deg, #f97316, #ec4899, #7c3aed); color: #fff; border: none; font-weight: 700; height: 42px; border-radius: 10px;">Use Cache</button>`
-    : `<button id="iu-cooldown-close-btn" class="iu-btn-export" style="flex: 1; height: 42px; border-radius: 10px;">Close</button>`;
-
-  setElementHTML(
-    bodyEl,
-    `
-    <div style="text-align: center; margin: auto; padding: 2.5rem; display: flex; flex-direction: column; gap: 1.5rem; align-items: center; justify-content: center; height: 100%;">
-      ${HOURGLASS_SVG}
-      <div>
-        <h3 style="margin-bottom: 0.5rem; font-weight: 600; font-size: 1.3rem;">${
-          warning.reason === 'recent' ? 'You scanned recently' : 'Many scans today'
-        }</h3>
-        <p style="color: #ada79d; font-size: 0.9rem; line-height: 1.5; max-width: 380px;">
-          ${
-            warning.reason === 'recent'
-              ? `Your last scan started <strong>${escapeHtml(formatCacheAge(warning.lastScanTime))}</strong>.
-                 Scanning again this soon can get your account flagged for automated behavior by Instagram.
-                 We recommend waiting at least ${SCAN_COOLDOWN_MS / 3_600_000} hour between scans.`
-              : `You've already scanned <strong>${warning.scansToday} times</strong> in the last 24 hours
-                 (last one <strong>${escapeHtml(formatCacheAge(warning.lastScanTime))}</strong>).
-                 Frequent scans can get your account flagged for automated behavior by Instagram.
-                 We recommend no more than ${DAILY_SCAN_LIMIT} scans a day, at least ${SCAN_COOLDOWN_MS / 3_600_000} hour apart.`
-          }
-        </p>
-      </div>
-      <div style="display: flex; gap: 0.5rem; width: 100%; max-width: 380px;">
-        ${primaryButton}
-        <button id="iu-cooldown-scan-btn" class="iu-btn-export" style="flex: 1; height: 42px; border-radius: 10px;">Scan Anyway</button>
-      </div>
-    </div>
-  `
-  );
-
-  if (onUseCache) {
-    document.getElementById('iu-cooldown-cache-btn')!.addEventListener('click', onUseCache);
-  } else {
-    document.getElementById('iu-cooldown-close-btn')!.addEventListener('click', onClose);
-  }
-  document.getElementById('iu-cooldown-scan-btn')!.addEventListener('click', onScanAnyway);
-}
-
-export function loadCacheWithScanAnimation(
-  file: File,
-  bodyEl: HTMLElement,
-  dsUserId: string,
-  onLoaded: (users: UserNode[]) => void,
-  onBack: () => void
-) {
-  setElementHTML(
-    bodyEl,
-    `
-    <div class="iu-scanner-view">
-      <div class="iu-spinner"></div>
-      <div>
-        <h3 style="margin-bottom: 0.5rem; font-weight: 600;">Importing cached data...</h3>
-        <p style="color: #ada79d; font-size: 0.9rem;" id="iu-scan-status">Reading backup file...</p>
-      </div>
-      <div class="iu-progress-bar-container">
-        <div class="iu-progress-bar" id="iu-progress-bar" style="width: 25%; transition: width 0.3s ease;"></div>
-      </div>
-    </div>
-  `
-  );
-
-  const scanStatusEl = document.getElementById('iu-scan-status')!;
-  const progressBarEl = document.getElementById('iu-progress-bar')!;
-
-  const reader = new FileReader();
-  reader.onload = (event) => {
-    const content = event.target?.result as string;
-    const result = validateAndParseCacheData(content);
-
-    if (result.error || !result.data) {
-      renderError(bodyEl, 'Import Failed', result.error ?? 'Unknown error.', { label: 'Back', onClick: onBack });
-      return;
-    }
-    const importedUsers = result.data.users;
-
-    progressBarEl.style.width = '70%';
-    scanStatusEl.textContent = `Loading ${importedUsers.length} users from cache...`;
-
-    setCachedFollowings(dsUserId, importedUsers, result.data.timestamp);
-
-    setTimeout(() => {
-      progressBarEl.style.width = '100%';
-      scanStatusEl.textContent = 'Finalizing list view...';
-
-      setTimeout(() => {
-        onLoaded(importedUsers);
-      }, 250);
-    }, 300);
-  };
-
-  reader.onerror = () => {
-    renderError(bodyEl, 'Import Failed', 'Unable to read the selected file.', { label: 'Back', onClick: onBack });
-  };
-
-  reader.readAsText(file);
 }
 
 export function renderList(
