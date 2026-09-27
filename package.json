@@ -7,8 +7,8 @@
     "lint": "biome check",
     "format": "biome check --write",
     "test": "vitest run",
-    "build": "npm run typecheck && npm run lint && npm test && esbuild src/index.ts --bundle --loader:.svg=text --loader:.css=text --minify --outfile=dist/index.min.js && node scripts/update-html.js",
-    "dev": "esbuild src/index.ts --bundle --loader:.svg=text --loader:.css=text --outfile=dist/index.js --serve=3000",
+    "build": "npm run typecheck && npm run lint && npm test && node scripts/build.js && node scripts/update-html.js",
+    "dev": "node scripts/build.js --dev",
     "package:extension": "npm run build && node scripts/create-extension-icons.js && npm run package:source && (cd extension && zip -q -r ../extension.zip . -x extension.zip)",
     "package:source": "node scripts/create-source-zip.js"
   },

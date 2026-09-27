@@ -1,6 +1,6 @@
 # Unfollowers for Instagram (UIG)
 
-A beautiful, lightweight (~63KB, ~19KB gzipped), and secure browser-based utility that helps you identify accounts you are following but who do not follow you back.
+A beautiful, lightweight, and secure browser-based utility that helps you identify accounts you are following but who do not follow you back.
 
 > [!NOTE]
 > This tool runs **completely client-side** in your active browser session. It does not require downloading any apps, sharing your credentials (username/password) with third-party sites, or registering for external services.
@@ -42,6 +42,7 @@ npm run package:extension
 * **`npm run package:extension`**: Executes `npm run build`, runs `scripts/create-extension-icons.js` to render PNG icons, bundles `source-code.zip` for Firefox source code review, and packages store-ready `extension.zip` in the root folder.
 * **`npm run typecheck`** / **`npm run lint`**: Type-check with `tsc` and check linting, formatting, and import order with [Biome](https://biomejs.dev). Both run automatically before every `npm run build`.
 * **`npm test`**: Run the [Vitest](https://vitest.dev) unit tests in `tests/` (cache merging, import validation, scan warnings, ID normalization, pacing, progress estimates, filtering, sorting, statistics, HTML escaping, and the bulk unfollow loop's pausing, cancelling, and rate-limit handling). Also runs before every `npm run build`.
+* **`npm run dev`**: Serve an unminified build at `http://localhost:3000/index.js` for debugging, rebuilt on every request.
 * **`npm run format`**: Apply Biome lint fixes, formatting, and import sorting.
 * **`npm run package:source`**: Generates `source-code.zip` containing all original TypeScript source files and build configurations (excluding `node_modules` and compiled assets) required for store source code reviews.
 
@@ -136,6 +137,7 @@ When you run `npm run package:extension`, the build pipeline automatically:
 │   ├── favicon.svg        # Synced automatically from src/assets/icon.svg
 │   └── index.html         # Redesigned glassmorphic landing page template
 ├── scripts/
+│   ├── build.js           # esbuild bundle (minifies the embedded CSS); --dev serves an unminified build on :3000
 │   ├── create-extension-icons.js # Syncs master SVG and generates active/dark PNGs
 │   ├── create-source-zip.js # Bundles source-code.zip for store source reviews
 │   └── update-html.js     # Post-build script: syncs version and copies bundle to extension/
